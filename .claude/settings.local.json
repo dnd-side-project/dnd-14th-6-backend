@@ -1,9 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(pnpm approve-builds:*)",
-      "Bash(npx prisma:*)",
-      "Bash(npx husky init)"
-    ]
-  }
-}
