@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pnpm approve-builds:*)",
+      "Bash(npx prisma:*)"
+    ]
+  }
+}
