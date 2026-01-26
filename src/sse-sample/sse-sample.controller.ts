@@ -7,10 +7,11 @@ const SSE_EVENTS_DESCRIPTION = `
 
 **사용 방법:**
 \`\`\`javascript
-const eventSource = new EventSource('/sse-sample/events');
+const eventSource = new EventSource('/api/sse-sample/events');
 eventSource.onmessage = (event) => {
-  const data = JSON.parse(event.data);
-  console.log(data);
+  const response = JSON.parse(event.data);
+  // response = { statusCode: 200, success: true, data: { timestamp, message } }
+  console.log(response.data);
 };
 \`\`\`
 
@@ -23,10 +24,11 @@ const SSE_ROOM_EVENTS_DESCRIPTION = `
 **사용 방법:**
 \`\`\`javascript
 const roomId = 'room-123';
-const eventSource = new EventSource(\`/sse-sample/events/\${roomId}\`);
+const eventSource = new EventSource(\`/api/sse-sample/events/\${roomId}\`);
 eventSource.onmessage = (event) => {
-  const data = JSON.parse(event.data);
-  console.log(data);
+  const response = JSON.parse(event.data);
+  // response = { statusCode: 200, success: true, data: { roomId, timestamp, message } }
+  console.log(response.data);
 };
 \`\`\`
 `;
@@ -47,6 +49,8 @@ export class SseSampleController {
         schema: {
           type: 'object',
           properties: {
+            statusCode: { type: 'number', example: 200 },
+            success: { type: 'boolean', example: true },
             data: {
               type: 'object',
               properties: {
@@ -64,6 +68,8 @@ export class SseSampleController {
           },
         },
         example: {
+          statusCode: 200,
+          success: true,
           data: {
             timestamp: '2024-01-01T00:00:00.000Z',
             message: 'Hello from SSE',
@@ -104,6 +110,8 @@ export class SseSampleController {
         schema: {
           type: 'object',
           properties: {
+            statusCode: { type: 'number', example: 200 },
+            success: { type: 'boolean', example: true },
             data: {
               type: 'object',
               properties: {
@@ -125,6 +133,8 @@ export class SseSampleController {
           },
         },
         example: {
+          statusCode: 200,
+          success: true,
           data: {
             roomId: 'room-123',
             timestamp: '2024-01-01T00:00:00.000Z',
