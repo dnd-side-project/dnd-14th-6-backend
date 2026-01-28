@@ -1,0 +1,123 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Difficulty {
+  EASY
+  NORMAL
+  HARD
+}
+
+model User {
+  id           BigInt   @id @default(autoincrement()) /// 사용자 ID
+  email        String   @unique                       /// 이메일
+  nickname     String   @db.VarChar(50)               /// 닉네임
+  githubUrl    String?  @map("github_url")            /// 깃허브 URL
+  provider     String   @db.VarChar(20)               /// 제공자
+  providerId   String   @map("provider_id")           /// 제공자 ID
+  profileImage String?  @map("profile_image")         /// 프로필 이미지
+  totalScore   BigInt   @default(0) @map("total_score") /// 누적 점수
+  refreshToken String   @map("refresh_token")         /// 리프레시 토큰
+  createdAt    DateTime @default(now()) @map("created_at") /// 가입일
+  updatedAt    DateTime @updatedAt @map("updated_at") /// 수정일
+
+  tierId       Int?         @map("tier_id") /// 현재 티어
+  tier         Tier?        @relation(fields: [tierId], references: [id])
+  gameSessions GameSession[]
+
+  @@map("users")
+}
+
+model Tier {
+  id       Int     @id @default(autoincrement()) /// 티어 ID
+  name     String  @unique @db.VarChar(30)       /// 티어명
+  minScore Int     @map("min_score")             /// 최소 점수
+  imageUrl String? @map("image_url")             /// 뱃지 이미지
+
+  users User[]
+
+  @@map("tiers")
+}
+
+model Category {
+  id   Int    @id @default(autoincrement()) /// 카테고리 ID
+  name String @unique @db.VarChar(50)       /// 카테고리 이름
+
+  subCategories SubCategory[]
+  problems      Problem[]
+  gameSessions  GameSession[]
+
+  @@map("categories")
+}
+
+model SubCategory {
+  id   Int    @id @default(autoincrement()) /// 서브 ID
+  name String @db.VarChar(50)               /// 서브 카테고리 이름
+
+  categoryId Int      @map("category_id") /// 메인 카테고리 ID
+  category   Category @relation(fields: [categoryId], references: [id])
+
+  problems Problem[]
+
+  @@map("sub_categories")
+}
+
+model Problem {
+  id          BigInt     @id @default(autoincrement()) /// 문제 ID
+  difficulty  Difficulty                               /// 난이도
+  title       String     @db.VarChar(255)              /// 문제 제목
+  text        String                                   /// 문제 지문
+  answer      String                                   /// 정답
+  explanation String?                                  /// 해설
+  createdAt   DateTime   @default(now()) @map("created_at") /// 생성일
+
+  categoryId      Int              @map("category_id")     /// 카테고리 ID
+  category        Category         @relation(fields: [categoryId], references: [id])
+  subCategoryId   Int              @map("sub_category_id") /// 서브 카테고리 ID
+  subCategory     SubCategory      @relation(fields: [subCategoryId], references: [id])
+  gameSessionLogs GameSessionLog[]
+
+  @@map("problems")
+}
+
+model GameSession {
+  id                  BigInt   @id @default(autoincrement()) /// 세션 ID
+  difficultyMode      String   @db.VarChar(10) @map("difficulty_mode") /// 난이도 모드
+  score               Int      @default(0)                   /// 획득 점수
+  totalProblemCount   Int      @map("total_problem_count")   /// 총 문제 수
+  correctProblemCount Int      @map("correct_problem_count") /// 정답 수
+  playedAt            DateTime @default(now()) @map("played_at") /// 플레이 일시
+
+  userId          BigInt?          @map("user_id")     /// 사용자 ID
+  user            User?            @relation(fields: [userId], references: [id])
+  categoryId      Int              @map("category_id") /// 카테고리 ID
+  category        Category         @relation(fields: [categoryId], references: [id])
+  gameSessionLogs GameSessionLog[]
+
+  @@map("game_sessions")
+}
+
+model GameSessionLog {
+  id       BigInt  @id @default(autoincrement()) /// 로그 ID
+  inputs   Json                                  /// 입력 이력
+  isSolved Boolean @map("is_solved")             /// 해결 여부
+  tryCount Int     @map("try_count")             /// 시도 횟수
+
+  sessionId   BigInt      @map("session_id") /// 세션 ID
+  gameSession GameSession @relation(fields: [sessionId], references: [id])
+  problemId   BigInt      @map("problem_id") /// 문제 ID
+  problem     Problem     @relation(fields: [problemId], references: [id])
+
+  @@map("game_session_logs")
+}
