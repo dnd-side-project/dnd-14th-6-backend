@@ -62,13 +62,14 @@ jobs:
         run: echo "ipv4=$(curl -s https://ifconfig.me)" >> $GITHUB_OUTPUT
 
       - name: Open Port 22 for Runner IP
-        uses: oracle-actions/run-oci-cli-command@v1.1.1
+        uses: oracle-actions/run-oci-cli-command@v1.3.2
+        env:
+          OCI_CLI_USER: ${{ secrets.OCI_USER_OCID }}
+          OCI_CLI_TENANCY: ${{ secrets.OCI_TENANCY_OCID }}
+          OCI_CLI_FINGERPRINT: ${{ secrets.OCI_FINGERPRINT }}
+          OCI_CLI_KEY_CONTENT: ${{ secrets.OCI_PRIVATE_KEY }}
+          OCI_CLI_REGION: ${{ secrets.OCI_REGION }}
         with:
-          user_ocid: ${{ secrets.OCI_USER_OCID }}
-          tenancy_ocid: ${{ secrets.OCI_TENANCY_OCID }}
-          fingerprint: ${{ secrets.OCI_FINGERPRINT }}
-          region: ${{ secrets.OCI_REGION }}
-          private_key: ${{ secrets.OCI_PRIVATE_KEY }}
           command: |
             network nsg rules add \
               --nsg-id ${{ secrets.OCI_NSG_ID }} \
