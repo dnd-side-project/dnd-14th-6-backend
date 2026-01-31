@@ -19,8 +19,10 @@ FROM base AS deps
 COPY package.json pnpm-lock.yaml ./
 # Husky install script is required during pnpm install because of the 'prepare' script
 COPY .husky ./.husky
+COPY prisma ./prisma/
 
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
+RUN pnpm exec prisma generate
 
 FROM deps AS build 
 
