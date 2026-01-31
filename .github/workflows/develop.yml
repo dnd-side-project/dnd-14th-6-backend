@@ -62,7 +62,7 @@ jobs:
         run: echo "ipv4=$(curl -s https://ifconfig.me)" >> $GITHUB_OUTPUT
 
       - name: Open Port 22 for Runner IP
-        uses: oracle-actions/run-oci-cli-command@v1.3.2
+        uses: oracle-actions/run-oci-cli-command@v1.3.0
         env:
           OCI_CLI_USER: ${{ secrets.OCI_USER_OCID }}
           OCI_CLI_TENANCY: ${{ secrets.OCI_TENANCY_OCID }}
@@ -97,7 +97,7 @@ jobs:
 
       - name: Close Port 22
         if: always()
-        uses: oracle-actions/run-oci-cli-command@v1.3.2
+        uses: oracle-actions/run-oci-cli-command@v1.3.0
         env:
           OCI_CLI_USER: ${{ secrets.OCI_USER_OCID }}
           OCI_CLI_TENANCY: ${{ secrets.OCI_TENANCY_OCID }}
