@@ -1,6 +1,8 @@
 # Base image for building the application
 FROM node:24-slim AS base
 
+RUN apt-get update -y && apt-get install -y openssl
+
 # Set environment variables
 ENV app_dir_base=app
 ENV app_name=orvit-server
