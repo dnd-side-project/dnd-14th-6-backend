@@ -49,6 +49,7 @@ jobs:
           file: Dockerfile.dev
           push: true
           tags: |
+            ${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKERHUB_PROJECT_NAME }}:dev-latest
             ${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKERHUB_PROJECT_NAME }}:dev-${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
@@ -109,7 +110,7 @@ jobs:
           key: ${{ secrets.REMOTE_SSH_KEY }}
           port: ${{ secrets.REMOTE_SSH_PORT }}
           script: |
-            cd /opt/orbit/docker
+            cd /opt/orvit/docker
             sudo ./deploy.sh
 
       - name: Close Port 22
