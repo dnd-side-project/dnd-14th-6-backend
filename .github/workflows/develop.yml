@@ -111,7 +111,7 @@ jobs:
           port: ${{ secrets.REMOTE_SSH_PORT }}
           script: |
             cd /opt/orvit/docker
-            echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" | sudo tee .env.dev > /dev/nulls
+            echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" | sudo tee .env.dev > /dev/null
             echo "PORT=${{ secrets.PORT }}" | sudo tee -a .env.dev > /dev/null
             sudo ./deploy.sh
 
