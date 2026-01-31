@@ -30,6 +30,7 @@ jobs:
       - name: Install & Build
         run: |
           pnpm install --frozen-lockfile
+          pnpm exec prisma generate
           pnpm run build
 
       - name: Set up Docker Buildx
