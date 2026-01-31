@@ -63,12 +63,13 @@ jobs:
 
       - name: Open Port 22 for Runner IP
         uses: oracle-actions/run-oci-cli-command@v1.1.1
+        env:
+          OCI_CLI_USER: ${{ secrets.OCI_USER_OCID }}
+          OCI_CLI_TENANCY: ${{ secrets.OCI_TENANCY_OCID }}
+          OCI_CLI_FINGERPRINT: ${{ secrets.OCI_FINGERPRINT }}
+          OCI_CLI_KEY_CONTENT: ${{ secrets.OCI_PRIVATE_KEY }}
+          OCI_CLI_REGION: ${{ secrets.OCI_REGION }}
         with:
-          user_ocid: ${{ secrets.OCI_USER_OCID }}
-          tenancy_ocid: ${{ secrets.OCI_TENANCY_OCID }}
-          fingerprint: ${{ secrets.OCI_FINGERPRINT }}
-          region: ${{ secrets.OCI_REGION }}
-          private_key: ${{ secrets.OCI_PRIVATE_KEY }}
           command: |
             network nsg rules add \
               --nsg-id ${{ secrets.OCI_NSG_ID }} \
@@ -89,12 +90,13 @@ jobs:
       - name: Close Port 22
         if: always()
         uses: oracle-actions/run-oci-cli-command@v1.1.1
+        env:
+          OCI_CLI_USER: ${{ secrets.OCI_USER_OCID }}
+          OCI_CLI_TENANCY: ${{ secrets.OCI_TENANCY_OCID }}
+          OCI_CLI_FINGERPRINT: ${{ secrets.OCI_FINGERPRINT }}
+          OCI_CLI_KEY_CONTENT: ${{ secrets.OCI_PRIVATE_KEY }}
+          OCI_CLI_REGION: ${{ secrets.OCI_REGION }}
         with:
-          user_ocid: ${{ secrets.OCI_USER_OCID }}
-          tenancy_ocid: ${{ secrets.OCI_TENANCY_OCID }}
-          fingerprint: ${{ secrets.OCI_FINGERPRINT }}
-          region: ${{ secrets.OCI_REGION }}
-          private_key: ${{ secrets.OCI_PRIVATE_KEY }}
           command: |
             RULE_ID=$(oci network nsg rules list --nsg-id ${{ secrets.OCI_NSG_ID }} --query "data[?description=='GHA-TEMP-${{ github.run_id }}'].id | [0]" --raw-output)
             if [ "$RULE_ID" != "null" ]; then
