@@ -63,19 +63,26 @@ jobs:
 
       - name: Open Port 22 for Runner IP
         uses: oracle-actions/run-oci-cli-command@v1.1.1
-        env:
-          OCI_CLI_USER: ${{ secrets.OCI_USER_OCID }}
-          OCI_CLI_TENANCY: ${{ secrets.OCI_TENANCY_OCID }}
-          OCI_CLI_FINGERPRINT: ${{ secrets.OCI_FINGERPRINT }}
-          OCI_CLI_KEY_CONTENT: ${{ secrets.OCI_PRIVATE_KEY }}
-          OCI_CLI_REGION: ${{ secrets.OCI_REGION }}
         with:
+          user_ocid: ${{ secrets.OCI_USER_OCID }}
+          tenancy_ocid: ${{ secrets.OCI_TENANCY_OCID }}
+          fingerprint: ${{ secrets.OCI_FINGERPRINT }}
+          region: ${{ secrets.OCI_REGION }}
+          private_key: ${{ secrets.OCI_PRIVATE_KEY }}
           command: |
             network nsg rules add \
               --nsg-id ${{ secrets.OCI_NSG_ID }} \
-              --security-rules '[{"direction": "INGRESS", "protocol": "6", "source": "${{ steps.ip.outputs.ipv4 }}/32", "source-type": "CIDR", "tcp-options": {"destination-port-range": {"max": 22, "min": 22}}, "description": "GHA-TEMP-${{ github.run_id }}"}]'
+              --security-rules '[{
+                "direction": "INGRESS",
+                "protocol": "6",
+                "source": "${{ steps.ip.outputs.ipv4 }}/32",
+                "source-type": "CIDR_BLOCK",
+                "tcp-options": {
+                  "destination-port-range": {"max": 22, "min": 22}
+                },
+                "description": "GHA-TEMP-${{ github.run_id }}"
+              }]'
 
-      # 2. SSH 배포 스크립트 실행
       - name: Run Deploy Script (SSH)
         uses: appleboy/ssh-action@master
         with:
@@ -89,7 +96,7 @@ jobs:
 
       - name: Close Port 22
         if: always()
-        uses: oracle-actions/run-oci-cli-command@v1.1.1
+        uses: oracle-actions/run-oci-cli-command@v1.3.2
         env:
           OCI_CLI_USER: ${{ secrets.OCI_USER_OCID }}
           OCI_CLI_TENANCY: ${{ secrets.OCI_TENANCY_OCID }}
@@ -100,5 +107,5 @@ jobs:
           command: |
             RULE_ID=$(oci network nsg rules list --nsg-id ${{ secrets.OCI_NSG_ID }} --query "data[?description=='GHA-TEMP-${{ github.run_id }}'].id | [0]" --raw-output)
             if [ "$RULE_ID" != "null" ]; then
-              oci network nsg rules remove --nsg-id ${{ secrets.OCI_NSG_ID }} --security-rule-ids "[\"$RULE_ID\"]" --force
+              oci network nsg rules remove --nsg-id ${{ secrets.OCI_NSG_ID }} --security-rule-ids "[\"$RULE_ID\"]" 
             fi
