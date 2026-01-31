@@ -111,8 +111,8 @@ jobs:
           port: ${{ secrets.REMOTE_SSH_PORT }}
           script: |
             cd /opt/orvit/docker
-            echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" > .env.dev
-            echo "PORT=${{ secrets.PORT }}" >> .env.dev
+            echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" | sudo tee .env.dev > /dev/nulls
+            echo "PORT=${{ secrets.PORT }}" | sudo tee -a .env.dev > /dev/null
             sudo ./deploy.sh
 
       - name: Close Port 22
