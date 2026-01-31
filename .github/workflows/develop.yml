@@ -61,28 +61,45 @@ jobs:
         id: ip
         run: echo "ipv4=$(curl -s https://ifconfig.me)" >> $GITHUB_OUTPUT
 
-      - name: Open Port 22 for Runner IP
-        uses: oracle-actions/run-oci-cli-command@v1.3.0
-        env:
-          OCI_CLI_USER: ${{ secrets.OCI_USER_OCID }}
-          OCI_CLI_TENANCY: ${{ secrets.OCI_TENANCY_OCID }}
-          OCI_CLI_FINGERPRINT: ${{ secrets.OCI_FINGERPRINT }}
-          OCI_CLI_KEY_CONTENT: ${{ secrets.OCI_PRIVATE_KEY }}
-          OCI_CLI_REGION: ${{ secrets.OCI_REGION }}
-        with:
-          command: |
-            network nsg rules add \
-              --nsg-id ${{ secrets.OCI_NSG_ID }} \
-              --security-rules '[{
-                "direction": "INGRESS",
-                "protocol": "6",
-                "source": "${{ steps.ip.outputs.ipv4 }}/32",
-                "source-type": "CIDR_BLOCK",
-                "tcp-options": {
-                  "destination-port-range": {"max": 22, "min": 22}
-                },
-                "description": "GHA-TEMP-${{ github.run_id }}"
-              }]'
+      - name: Install and Configure OCI CLI
+        run: |
+          # OCI CLI 설치
+          bash -c "$(curl -L https://raw.githubusercontent.com/oracle/oci-cli/master/scripts/install/install.sh)" -- --accept-all-defaults
+          
+          # 환경 변수 경로 설정
+          echo "/home/runner/bin" >> $GITHUB_PATH
+          export PATH=$PATH:/home/runner/bin
+          
+          # .oci 디렉토리 생성
+          mkdir -p ~/.oci
+          
+          # API 프라이빗 키 파일 생성 (개행 문자 처리를 위해 printf 사용)
+          printf "%s" "${{ secrets.OCI_PRIVATE_KEY }}" > ~/.oci/oci_api_key.pem
+          chmod 600 ~/.oci/oci_api_key.pem
+          
+          # 설정 파일(config) 생성
+          cat <<EOF > ~/.oci/config
+          [DEFAULT]
+          user=${{ secrets.OCI_USER_OCID }}
+          fingerprint=${{ secrets.OCI_FINGERPRINT }}
+          tenancy=${{ secrets.OCI_TENANCY_OCID }}
+          region=${{ secrets.OCI_REGION }}
+          key_file=~/.oci/oci_api_key.pem
+          EOF
+          chmod 600 ~/.oci/config
+
+      - name: Open Port 22
+        run: |
+          ~/bin/oci network nsg rules add \
+            --nsg-id ${{ secrets.OCI_NSG_ID }} \
+            --security-rules '[{
+              "direction": "INGRESS",
+              "protocol": "6",
+              "source": "${{ steps.ip.outputs.ipv4 }}/32",
+              "source-type": "CIDR_BLOCK",
+              "tcp-options": {"destination-port-range": {"max": 22, "min": 22}},
+              "description": "GHA-TEMP-${{ github.run_id }}"
+            }]'
 
       - name: Run Deploy Script (SSH)
         uses: appleboy/ssh-action@master
@@ -97,16 +114,10 @@ jobs:
 
       - name: Close Port 22
         if: always()
-        uses: oracle-actions/run-oci-cli-command@v1.3.0
-        env:
-          OCI_CLI_USER: ${{ secrets.OCI_USER_OCID }}
-          OCI_CLI_TENANCY: ${{ secrets.OCI_TENANCY_OCID }}
-          OCI_CLI_FINGERPRINT: ${{ secrets.OCI_FINGERPRINT }}
-          OCI_CLI_KEY_CONTENT: ${{ secrets.OCI_PRIVATE_KEY }}
-          OCI_CLI_REGION: ${{ secrets.OCI_REGION }}
-        with:
-          command: |
-            RULE_ID=$(oci network nsg rules list --nsg-id ${{ secrets.OCI_NSG_ID }} --query "data[?description=='GHA-TEMP-${{ github.run_id }}'].id | [0]" --raw-output)
-            if [ "$RULE_ID" != "null" ]; then
-              oci network nsg rules remove --nsg-id ${{ secrets.OCI_NSG_ID }} --security-rule-ids "[\"$RULE_ID\"]" 
-            fi
+        run: |
+          RULE_ID=$(~/bin/oci network nsg rules list --nsg-id ${{ secrets.OCI_NSG_ID }} \
+            --query "data[?description=='GHA-TEMP-${{ github.run_id }}'].id | [0]" --raw-output)
+          
+          if [ "$RULE_ID" != "null" ] && [ -n "$RULE_ID" ]; then
+            ~/bin/oci network nsg rules remove --nsg-id ${{ secrets.OCI_NSG_ID }} --security-rule-ids "[\"$RULE_ID\"]" 
+          fi
