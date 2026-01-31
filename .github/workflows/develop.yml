@@ -16,8 +16,19 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 24.x
-          cache: "pnpm"
+      
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 9 
+          run_install: false
 
+      - uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+            
       - name: Create .env file
         run: |
           printf "PORT=%s\n" "${{ secrets.PORT }}" >> .env
