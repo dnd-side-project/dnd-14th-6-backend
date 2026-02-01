@@ -25,7 +25,6 @@ export class ErrorExceptionFilter implements ExceptionFilter {
 
     let endpoint: string;
     try {
-      console.log(`${request.method} ${request.url}`);
       endpoint = decodeURIComponent(`${request.method} ${request.url}`);
     } catch (error) {
       this.logger.error(error);
