@@ -3,11 +3,7 @@ export class ResponseExceptionDto {
   readonly message: string;
   readonly statusCode: number;
 
-  private constructor(params: {
-    message: string;
-    statusCode?: number;
-    errors?: object | object[];
-  }) {
+  private constructor(params: { message: string; statusCode?: number }) {
     this.success = false;
     this.message = params.message;
     this.statusCode = params.statusCode || 500;
