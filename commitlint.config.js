@@ -6,6 +6,7 @@ module.exports = {
       'always',
       [
         'fix', // 버그수정
+        'feat', // 기능 추가
         'refactor', // 코드 리팩터링
         'docs', // 리드미 작성
         'chore', // 패키지 설치, 기능단위가 아닌 작업

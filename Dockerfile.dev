@@ -1,0 +1,45 @@
+# Base image for building the application
+FROM node:24-slim AS base
+
+RUN apt-get update -y && apt-get install -y openssl
+
+# Set environment variables
+ENV app_dir_base=app
+ENV app_name=orvit-server
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+# Set CI=true to prevent TTY-related issues during pnpm operations
+ENV CI=true
+
+RUN corepack enable
+
+WORKDIR /${app_dir_base}/${app_name}
+
+# Dependencies stage
+FROM base AS deps 
+
+COPY package.json pnpm-lock.yaml ./
+# Husky install script is required during pnpm install because of the 'prepare' script
+COPY .husky ./.husky
+COPY prisma ./prisma/
+
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
+RUN pnpm exec prisma generate
+
+FROM deps AS build 
+
+COPY . .
+
+RUN pnpm run build
+RUN pnpm prune --prod
+
+FROM base AS runner
+
+WORKDIR /${app_dir_base}/${app_name}
+
+COPY --from=build /${app_dir_base}/${app_name}/node_modules ./node_modules
+COPY --from=build /${app_dir_base}/${app_name}/dist ./dist
+COPY --from=build /${app_dir_base}/${app_name}/package.json ./package.json
+
+EXPOSE 3000
+CMD [ "pnpm", "start:prod" ]

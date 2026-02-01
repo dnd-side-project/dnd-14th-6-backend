@@ -1,0 +1,126 @@
+name: orvit-server-dev
+
+on:
+  push:
+    branches: [develop]
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    outputs:
+      short_sha: ${{ steps.meta.outputs.short_sha }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 9 
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24.x
+          cache: "pnpm"
+          
+      - name: Create .env file
+        run: |
+          printf "PORT=%s\n" "${{ secrets.PORT }}" >> .env
+          printf "DATABASE_URL=%s\n" "${{ secrets.DATABASE_URL }}" >> .env
+
+      - name: Install & Build
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm exec prisma generate
+          pnpm run build
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile.dev
+          push: true
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKERHUB_PROJECT_NAME }}:dev-latest
+            ${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKERHUB_PROJECT_NAME }}:dev-${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  cd:
+    runs-on: ubuntu-latest
+    needs: ci
+    steps:
+      - name: Get Runner IP
+        id: ip
+        run: echo "ipv4=$(curl -s https://ifconfig.me)" >> $GITHUB_OUTPUT
+
+      - name: Install and Configure OCI CLI
+        run: |
+          # OCI CLI 설치
+          bash -c "$(curl -L https://raw.githubusercontent.com/oracle/oci-cli/master/scripts/install/install.sh)" -- --accept-all-defaults
+          
+          # 환경 변수 경로 설정
+          echo "/home/runner/bin" >> $GITHUB_PATH
+          export PATH=$PATH:/home/runner/bin
+          
+          # .oci 디렉토리 생성
+          mkdir -p ~/.oci
+          
+          # API 프라이빗 키 파일 생성 (개행 문자 처리를 위해 printf 사용)
+          printf "%s" "${{ secrets.OCI_PRIVATE_KEY }}" > ~/.oci/oci_api_key.pem
+          chmod 600 ~/.oci/oci_api_key.pem
+          
+          # 설정 파일(config) 생성
+          cat <<EOF > ~/.oci/config
+          [DEFAULT]
+          user=${{ secrets.OCI_USER_OCID }}
+          fingerprint=${{ secrets.OCI_FINGERPRINT }}
+          tenancy=${{ secrets.OCI_TENANCY_OCID }}
+          region=${{ secrets.OCI_REGION }}
+          key_file=~/.oci/oci_api_key.pem
+          EOF
+          chmod 600 ~/.oci/config
+
+      - name: Open Port 22
+        run: |
+          ~/bin/oci network nsg rules add \
+            --nsg-id ${{ secrets.OCI_NSG_ID }} \
+            --security-rules '[{
+              "direction": "INGRESS",
+              "protocol": "6",
+              "source": "${{ steps.ip.outputs.ipv4 }}/32",
+              "source-type": "CIDR_BLOCK",
+              "tcp-options": {"destination-port-range": {"max": 22, "min": 22}},
+              "description": "GHA-TEMP-${{ github.run_id }}"
+            }]'
+
+      - name: Run Deploy Script (SSH)
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.REMOTE_IP }}
+          username: ${{ secrets.REMOTE_SSH_ID }}
+          key: ${{ secrets.REMOTE_SSH_KEY }}
+          port: ${{ secrets.REMOTE_SSH_PORT }}
+          script: |
+            cd /opt/orvit/docker
+            echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" | sudo tee .env.dev > /dev/null
+            echo "PORT=${{ secrets.PORT }}" | sudo tee -a .env.dev > /dev/null
+            sudo ./deploy.sh
+
+      - name: Close Port 22
+        if: always()
+        run: |
+          RULE_ID=$(~/bin/oci network nsg rules list --nsg-id ${{ secrets.OCI_NSG_ID }} \
+            --query "data[?description=='GHA-TEMP-${{ github.run_id }}'].id | [0]" --raw-output)
+          
+          if [ "$RULE_ID" != "null" ] && [ -n "$RULE_ID" ]; then
+            ~/bin/oci network nsg rules remove --nsg-id ${{ secrets.OCI_NSG_ID }} --security-rule-ids "[\"$RULE_ID\"]" 
+          fi
