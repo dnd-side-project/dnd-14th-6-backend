@@ -16,6 +16,14 @@
     "forceConsistentCasingInFileNames": true,
     "noImplicitAny": false,
     "strictBindCallApply": false,
-    "noFallthroughCasesInSwitch": false
+    "noFallthroughCasesInSwitch": false,
+    "paths": {
+			"@/*": ["src/*"],
+			"@config/*": ["src/config/*"],
+			"@common/*": ["src/common/*"],
+      "@prisma/*": ["src/prisma/*"],
+      "@sse-sample/*": ["src/sse-sample/*"],
+
+		},
   }
 }
