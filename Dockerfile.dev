@@ -8,6 +8,12 @@ ENV app_dir_base=app
 ENV app_name=orvit-server
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
+
+# Newrelic Monitoring
+ENV NEW_RELIC_NO_CONFIG_FILE=true
+ENV NEW_RELIC_DISTRIBUTED_TRACING_ENABLED=true
+ENV NEW_RELIC_LOG=stdout
+
 # Set CI=true to prevent TTY-related issues during pnpm operations
 ENV CI=true
 
