@@ -23,7 +23,6 @@
 			"@common/*": ["src/common/*"],
       "@prisma/*": ["src/prisma/*"],
       "@sse-sample/*": ["src/sse-sample/*"],
-
 		},
   }
 }
