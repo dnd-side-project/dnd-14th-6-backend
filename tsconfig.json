@@ -18,11 +18,12 @@
     "strictBindCallApply": false,
     "noFallthroughCasesInSwitch": false,
     "paths": {
-			"@/*": ["src/*"],
-			"@config/*": ["src/config/*"],
-			"@common/*": ["src/common/*"],
+      "@/*": ["src/*"],
+      "@config/*": ["src/config/*"],
+      "@common/*": ["src/common/*"],
       "@prisma/*": ["src/prisma/*"],
       "@sse-sample/*": ["src/sse-sample/*"],
-		},
+      "@games/*": ["src/games/*"]
+    }
   }
 }
