@@ -45,6 +45,7 @@ model Tier {
   name     String  @unique @db.VarChar(30)       /// 티어명
   minScore Int     @map("min_score")             /// 최소 점수
   imageUrl String? @map("image_url")             /// 뱃지 이미지
+  iconUrl  String? @map("icon_url")              /// 아이콘 이미지
 
   users User[]
 
