@@ -17,6 +17,8 @@ export class TiersController {
     type: TiersResponseDto,
   })
   async getAllTiers(): Promise<TierDto[]> {
-    return this.tiersService.getAllTiers();
+    const tiers = await this.tiersService.getAllTiers();
+
+    return tiers.map((tier) => TierDto.from(tier));
   }
 }

@@ -1,6 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { plainToInstance } from 'class-transformer';
 
 import { ApiResponseDto } from '@common/dto/api-response.dto';
+
+import { Tier } from '../domain/tiers.entity';
 
 export class TierDto {
   @ApiProperty({ description: '티어 ID', example: 1 })
@@ -23,6 +26,10 @@ export class TierDto {
     example: 'https://example.com/icon.png',
   })
   iconUrl: string | null;
+
+  static from(tier: Tier): TierDto {
+    return plainToInstance(TierDto, tier);
+  }
 }
 
 export class TiersResponseDto extends ApiResponseDto {
