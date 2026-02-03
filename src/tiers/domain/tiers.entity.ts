@@ -7,13 +7,7 @@ export class Tier {
     public readonly iconUrl: string | null,
   ) {}
 
-  static from(data: {
-    id: number;
-    name: string;
-    minScore: number;
-    imageUrl: string | null;
-    iconUrl: string | null;
-  }): Tier {
+  static from(data: Pick<Tier, 'id' | 'name' | 'minScore' | 'imageUrl' | 'iconUrl'>): Tier {
     return new Tier(data.id, data.name, data.minScore, data.imageUrl, data.iconUrl);
   }
 }
