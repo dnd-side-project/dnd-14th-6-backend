@@ -23,7 +23,8 @@
       "@common/*": ["src/common/*"],
       "@prisma/*": ["src/prisma/*"],
       "@sse-sample/*": ["src/sse-sample/*"],
-      "@games/*": ["src/games/*"]
-    }
+      "@games/*": ["src/games/*"],
+      "@tiers/*": ["src/tiers/*"]
+		},
   }
 }
