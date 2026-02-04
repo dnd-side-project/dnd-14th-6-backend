@@ -1,12 +1,12 @@
 import { Inject, Injectable } from '@nestjs/common';
 
-import { ITiersRepository } from '../domain/tiers.repository.interface';
+import { ITiersRepository, TIER_REPOSITORY } from '../domain/tiers.repository.interface';
 import { Tier } from '../domain/tiers.entity';
 
 @Injectable()
 export class TiersService {
   constructor(
-    @Inject(ITiersRepository)
+    @Inject(TIER_REPOSITORY)
     private readonly tiersRepository: ITiersRepository,
   ) {}
 

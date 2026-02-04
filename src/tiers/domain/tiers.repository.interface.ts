@@ -4,4 +4,4 @@ export interface ITiersRepository {
   findAll(): Promise<Tier[]>;
 }
 
-export const ITiersRepository = Symbol('ITiersRepository');
+export const TIER_REPOSITORY = Symbol('ITiersRepository');

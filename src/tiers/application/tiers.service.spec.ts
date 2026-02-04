@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 
 import { TiersService } from './tiers.service';
 
-import { ITiersRepository } from '../domain/tiers.repository.interface';
+import { ITiersRepository, TIER_REPOSITORY } from '../domain/tiers.repository.interface';
 import { Tier } from '../domain/tiers.entity';
 
 describe('TiersService', () => {
@@ -18,7 +18,7 @@ describe('TiersService', () => {
       providers: [
         TiersService,
         {
-          provide: ITiersRepository,
+          provide: TIER_REPOSITORY,
           useValue: mockTiersRepository,
         },
       ],

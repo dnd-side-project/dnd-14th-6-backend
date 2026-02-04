@@ -3,7 +3,7 @@ import { Module } from '@nestjs/common';
 import { TiersController } from './application/tiers.controller';
 import { TiersService } from './application/tiers.service';
 
-import { ITiersRepository } from './domain/tiers.repository.interface';
+import { TIER_REPOSITORY } from './domain/tiers.repository.interface';
 import { TiersRepositoryImpl } from './infrastructure/tiers.repository';
 
 @Module({
@@ -11,7 +11,7 @@ import { TiersRepositoryImpl } from './infrastructure/tiers.repository';
   providers: [
     TiersService,
     {
-      provide: ITiersRepository,
+      provide: TIER_REPOSITORY,
       useClass: TiersRepositoryImpl,
     },
   ],
