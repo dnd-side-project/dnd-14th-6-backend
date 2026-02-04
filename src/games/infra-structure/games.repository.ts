@@ -4,7 +4,7 @@ import { IGameRepository } from '../domain/games.repository.interface';
 import { GameCategory } from '../domain/game-categories.entity';
 
 @Injectable()
-export class GameRepository implements IGameRepository {
+export class GameRepositoryImpl implements IGameRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   /**
