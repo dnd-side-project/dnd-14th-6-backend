@@ -29,8 +29,7 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "prepare": "node .husky/install.mjs",
-    "seed": "ts-node prisma/seed.ts",
-    "seed:category": "ts-node prisma/seed.ts category"
+    "seed": "ts-node prisma/seed.ts"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
@@ -103,17 +102,10 @@
       "^@common/(.*)$": "<rootDir>/common/$1",
       "^@prisma/(.*)$": "<rootDir>/prisma/$1",
       "^@sse-sample/(.*)$": "<rootDir>/sse-sample/$1",
-      "^@tiers/(.*)$": "<rootDir>/tiers/$1"
+      "^@tiers/(.*)$": "<rootDir>/tiers/$1",
+      "^@games/(.*)$": "<rootDir>/games/$1"
     },
     "coverageDirectory": "../coverage",
-    "testEnvironment": "node",
-    "moduleNameMapper": {
-      "^@/(.*)$": "<rootDir>/$1",
-      "^@config/(.*)$": "<rootDir>/config/$1",
-      "^@common/(.*)$": "<rootDir>/common/$1",
-      "^@prisma/(.*)$": "<rootDir>/prisma/$1",
-      "^@sse-sample/(.*)$": "<rootDir>/sse-sample/$1",
-      "^@games/(.*)$": "<rootDir>/games/$1"
-    }
+    "testEnvironment": "node"
   }
 }
