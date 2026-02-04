@@ -1,6 +1,6 @@
 import { applyDecorators } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { GetGameOptionsResponseDto } from '@games/application/dto/game-options.dto';
+import { GetGameOptionsResponseDto } from '@/games/presentation/dto/get-game-options.dto';
 
 export function ApiGetGameOptions() {
   return applyDecorators(

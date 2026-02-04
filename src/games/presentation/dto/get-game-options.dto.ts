@@ -1,5 +1,8 @@
-import { GameDifficultyMode } from '@/games/domain/game.business-rules';
+import { ApiResponseDto } from '@common/dto/api-response.dto';
+import { GameOptions } from '@games/domain/game-options.entity';
+import { GameDifficultyMode } from '@games/domain/game.business-rules';
 import { ApiProperty } from '@nestjs/swagger';
+import { plainToInstance } from 'class-transformer';
 
 export class CategoryDto {
   @ApiProperty({
@@ -15,7 +18,7 @@ export class CategoryDto {
   name: string;
 }
 
-export class GetGameOptionsResponseDto {
+export class GetGameOptionsResponseDto extends ApiResponseDto {
   @ApiProperty({
     description: '게임 카테고리 목록',
     type: [CategoryDto],
@@ -34,4 +37,11 @@ export class GetGameOptionsResponseDto {
     example: ['Easy', 'Normal', 'Hard', 'Random'],
   })
   difficultyModes: GameDifficultyMode[];
+
+  static from(gameOptions: GameOptions): GetGameOptionsResponseDto {
+    return plainToInstance(GetGameOptionsResponseDto, {
+      categories: gameOptions.categories,
+      difficultyModes: gameOptions.difficultyModes,
+    });
+  }
 }
