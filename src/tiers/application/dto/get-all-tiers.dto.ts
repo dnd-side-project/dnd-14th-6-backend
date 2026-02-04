@@ -3,9 +3,9 @@ import { plainToInstance } from 'class-transformer';
 
 import { ApiResponseDto } from '@common/dto/api-response.dto';
 
-import { Tier } from '../domain/tiers.entity';
+import { Tier } from '../../domain/tiers.entity';
 
-export class TierDto {
+export class GetAllTiersResponseDto {
   @ApiProperty({ description: '티어 ID', example: 1 })
   id: number;
 
@@ -27,15 +27,15 @@ export class TierDto {
   })
   iconUrl: string | null;
 
-  static from(tier: Tier): TierDto {
-    return plainToInstance(TierDto, tier);
+  static from(tier: Tier): GetAllTiersResponseDto {
+    return plainToInstance(GetAllTiersResponseDto, tier);
   }
 }
 
 export class TiersResponseDto extends ApiResponseDto {
   @ApiProperty({
     description: '티어 목록',
-    type: [TierDto],
+    type: [GetAllTiersResponseDto],
   })
-  data: TierDto[];
+  data: GetAllTiersResponseDto[];
 }
