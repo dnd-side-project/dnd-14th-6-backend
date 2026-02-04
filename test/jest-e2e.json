@@ -5,5 +5,15 @@
   "testRegex": ".e2e-spec.ts$",
   "transform": {
     "^.+\\.(t|j)s$": "ts-jest"
+  },
+  "moduleNameMapper": {
+    "^@/(.*)$": "<rootDir>/../src/$1",
+    "^@config/(.*)$": "<rootDir>/../src/config/$1",
+    "^@common/(.*)$": "<rootDir>/../src/common/$1",
+    "^@prisma/client(.*)$": "@prisma/client$1",
+    "^@prisma/(.*)$": "<rootDir>/../src/prisma/$1",
+    "^@sse-sample/(.*)$": "<rootDir>/../src/sse-sample/$1",
+    "^@games/(.*)$": "<rootDir>/../src/games/$1",
+    "^@tiers/(.*)$": "<rootDir>/../src/tiers/$1"
   }
 }
