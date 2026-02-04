@@ -1,7 +1,7 @@
 import { Controller, Get } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
-import { TiersService } from './tiers.service';
+import { TiersService } from '../application/tiers.service';
 import { GetAllTiersResponseDto, TiersResponseDto } from './dto/get-all-tiers.dto';
 
 @ApiTags('Tiers')

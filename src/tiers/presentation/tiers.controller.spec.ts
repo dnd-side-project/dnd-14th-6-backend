@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { TiersController } from './tiers.controller';
-import { TiersService } from './tiers.service';
+import { TiersService } from '../application/tiers.service';
 
 import { Tier } from '../domain/tiers.entity';
 
