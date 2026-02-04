@@ -48,4 +48,4 @@ COPY --from=build /${app_dir_base}/${app_name}/dist ./dist
 COPY --from=build /${app_dir_base}/${app_name}/package.json ./package.json
 
 EXPOSE 3000
-CMD [ "pnpm", "start:prod" ]
+CMD ["node", "-r", "newrelic", "dist/main"]
