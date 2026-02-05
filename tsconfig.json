@@ -24,6 +24,7 @@
       "@prisma/*": ["src/prisma/*"],
       "@sse-sample/*": ["src/sse-sample/*"],
       "@tiers/*": ["src/tiers/*"],
+      "@users/*": ["src/users/*"],
 		},
   }
 }
