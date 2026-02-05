@@ -42,8 +42,10 @@ describe('GamesController', () => {
       const result = await controller.getGameOptions();
 
       expect(result).toBeInstanceOf(GetGameOptionsResponseDto);
-      expect(result.categories).toEqual(categories);
-      expect(result.difficultyModes).toEqual(DIFFICULTY_MODES);
+      expect(result).toEqual({
+        categories,
+        difficultyModes: DIFFICULTY_MODES,
+      });
       expect(gameService.getGameOptions).toHaveBeenCalledTimes(1);
     });
   });
