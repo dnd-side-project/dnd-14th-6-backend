@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
-import { GamesService } from '@games/application/games.service';
-import { GamesController } from '@games/presentation/games.controller';
-import { GAME_REPOSITORY } from '@games/domain/games.repository.interface';
-import { GameRepositoryImpl } from '@/games/infrastructure/games.repository';
+import { GamesService } from './application/games.service';
+import { GamesController } from './presentation/games.controller';
+import { GAME_REPOSITORY } from './domain/games.repository.interface';
+import { GameRepositoryImpl } from './infrastructure/games.repository';
 import { PrismaModule } from '@prisma/prisma.module';
 
 @Module({

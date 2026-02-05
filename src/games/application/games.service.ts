@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { GAME_REPOSITORY, IGameRepository } from '@games/domain/games.repository.interface';
-import { GameOptions } from '@games/domain/game-options.entity';
+import { GAME_REPOSITORY, IGameRepository } from '../domain/games.repository.interface';
+import { GameOptions } from '../domain/game-options.entity';
 
 @Injectable()
 export class GamesService {

@@ -1,6 +1,6 @@
+import { GameOptions } from '../../domain/game-options.entity';
+import { GameDifficultyMode } from '../../domain/game.business-rules';
 import { ApiResponseDto } from '@common/dto/api-response.dto';
-import { GameOptions } from '@games/domain/game-options.entity';
-import { GameDifficultyMode } from '@games/domain/game.business-rules';
 import { ApiProperty } from '@nestjs/swagger';
 import { plainToInstance } from 'class-transformer';
 

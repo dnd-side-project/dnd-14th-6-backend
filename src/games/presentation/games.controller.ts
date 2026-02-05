@@ -1,8 +1,8 @@
 import { Controller, Get } from '@nestjs/common';
-import { GamesService } from '@/games/application/games.service';
-import { GetGameOptionsResponseDto } from '@/games/presentation/dto/get-game-options.dto';
-import { ApiGetGameOptions } from '@/games/presentation/swagger-decorators/get-game-options.decorator';
 import { ApiTags } from '@nestjs/swagger';
+import { GamesService } from '../application/games.service';
+import { GetGameOptionsResponseDto } from './dto/get-game-options.dto';
+import { ApiGetGameOptions } from './swagger-decorators/get-game-options.decorator';
 
 @ApiTags('Games')
 @Controller('games')
