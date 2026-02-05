@@ -98,7 +98,8 @@
       "^@common/(.*)$": "<rootDir>/common/$1",
       "^@prisma/(.*)$": "<rootDir>/prisma/$1",
       "^@sse-sample/(.*)$": "<rootDir>/sse-sample/$1",
-      "^@tiers/(.*)$": "<rootDir>/tiers/$1"
+      "^@tiers/(.*)$": "<rootDir>/tiers/$1",
+      "^@users/(.*)$": "<rootDir>/users/$1"
     },
     "coverageDirectory": "../coverage",
     "testEnvironment": "node"
