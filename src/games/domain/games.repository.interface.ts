@@ -4,8 +4,7 @@ export const GAME_REPOSITORY = Symbol('IGameRepository');
 
 export interface IGameRepository {
   /**
-   * 모든 카테고리 목록을 조회
-   * @returns 카테고리 목록 (ID 오름차순 정렬)
+   * @description 모든 카테고리 목록을 조회
    */
   getCategories(): Promise<GameCategory[]>;
 }
