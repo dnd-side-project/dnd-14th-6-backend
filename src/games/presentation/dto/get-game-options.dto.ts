@@ -1,6 +1,6 @@
+import { ApiResponseDto } from '@common/dto/api-response.dto';
 import { GameOptions } from '../../domain/game-options.entity';
 import { GameDifficultyMode } from '../../domain/game.business-rules';
-import { ApiResponseDto } from '@common/dto/api-response.dto';
 import { ApiProperty } from '@nestjs/swagger';
 import { plainToInstance } from 'class-transformer';
 
@@ -38,10 +38,10 @@ export class GetGameOptionsResponseDto extends ApiResponseDto {
   })
   difficultyModes: GameDifficultyMode[];
 
-  static from(gameOptions: GameOptions): GetGameOptionsResponseDto {
+  static from(gameOptionsEntity: GameOptions): GetGameOptionsResponseDto {
     return plainToInstance(GetGameOptionsResponseDto, {
-      categories: gameOptions.categories,
-      difficultyModes: gameOptions.difficultyModes,
+      categories: gameOptionsEntity.categories,
+      difficultyModes: gameOptionsEntity.difficultyModes,
     });
   }
 }
