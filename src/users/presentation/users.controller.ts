@@ -1,8 +1,9 @@
 import { Controller, Get, Query } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiTags } from '@nestjs/swagger';
 
 import { UsersService } from '../application/users.service';
-import { GetRanksQueryDto, GetRanksResponseDto, RanksResponseDto } from './dto/get-ranks.dto';
+import { GetRanksQueryDto, GetRanksResponseDto } from './dto/get-ranks.dto';
+import { ApiGetRanks } from './decorators/get-ranks-swagger.decorator';
 
 @ApiTags('Users')
 @Controller('users')
@@ -10,12 +11,7 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Get('/ranks')
-  @ApiOperation({ summary: '유저 전체, 티어별 랭킹 조회' })
-  @ApiResponse({
-    status: 200,
-    description: '유저 랭킹 전체 조회 성공',
-    type: RanksResponseDto,
-  })
+  @ApiGetRanks()
   async getRanks(@Query() query: GetRanksQueryDto): Promise<GetRanksResponseDto> {
     const { page, size, tierId } = query;
 
