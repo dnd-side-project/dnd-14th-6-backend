@@ -18,13 +18,14 @@
     "strictBindCallApply": false,
     "noFallthroughCasesInSwitch": false,
     "paths": {
-			"@/*": ["src/*"],
-			"@config/*": ["src/config/*"],
-			"@common/*": ["src/common/*"],
+      "@/*": ["src/*"],
+      "@config/*": ["src/config/*"],
+      "@common/*": ["src/common/*"],
       "@prisma/*": ["src/prisma/*"],
       "@sse-sample/*": ["src/sse-sample/*"],
       "@tiers/*": ["src/tiers/*"],
       "@users/*": ["src/users/*"],
-		},
+      "@games/*": ["src/games/*"]
+    },
   }
 }

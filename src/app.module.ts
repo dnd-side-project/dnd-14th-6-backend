@@ -8,6 +8,7 @@ import { PrismaModule } from '@prisma/prisma.module';
 import { SseSampleModule } from '@sse-sample/sse-sample.module';
 import { TiersModule } from '@tiers/tiers.module';
 import { UsersModule } from '@users/users.module';
+import { GamesModule } from '@games/games.module';
 
 import { ErrorExceptionFilter } from '@common/filters/error-exception.filter';
 import { TypeExceptionFilter } from '@common/filters/type-exception.filter';
@@ -15,7 +16,7 @@ import { HttpExceptionFilter } from '@common/filters/http-exception.filter';
 import { ValidationException } from '@common/exceptions/validation.exception';
 
 @Module({
-  imports: [PrismaModule, SseSampleModule, TiersModule, UsersModule],
+  imports: [PrismaModule, SseSampleModule, TiersModule, UsersModule, GamesModule],
   controllers: [AppController],
   providers: [
     AppService,
