@@ -23,8 +23,9 @@
       "@common/*": ["src/common/*"],
       "@prisma/*": ["src/prisma/*"],
       "@sse-sample/*": ["src/sse-sample/*"],
-      "@games/*": ["src/games/*"],
-      "@tiers/*": ["src/tiers/*"]
-		},
+      "@tiers/*": ["src/tiers/*"],
+      "@users/*": ["src/users/*"],
+      "@games/*": ["src/games/*"]
+    },
   }
 }
