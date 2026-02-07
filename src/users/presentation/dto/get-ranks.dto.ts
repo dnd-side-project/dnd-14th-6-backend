@@ -77,8 +77,8 @@ export class RankItemDto {
   @ApiProperty({ description: '닉네임', example: 'Jin Park' })
   nickname: string;
 
-  @ApiProperty({ description: '총 점수', example: 1029342 })
-  totalScore: number;
+  @ApiProperty({ description: '총 점수(int size를 넘길 수 있어 string type)', example: '1029342' })
+  totalScore: string;
 
   @ApiProperty({ description: '프로필 이미지', example: 'https://github.com/profile.png' })
   profileImage: string | null;
@@ -94,7 +94,7 @@ export class RankItemDto {
 
     dto.ranking = ranking;
     dto.nickname = user.nickname;
-    dto.totalScore = Number(user.totalScore);
+    dto.totalScore = user.totalScore.toString();
     dto.profileImage = user.profileImage;
     dto.githubUrl = user.githubUrl;
     dto.tier = user.tier ? { name: user.tier.name, imageUrl: user.tier.imageUrl } : null;
