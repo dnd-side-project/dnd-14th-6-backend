@@ -1,4 +1,3 @@
-import { ApiResponseDto } from '@common/dto/api-response.dto';
 import { GameOptions } from '../../domain/game-options.entity';
 import { GameDifficultyMode } from '../../domain/game.business-rules';
 import { ApiProperty } from '@nestjs/swagger';
@@ -18,7 +17,7 @@ export class CategoryDto {
   name: string;
 }
 
-export class GetGameOptionsResponseDto extends ApiResponseDto {
+export class GetGameOptionsResponseDto {
   @ApiProperty({
     description: '게임 카테고리 목록',
     type: [CategoryDto],

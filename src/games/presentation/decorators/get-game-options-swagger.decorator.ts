@@ -6,19 +6,20 @@ import {
   ApiResponse,
   getSchemaPath,
 } from '@nestjs/swagger';
+
+import { ApiResponseDto } from '@common/dto/api-response.dto';
 import { GetGameOptionsResponseDto } from '../dto/get-game-options.dto';
 
 export function ApiGetGameOptions() {
   return applyDecorators(
     ApiOperation({ summary: '게임 옵션 조회 (카테고리, 난이도)' }),
-    ApiExtraModels(GetGameOptionsResponseDto),
+    ApiExtraModels(ApiResponseDto, GetGameOptionsResponseDto),
     ApiOkResponse({
       description: '게임 옵션 조회 성공',
       schema: {
         type: 'object',
+        $ref: getSchemaPath(ApiResponseDto),
         properties: {
-          statusCode: { type: 'number', example: 200 },
-          success: { type: 'boolean', example: true },
           data: { $ref: getSchemaPath(GetGameOptionsResponseDto) },
         },
       },
