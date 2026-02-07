@@ -2,8 +2,6 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsInt, IsOptional, Min } from 'class-validator';
 import { plainToInstance, Type } from 'class-transformer';
 
-import { ApiResponseDto } from '@common/dto/api-response.dto';
-
 import { User } from '../../domain/users.entity';
 
 export class GetRanksQueryDto {
@@ -125,9 +123,4 @@ export class GetRanksResponseDto {
 
     return plainToInstance(GetRanksResponseDto, { ranks, metadata });
   }
-}
-
-export class RanksResponseDto extends ApiResponseDto {
-  @ApiProperty({ description: '랭킹 응답', type: GetRanksResponseDto })
-  data: GetRanksResponseDto;
 }
