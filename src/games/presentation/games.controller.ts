@@ -1,4 +1,4 @@
-import { Controller, Get, MessageEvent, Query, Req, Res } from '@nestjs/common';
+import { Controller, Get, Logger, MessageEvent, Query, Req, Res } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { GamesService } from '../application/games.service';
 import { GetGameOptionsResponseDto } from './dto/get-game-options.dto';
@@ -12,6 +12,8 @@ import { GameStreamQueryDto } from './dto/game-stream-query.dto';
 @ApiTags('Games')
 @Controller('games')
 export class GamesController {
+  private readonly logger = new Logger(GamesController.name);
+
   constructor(
     private readonly gameService: GamesService,
     private readonly gameStreamService: GameStreamService,
@@ -65,7 +67,11 @@ export class GamesController {
       complete: () => {
         response.end();
       },
-      error: () => {
+      error: (err: Error) => {
+        this.logger.error(
+          `Game stream error [categoryId=${query.categoryId}, difficultyMode=${query.difficultyMode}]`,
+          err.stack,
+        );
         response.end();
       },
     });
