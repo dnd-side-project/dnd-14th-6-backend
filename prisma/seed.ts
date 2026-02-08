@@ -1,5 +1,9 @@
+// seed.ts
 import { PrismaClient } from '@prisma/client';
 import { seedCategories } from './seeds/category.seed';
+import { seedTiers } from './seeds/tier.seed';
+import { seedSubCategories } from './seeds/subcategory.seed';
+import { seedUsersAndSessions } from './seeds/user-session.seed';
 
 const connectionString = process.env.DATABASE_URL;
 if (!connectionString) {
@@ -11,9 +15,10 @@ const prisma = new PrismaClient();
 type SeedFunction = (prisma: PrismaClient) => Promise<void>;
 
 const seeds: Record<string, SeedFunction> = {
+  tier: seedTiers,
   category: seedCategories,
-  // TODO: subcategory: seedSubCategories,
-  // TODO: problem: seedProblems,
+  subcategory: seedSubCategories,
+  user_session: seedUsersAndSessions, // user + game_session
 };
 
 async function main() {
