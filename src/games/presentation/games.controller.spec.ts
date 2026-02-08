@@ -8,8 +8,8 @@ import { GetGameOptionsResponseDto } from './dto/get-game-options.dto';
 import { GameStreamService } from '../application/game-stream.service';
 import { GameDifficultyMode } from '../domain/game.business-rules';
 import { EventEmitter } from 'events';
-import { of, Subject, takeUntil } from 'rxjs';
-import { MessageEvent, NotFoundException } from '@nestjs/common';
+import { Observable, of, Subject, takeUntil } from 'rxjs';
+import { Logger, MessageEvent, NotFoundException } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { validate } from 'class-validator';
 import { plainToInstance } from 'class-transformer';
@@ -191,6 +191,34 @@ describe('GamesController', () => {
         expect(mockResponse.flushHeaders).not.toHaveBeenCalled();
         expect(gameStreamService.createGameStream).not.toHaveBeenCalled();
       });
+      it('스트림 도중 에러가 발생하면 Logger.error를 호출하고 연결을 종료한다.', async () => {
+        const query = { categoryId: 1, difficultyMode: GameDifficultyMode.Easy };
+        const mockRequest = new EventEmitter() as Request;
+        const streamError = new Error('DB connection failed');
+
+        gameStreamService.validateGameStreamParams.mockResolvedValue(undefined);
+        gameStreamService.createGameStream.mockImplementation(() => {
+          return new Subject<MessageEvent>().pipe((source) => {
+            return new Observable((subscriber) => {
+              source.subscribe(subscriber);
+              subscriber.error(streamError);
+            });
+          });
+        });
+
+        const loggerSpy = jest.spyOn(Logger.prototype, 'error').mockImplementation();
+
+        await controller.gameStream(query, mockRequest, mockResponse as Response);
+
+        expect(loggerSpy).toHaveBeenCalledWith(
+          'Game stream error [categoryId=1, difficultyMode=Easy]',
+          streamError.stack,
+        );
+        expect(mockResponse.end).toHaveBeenCalled();
+
+        loggerSpy.mockRestore();
+      });
+
       it('존재하지 않는 난이도로 요청하면 유효성 검증에 실패한다.', async () => {
         const dto = plainToInstance(GameStreamQueryDto, {
           categoryId: 1,
