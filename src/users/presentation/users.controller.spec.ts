@@ -6,6 +6,11 @@ import { UsersController } from './users.controller';
 import { UsersService } from '../application/users.service';
 
 import { User } from '../domain/users.entity';
+import {
+  UserMistakeAnalysis,
+  FrequentWrongCommand,
+  FrequentWrongCategory,
+} from '@games/domain/user-mistake-analysis.entity';
 
 function createMockTier(overrides: Partial<Tier> = {}): Tier {
   return Tier.from({
@@ -44,6 +49,7 @@ describe('UsersController', () => {
   beforeEach(async () => {
     mockUsersService = {
       getRanksByPageAndSize: jest.fn(),
+      getUserAnalysis: jest.fn(),
     } as unknown as jest.Mocked<UsersService>;
 
     const module: TestingModule = await Test.createTestingModule({
@@ -114,6 +120,77 @@ describe('UsersController', () => {
         query.page,
         query.size,
         3,
+      );
+    });
+  });
+
+  describe('getUserAnalysis', () => {
+    const userId = 1n;
+    let mockAnalysis: UserMistakeAnalysis;
+
+    beforeEach(() => {
+      const mockCommands = [
+        FrequentWrongCommand.from({ subCategory: 'Branch', wrongCount: 12 }),
+        FrequentWrongCommand.from({ subCategory: 'Commit', wrongCount: 9 }),
+        FrequentWrongCommand.from({ subCategory: 'Merge', wrongCount: 7 }),
+      ];
+
+      const mockCategories = [
+        FrequentWrongCategory.from({
+          category: 'Git',
+          wrongRatio: 48,
+          wrongCount: 24,
+          iconUrl: 'https://example.com/git.png',
+        }),
+        FrequentWrongCategory.from({
+          category: 'Docker',
+          wrongRatio: 30,
+          wrongCount: 12,
+          iconUrl: 'https://example.com/docker.png',
+        }),
+      ];
+
+      mockAnalysis = UserMistakeAnalysis.from({
+        frequentWrongCommands: mockCommands,
+        frequentWrongCategories: mockCategories,
+      });
+
+      mockUsersService.getUserAnalysis.mockResolvedValue(mockAnalysis);
+    });
+
+    it('서비스를 호출하여 사용자 실수 분석 데이터를 조회하는지 확인', async () => {
+      await controller.getUserAnalysis({ userId });
+
+      expect(mockUsersService.getUserAnalysis).toHaveBeenCalledWith(userId);
+    });
+
+    it('자주 틀린 명령어 목록이 반환되는지 확인', async () => {
+      const result = await controller.getUserAnalysis({ userId });
+
+      expect(result.frequentWrongCommands).toHaveLength(3);
+      expect(result.frequentWrongCommands[0]).toMatchObject({
+        subCategory: 'Branch',
+        wrongCount: 12,
+      });
+    });
+
+    it('자주 틀린 카테고리 목록에 iconUrl이 포함되어 반환되는지 확인', async () => {
+      const result = await controller.getUserAnalysis({ userId });
+
+      expect(result.frequentWrongCategories).toHaveLength(2);
+      expect(result.frequentWrongCategories[0]).toMatchObject({
+        category: 'Git',
+        wrongRatio: 48,
+        wrongCount: 24,
+        iconUrl: 'https://example.com/git.png',
+      });
+    });
+
+    it('오답 비율이 높은 순으로 정렬되어 있는지 확인', async () => {
+      const result = await controller.getUserAnalysis({ userId });
+
+      expect(result.frequentWrongCategories[0].wrongRatio).toBeGreaterThan(
+        result.frequentWrongCategories[1].wrongRatio,
       );
     });
   });
