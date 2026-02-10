@@ -1,7 +1,7 @@
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '@prisma/prisma.service';
 import { Injectable } from '@nestjs/common';
-import { IGameRepository } from '../domain/games.repository.interface';
+import { IGameRepository, NonRandomGameDifficultyMode } from '../domain/games.repository.interface';
 import { GameCategory } from '../domain/game-categories.entity';
 import { GameProblem } from '../domain/game-problem.entity';
 import {
@@ -20,7 +20,10 @@ export class GameRepositoryImpl implements IGameRepository {
   /**
    * @description 특정 카테고리와 난이도에 맞는 문제 MAX_PROBLEMS_PER_GAME 개만큼 랜덤으로 출제
    */
-  async getProblems(categoryId: number, difficulty: GameDifficultyMode): Promise<GameProblem[]> {
+  async getProblems(
+    categoryId: number,
+    difficulty: NonRandomGameDifficultyMode,
+  ): Promise<GameProblem[]> {
     return await this.findRandomProblems(categoryId, difficulty);
   }
 

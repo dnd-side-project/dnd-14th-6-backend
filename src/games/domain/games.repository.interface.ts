@@ -2,7 +2,7 @@ import { GameCategory } from './game-categories.entity';
 import { GameProblem } from './game-problem.entity';
 import { GameDifficultyMode } from './game.business-rules';
 
-type NonRandomGameDifficultyMode = Exclude<GameDifficultyMode, GameDifficultyMode.Random>;
+export type NonRandomGameDifficultyMode = Exclude<GameDifficultyMode, GameDifficultyMode.Random>;
 
 export const GAME_REPOSITORY = Symbol('IGameRepository');
 
