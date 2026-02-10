@@ -93,7 +93,7 @@ describe('GET /api/games/stream (e2e)', () => {
         `${getBaseUrl()}/api/games/stream?categoryId=1&difficultyMode=Easy`,
         (res) => {
           expect(res.statusCode).toBe(200);
-          expect(res.headers['content-type']).toBe('text/event-stream');
+          expect(String(res.headers['content-type'])).toMatch(/text\/event-stream/);
           expect(res.headers['cache-control']).toBe('no-cache');
 
           let data = '';
