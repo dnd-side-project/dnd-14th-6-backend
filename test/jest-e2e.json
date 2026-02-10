@@ -14,6 +14,7 @@
     "^@prisma/(.*)$": "<rootDir>/../src/prisma/$1",
     "^@sse-sample/(.*)$": "<rootDir>/../src/sse-sample/$1",
     "^@games/(.*)$": "<rootDir>/../src/games/$1",
-    "^@tiers/(.*)$": "<rootDir>/../src/tiers/$1"
+    "^@tiers/(.*)$": "<rootDir>/../src/tiers/$1",
+    "^@users/(.*)$": "<rootDir>/../src/users/$1"
   }
 }
