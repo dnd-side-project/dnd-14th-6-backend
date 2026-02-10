@@ -65,6 +65,9 @@ export class GameRepositoryImpl implements IGameRepository {
 
   private mapToGameProblem(p: ProblemRawRow): GameProblem {
     const difficulty = capitalize(p.difficulty.toLowerCase()) as GameDifficultyMode;
+    if (!(difficulty in DIFFICULTY_SCORES)) {
+      throw new Error(`Invalid difficulty for problem mapping: ${difficulty}`);
+    }
     const point = DIFFICULTY_SCORES[difficulty as ProblemDifficulty];
 
     return GameProblem.from({
