@@ -1,9 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, ValidationError } from 'class-validator';
+import { IsNotEmpty } from 'class-validator';
 import { plainToInstance, Transform } from 'class-transformer';
 
 import { UserMistakeAnalysis } from '@games/domain/user-mistake-analysis.entity';
-import { ValidationException } from '@/common/exceptions/validation.exception';
+import { BadRequestException } from '@nestjs/common';
 
 export class GetUserAnalysisParamDto {
   @ApiProperty({
@@ -15,8 +15,7 @@ export class GetUserAnalysisParamDto {
     try {
       return BigInt(value as string);
     } catch {
-      const error = new ValidationError();
-      throw ValidationException.badRequest([error]);
+      throw new BadRequestException('Invalid userId');
     }
   })
   userId: bigint;
