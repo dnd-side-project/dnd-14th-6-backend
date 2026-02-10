@@ -2,9 +2,7 @@ import { PrismaClient, Difficulty } from '@prisma/client';
 import { problems } from './problems/docker';
 import { ProblemSeedData } from './problems/git';
 
-const prisma = new PrismaClient();
-
-export async function seedDockerProblems() {
+export async function seedDockerProblems(prisma: PrismaClient) {
   console.log('🌱 Docker 문제 시딩 시작...');
 
   let created = 0;

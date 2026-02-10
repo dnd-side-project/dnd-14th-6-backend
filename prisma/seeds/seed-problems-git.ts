@@ -1,9 +1,7 @@
 import { PrismaClient, Difficulty } from '@prisma/client';
 import { problems, ProblemSeedData } from './problems/git';
 
-const prisma = new PrismaClient();
-
-export async function seedGitProblems() {
+export async function seedGitProblems(prisma: PrismaClient) {
   console.log('🌱 Git 문제 시딩 시작...');
 
   let created = 0;
