@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEnum, IsNotEmpty, IsNumber } from 'class-validator';
+import { IsEnum, IsInt, IsNotEmpty, Min } from 'class-validator';
 import { Type } from 'class-transformer';
 import { GameDifficultyMode } from '../../domain/game.business-rules';
 
@@ -10,7 +10,8 @@ export class GameStreamQueryDto {
     required: true,
   })
   @IsNotEmpty({ message: 'categoryId 는 필수값입니다.' })
-  @IsNumber()
+  @IsInt({ message: 'categoryId는 정수여야 합니다.' })
+  @Min(1, { message: 'categoryId는 1 이상이어야 합니다.' })
   @Type(() => Number)
   categoryId: number;
 
