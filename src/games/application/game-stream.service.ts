@@ -3,7 +3,6 @@ import { GAME_REPOSITORY, IGameRepository } from '../domain/games.repository.int
 import {
   GAME_TIMER_DURATION,
   GameDifficultyMode,
-  MAX_PROBLEMS_PER_GAME,
   PROBLEM_INTERVAL_MAX,
   PROBLEM_INTERVAL_MIN,
 } from '../domain/game.business-rules';
@@ -100,7 +99,6 @@ export class GameStreamService {
   ): Observable<MessageEvent> {
     return from(this.fetchProblems(categoryId, difficultyMode)).pipe(
       concatMap((problems) => from(problems)),
-      take(MAX_PROBLEMS_PER_GAME),
       concatMap((problem) => {
         const randomDelay =
           Math.floor(Math.random() * (PROBLEM_INTERVAL_MAX - PROBLEM_INTERVAL_MIN)) +
@@ -128,7 +126,7 @@ export class GameStreamService {
   /**
    * @description 카테고리와 난이도에 맞는 문제 출제
    *
-   * - Random 모드일 경우 랜덤으로 문제를 선택
+   * - Random 모드일 경우 '문제 난이도'를 랜덤으로 문제를 선택
    */
   private fetchProblems(categoryId: number, difficultyMode: GameDifficultyMode) {
     if (difficultyMode === GameDifficultyMode.Random) {
