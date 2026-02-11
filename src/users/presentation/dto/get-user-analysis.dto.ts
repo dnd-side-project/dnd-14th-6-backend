@@ -1,9 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { BadRequestException } from '@nestjs/common';
 import { IsNotEmpty } from 'class-validator';
 import { plainToInstance, Transform } from 'class-transformer';
 
 import { UserMistakeAnalysis } from '@games/domain/user-mistake-analysis.entity';
-import { BadRequestException } from '@nestjs/common';
 
 export class GetUserAnalysisParamDto {
   @ApiProperty({
@@ -15,7 +15,7 @@ export class GetUserAnalysisParamDto {
     try {
       return BigInt(value as string);
     } catch {
-      throw new BadRequestException('Invalid userId');
+      throw new BadRequestException('userId가 유효한 숫자 형식의 문자열이 아닙니다.');
     }
   })
   userId: bigint;
