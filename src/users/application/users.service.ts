@@ -41,7 +41,7 @@ export class UsersService {
     return UserStats.from({
       nickname: user.nickname,
       totalScore: user.totalScore,
-      averageScore: Math.round(avgScore),
+      averageScore: avgScore,
       ranking,
       tier: user.tier,
       scoreDetail,

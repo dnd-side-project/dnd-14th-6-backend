@@ -3,7 +3,7 @@ import { Tier } from '@tiers/domain/tiers.entity';
 export class CategoryScore {
   constructor(
     public readonly category: string,
-    public readonly score: number,
+    public readonly score: bigint,
   ) {}
 
   static from(data: Pick<CategoryScore, 'category' | 'score'>): CategoryScore {
@@ -14,7 +14,7 @@ export class CategoryScore {
 export class DifficultyScoreDetail {
   constructor(
     public readonly difficultyMode: string,
-    public readonly totalScore: number,
+    public readonly totalScore: bigint,
     public readonly categoryScores: CategoryScore[],
   ) {}
 
@@ -29,7 +29,7 @@ export class UserStats {
   constructor(
     public readonly nickname: string,
     public readonly totalScore: bigint,
-    public readonly averageScore: number,
+    public readonly averageScore: bigint,
     public readonly ranking: number,
     public readonly tier: Tier | null,
     public readonly scoreDetail: DifficultyScoreDetail[],

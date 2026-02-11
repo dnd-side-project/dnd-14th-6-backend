@@ -18,16 +18,22 @@ export class CategoryScoreDto {
   @ApiProperty({ description: '카테고리 이름', example: 'Git' })
   category: string;
 
-  @ApiProperty({ description: '해당 카테고리 점수', example: 17650 })
-  score: number;
+  @ApiProperty({
+    description: '해당 카테고리 점수 (BigInt 안정성을 위해 String)',
+    example: '17650',
+  })
+  score: string;
 }
 
 export class ScoreDetailDto {
   @ApiProperty({ description: '난이도', example: 'Hard' })
   difficultyMode: string;
 
-  @ApiProperty({ description: '해당 난이도 총 점수', example: 32460 })
-  totalScore: number;
+  @ApiProperty({
+    description: '해당 난이도 총 점수 (BigInt 안정성을 위해 String)',
+    example: '32460',
+  })
+  totalScore: string;
 
   @ApiProperty({
     description: '카테고리별 점수 목록',
@@ -61,8 +67,11 @@ export class GetUserStatsResponseDto {
   })
   totalScore: string;
 
-  @ApiProperty({ description: '전체 유저 평균 점수', example: 190293 })
-  averageScore: number;
+  @ApiProperty({
+    description: '전체 유저 평균 점수 (BigInt 안정성을 위해 String)',
+    example: '190293',
+  })
+  averageScore: string;
 
   @ApiProperty({ description: '현재 랭킹', example: 131 })
   ranking: number;
@@ -84,12 +93,19 @@ export class GetUserStatsResponseDto {
     return plainToInstance(GetUserStatsResponseDto, {
       nickname: userStats.nickname,
       totalScore: userStats.totalScore.toString(),
-      averageScore: userStats.averageScore,
+      averageScore: userStats.averageScore.toString(),
       ranking: userStats.ranking,
       tier: userStats.tier
         ? { id: userStats.tier.id, name: userStats.tier.name, imageUrl: userStats.tier.imageUrl }
         : null,
-      scoreDetail: userStats.scoreDetail,
+      scoreDetail: userStats.scoreDetail.map((detail) => ({
+        difficultyMode: detail.difficultyMode,
+        totalScore: detail.totalScore.toString(),
+        categoryScores: detail.categoryScores.map((category) => ({
+          category: category.category,
+          score: category.score.toString(),
+        })),
+      })),
     });
   }
 }

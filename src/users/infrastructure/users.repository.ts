@@ -43,12 +43,13 @@ export class UsersRepositoryImpl implements IUsersRepository {
   /**
    * @description 전체 유저의 totalScore average 조회, 유저가 없을 경우 0 반환
    */
-  async getAverageScore(): Promise<number> {
+  async getAverageScore(): Promise<bigint> {
     const result = await this.prisma.user.aggregate({
       _avg: { totalScore: true },
     });
 
-    return Number(result._avg.totalScore ?? 0);
+    const avgScore = result._avg.totalScore ?? 0;
+    return BigInt(Math.round(avgScore));
   }
 
   /**
@@ -84,7 +85,7 @@ export class UsersRepositoryImpl implements IUsersRepository {
     return results.map((row) => ({
       difficultyMode: row.difficulty_mode,
       category: row.category,
-      totalScore: Number(row.total_score),
+      totalScore: row.total_score,
     }));
   }
 }

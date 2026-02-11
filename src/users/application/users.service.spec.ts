@@ -129,14 +129,14 @@ describe('UsersService', () => {
       tier: mockTier,
     });
     const mockScoreDetail: ScoreDetailRaw[] = [
-      { difficultyMode: 'Hard', category: 'Git', totalScore: 17650 },
-      { difficultyMode: 'Hard', category: 'Linux', totalScore: 11010 },
-      { difficultyMode: 'Normal', category: 'Git', totalScore: 8500 },
+      { difficultyMode: 'Hard', category: 'Git', totalScore: 17650n },
+      { difficultyMode: 'Hard', category: 'Linux', totalScore: 11010n },
+      { difficultyMode: 'Normal', category: 'Git', totalScore: 8500n },
     ];
 
     beforeEach(() => {
       mockUsersRepository.findByIdWithTier.mockResolvedValue(mockUser);
-      mockUsersRepository.getAverageScore.mockResolvedValue(190293.5);
+      mockUsersRepository.getAverageScore.mockResolvedValue(190294n);
       mockUsersRepository.getRankingByScore.mockResolvedValue(131);
       mockUsersRepository.getScoreDetailByUserId.mockResolvedValue(mockScoreDetail);
     });
@@ -160,7 +160,7 @@ describe('UsersService', () => {
 
       expect(result.nickname).toBe('Jin Park');
       expect(result.totalScore).toBe(54610n);
-      expect(result.averageScore).toBe(190294);
+      expect(result.averageScore).toBe(190294n);
       expect(result.ranking).toBe(131);
       expect(result.tier?.name).toBe('Master');
     });
@@ -169,9 +169,9 @@ describe('UsersService', () => {
       const result = await service.getUserStats(1n);
 
       expect(result.scoreDetail[0].difficultyMode).toBe('Hard');
-      expect(result.scoreDetail[0].totalScore).toBe(28660);
+      expect(result.scoreDetail[0].totalScore).toBe(28660n);
       expect(result.scoreDetail[1].difficultyMode).toBe('Normal');
-      expect(result.scoreDetail[1].totalScore).toBe(8500);
+      expect(result.scoreDetail[1].totalScore).toBe(8500n);
     });
 
     it('categoryScores가 score 기준 DESC로 정렬되는지 확인', async () => {
@@ -179,9 +179,9 @@ describe('UsersService', () => {
 
       const hardDetail = result.scoreDetail.find((d) => d.difficultyMode === 'Hard');
       expect(hardDetail?.categoryScores[0].category).toBe('Git');
-      expect(hardDetail?.categoryScores[0].score).toBe(17650);
+      expect(hardDetail?.categoryScores[0].score).toBe(17650n);
       expect(hardDetail?.categoryScores[1].category).toBe('Linux');
-      expect(hardDetail?.categoryScores[1].score).toBe(11010);
+      expect(hardDetail?.categoryScores[1].score).toBe(11010n);
     });
 
     it('유저 totalScore로 랭킹을 조회하는지 확인', async () => {

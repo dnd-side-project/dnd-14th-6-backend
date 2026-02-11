@@ -125,16 +125,16 @@ describe('UsersController', () => {
     const mockUserStats = UserStats.from({
       nickname: 'Jin Park',
       totalScore: 54610n,
-      averageScore: 190293,
+      averageScore: 190293n,
       ranking: 131,
       tier: mockTier,
       scoreDetail: [
         DifficultyScoreDetail.from({
           difficultyMode: 'Hard',
-          totalScore: 32460,
+          totalScore: 32460n,
           categoryScores: [
-            CategoryScore.from({ category: 'Git', score: 17650 }),
-            CategoryScore.from({ category: 'Linux', score: 11010 }),
+            CategoryScore.from({ category: 'Git', score: 17650n }),
+            CategoryScore.from({ category: 'Linux', score: 11010n }),
           ],
         }),
       ],
@@ -155,7 +155,7 @@ describe('UsersController', () => {
 
       expect(result.nickname).toBe('Jin Park');
       expect(result.totalScore).toBe('54610');
-      expect(result.averageScore).toBe(190293);
+      expect(result.averageScore).toBe('190293');
       expect(result.ranking).toBe(131);
     });
 
@@ -175,10 +175,10 @@ describe('UsersController', () => {
       expect(result.scoreDetail).toEqual([
         {
           difficultyMode: 'Hard',
-          totalScore: 32460,
+          totalScore: '32460',
           categoryScores: [
-            { category: 'Git', score: 17650 },
-            { category: 'Linux', score: 11010 },
+            { category: 'Git', score: '17650' },
+            { category: 'Linux', score: '11010' },
           ],
         },
       ]);

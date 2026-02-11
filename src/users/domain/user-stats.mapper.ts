@@ -8,7 +8,7 @@ export class UserStatsMapper {
   static groupAndSortScoreDetail(scoreDetailRaw: ScoreDetailRaw[]): DifficultyScoreDetail[] {
     const difficultyModeGroup = new Map<
       string,
-      { totalScore: number; categories: CategoryScore[] }
+      { totalScore: bigint; categories: CategoryScore[] }
     >();
 
     for (const detail of scoreDetailRaw) {
@@ -19,7 +19,7 @@ export class UserStatsMapper {
       });
 
       if (existing) {
-        existing.totalScore += detail.totalScore;
+        existing.totalScore = existing.totalScore + detail.totalScore;
         existing.categories.push(categoryScore);
       } else {
         difficultyModeGroup.set(detail.difficultyMode, {
@@ -31,7 +31,7 @@ export class UserStatsMapper {
 
     const result: DifficultyScoreDetail[] = [];
     for (const [difficultyMode, data] of difficultyModeGroup) {
-      const sortedCategories = data.categories.sort((a, b) => b.score - a.score);
+      const sortedCategories = data.categories.sort((a, b) => Number(b.score - a.score));
       result.push(
         DifficultyScoreDetail.from({
           difficultyMode,
@@ -41,6 +41,6 @@ export class UserStatsMapper {
       );
     }
 
-    return result.sort((a, b) => b.totalScore - a.totalScore);
+    return result.sort((a, b) => Number(b.totalScore - a.totalScore));
   }
 }
