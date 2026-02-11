@@ -24,6 +24,7 @@ export class UsersService {
     ]);
   }
 
+  // FIXME: user facade 도입을 통해 도메인 결합 분리되도록 리팩터링 필요
   async getUserAnalysis(userId: bigint): Promise<UserMistakeAnalysis> {
     return this.gamesService.getUserMistakeAnalysis(userId);
   }
