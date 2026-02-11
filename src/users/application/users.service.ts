@@ -32,7 +32,7 @@ export class UsersService {
 
     // FIXME: auth guard 추가 시 필요 없어짐 (guard에서 리소스 확인)
     if (!user) {
-      throw new NotFoundException(`User with ID ${userId} not found`);
+      throw new NotFoundException(`존재하지 않는 유저입니다.`);
     }
 
     const ranking = await this.usersRepository.getRankingByScore(user.totalScore);
