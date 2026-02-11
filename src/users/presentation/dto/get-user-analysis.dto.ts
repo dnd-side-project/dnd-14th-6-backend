@@ -10,7 +10,7 @@ export class GetUserAnalysisParamDto {
     description: '유저 ID',
     example: '1',
   })
-  @IsNotEmpty()
+  @IsNotEmpty({ message: 'userId 는 필수값입니다.' })
   @Transform(({ value }) => {
     try {
       return BigInt(value as string);
