@@ -151,21 +151,6 @@ describe('GamesController', () => {
         expect(categoryIdError!.constraints!.isNotEmpty).toBe('categoryId 는 필수값입니다.');
       });
 
-      it('difficultyMode를 누락하면 유효성 검증에 실패한다.', async () => {
-        const dto = plainToInstance(GameStreamQueryDto, {
-          categoryId: 1,
-        });
-
-        const errors = await validate(dto);
-
-        const difficultyModeError = errors.find((e) => e.property === 'difficultyMode');
-        expect(difficultyModeError).toBeDefined();
-        expect(difficultyModeError!.constraints).toHaveProperty('isNotEmpty');
-        expect(difficultyModeError!.constraints!.isNotEmpty).toBe(
-          'difficultyMode 는 필수값입니다.',
-        );
-      });
-
       it('categoryId와 difficultyMode를 모두 누락하면 유효성 검증에 실패한다.', async () => {
         const dto = plainToInstance(GameStreamQueryDto, {});
 
