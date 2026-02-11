@@ -3,6 +3,7 @@ import { IsNotEmpty } from 'class-validator';
 import { plainToInstance, Transform } from 'class-transformer';
 
 import { UserStats } from '../../domain/user-stats.entity';
+import { BadRequestException } from '@nestjs/common';
 
 export class GetUserStatsParamDto {
   @ApiProperty({
@@ -10,7 +11,13 @@ export class GetUserStatsParamDto {
     example: '1',
   })
   @IsNotEmpty()
-  @Transform(({ value }) => BigInt(value as string))
+  @Transform(({ value }) => {
+    try {
+      return BigInt(value as string);
+    } catch {
+      throw new BadRequestException('userId가 유효한 숫자 형식의 문자열이 아닙니다.');
+    }
+  })
   userId: bigint;
 }
 
