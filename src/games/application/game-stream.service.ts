@@ -130,10 +130,10 @@ export class GameStreamService {
    */
   private fetchProblems(categoryId: number, difficultyMode: GameDifficultyMode) {
     if (difficultyMode === GameDifficultyMode.Random) {
-      return this.gameRepository.getRandomProblems(categoryId);
+      return this.gameRepository.getGameCategoryProblemsByRandomDifficulty(categoryId);
     }
 
-    return this.gameRepository.getProblems(categoryId, difficultyMode);
+    return this.gameRepository.getGameCategoryProblemsByDifficulty(categoryId, difficultyMode);
   }
   /**
    * @description 문제 정답을 Base64로 인코딩

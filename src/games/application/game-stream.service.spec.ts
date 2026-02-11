@@ -21,8 +21,8 @@ describe('GameStreamService', () => {
 
   beforeEach(async () => {
     mockGameRepository = {
-      getProblems: jest.fn(),
-      getRandomProblems: jest.fn(),
+      getGameCategoryProblemsByDifficulty: jest.fn(),
+      getGameCategoryProblemsByRandomDifficulty: jest.fn(),
       categoryExists: jest.fn(),
     };
 
@@ -58,7 +58,7 @@ describe('GameStreamService', () => {
           }),
         ];
 
-        mockGameRepository.getProblems!.mockResolvedValue(mockProblems);
+        mockGameRepository.getGameCategoryProblemsByDifficulty!.mockResolvedValue(mockProblems);
 
         const stream$ = service.createGameStream(categoryId, difficultyMode, disconnectSignal$);
 
@@ -78,11 +78,13 @@ describe('GameStreamService', () => {
               expect(data.point).toBe(DIFFICULTY_SCORES[difficultyMode]);
               expect(data.difficulty).toBe(difficultyMode);
 
-              expect(mockGameRepository.getProblems).toHaveBeenCalledWith(
+              expect(mockGameRepository.getGameCategoryProblemsByDifficulty).toHaveBeenCalledWith(
                 categoryId,
                 difficultyMode,
               );
-              expect(mockGameRepository.getRandomProblems).not.toHaveBeenCalled();
+              expect(
+                mockGameRepository.getGameCategoryProblemsByRandomDifficulty,
+              ).not.toHaveBeenCalled();
 
               disconnectSignal$.next();
               disconnectSignal$.complete();
@@ -96,7 +98,7 @@ describe('GameStreamService', () => {
         const difficultyMode = GameDifficultyMode.Easy;
         const disconnectSignal$ = new Subject<void>();
 
-        mockGameRepository.getProblems!.mockResolvedValue([]);
+        mockGameRepository.getGameCategoryProblemsByDifficulty!.mockResolvedValue([]);
 
         const stream$ = service.createGameStream(categoryId, difficultyMode, disconnectSignal$);
 
@@ -124,7 +126,7 @@ describe('GameStreamService', () => {
         const difficultyMode = GameDifficultyMode.Easy;
         const disconnectSignal$ = new Subject<void>();
 
-        mockGameRepository.getProblems!.mockResolvedValue([]);
+        mockGameRepository.getGameCategoryProblemsByDifficulty!.mockResolvedValue([]);
 
         const events: MessageEvent[] = [];
         const stream$ = service.createGameStream(categoryId, difficultyMode, disconnectSignal$);
@@ -140,12 +142,14 @@ describe('GameStreamService', () => {
       });
     });
     describe('❌ 실패 테스트 케이스', () => {
-      it('문제 조회(getProblems) 중 DB 에러가 발생하면 스트림이 에러를 전파한다', (done) => {
+      it('문제 조회(getGameCategoryProblemsByDifficulty) 중 DB 에러가 발생하면 스트림이 에러를 전파한다', (done) => {
         const categoryId = 1;
         const difficultyMode = GameDifficultyMode.Easy;
         const disconnectSignal$ = new Subject<void>();
 
-        mockGameRepository.getProblems!.mockRejectedValue(new Error('DB connection failed'));
+        mockGameRepository.getGameCategoryProblemsByDifficulty!.mockRejectedValue(
+          new Error('DB connection failed'),
+        );
 
         const stream$ = service.createGameStream(categoryId, difficultyMode, disconnectSignal$);
 
@@ -158,12 +162,14 @@ describe('GameStreamService', () => {
         });
       });
 
-      it('Random 모드에서 문제 조회(getRandomProblems) 중 DB 에러가 발생하면 스트림이 에러를 전파한다', (done) => {
+      it('Random 모드에서 문제 조회(getGameCategoryProblemsByRandomDifficulty) 중 DB 에러가 발생하면 스트림이 에러를 전파한다', (done) => {
         const categoryId = 1;
         const difficultyMode = GameDifficultyMode.Random;
         const disconnectSignal$ = new Subject<void>();
 
-        mockGameRepository.getRandomProblems!.mockRejectedValue(new Error('DB connection failed'));
+        mockGameRepository.getGameCategoryProblemsByRandomDifficulty!.mockRejectedValue(
+          new Error('DB connection failed'),
+        );
 
         const stream$ = service.createGameStream(categoryId, difficultyMode, disconnectSignal$);
 
@@ -171,8 +177,10 @@ describe('GameStreamService', () => {
           error: (err: Error) => {
             expect(err).toBeInstanceOf(Error);
             expect(err.message).toBe('DB connection failed');
-            expect(mockGameRepository.getRandomProblems).toHaveBeenCalledWith(categoryId);
-            expect(mockGameRepository.getProblems).not.toHaveBeenCalled();
+            expect(
+              mockGameRepository.getGameCategoryProblemsByRandomDifficulty,
+            ).toHaveBeenCalledWith(categoryId);
+            expect(mockGameRepository.getGameCategoryProblemsByDifficulty).not.toHaveBeenCalled();
             done();
           },
         });

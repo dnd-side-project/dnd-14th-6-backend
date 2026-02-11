@@ -23,11 +23,11 @@ export class GameRepositoryImpl implements IGameRepository {
    * - 사용자가 선택한 '카테고리' 와 '게임 난이도' 에 맞춘 문제 20개 출제
    * - 예를들어 '게임 난이도'를 'Easy'를 선택했다면, 문제도 'Easy' 문제 출제
    */
-  async getProblems(
+  async getGameCategoryProblemsByDifficulty(
     categoryId: number,
     difficulty: NonRandomGameDifficultyMode,
   ): Promise<GameProblem[]> {
-    return await this.findRandomProblemsByDifficulty(categoryId, difficulty);
+    return await this.findGameProblemsByGameOptions(categoryId, difficulty);
   }
 
   /**
@@ -35,19 +35,19 @@ export class GameRepositoryImpl implements IGameRepository {
    *
    * - 사용자가 선택한 '카테고리'의 '문제 난이도'는 Easy/Normal/Hard 무작위로 20개 출제
    */
-  async getRandomProblems(categoryId: number): Promise<GameProblem[]> {
-    return await this.findRandomProblemsByDifficulty(categoryId);
+  async getGameCategoryProblemsByRandomDifficulty(categoryId: number): Promise<GameProblem[]> {
+    return await this.findGameProblemsByGameOptions(categoryId);
   }
 
   /**
-   * @description 랜덤 문제 조회 로직 (Raw Query 사용)
+   * @description 게임옵션에 맞는 20문제 출제 쿼리 (Raw Query 사용)
    */
-  private async findRandomProblemsByDifficulty(
+  private async findGameProblemsByGameOptions(
     categoryId: number,
-    difficulty?: GameDifficultyMode,
+    gameDifficultyMode?: GameDifficultyMode,
   ): Promise<GameProblem[]> {
-    const difficultyFilter = difficulty
-      ? Prisma.sql`AND p.difficulty = ${difficulty.toUpperCase()}::"Difficulty"`
+    const difficultyFilter = gameDifficultyMode
+      ? Prisma.sql`AND p.difficulty = ${gameDifficultyMode.toUpperCase()}::"Difficulty"`
       : Prisma.empty;
 
     const problems = await this.prisma.$queryRaw<ProblemRawRow[]>`
