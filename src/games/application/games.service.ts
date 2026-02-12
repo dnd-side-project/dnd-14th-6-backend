@@ -72,10 +72,15 @@ export class GamesService {
    * @description 클라이언트가 푼 게임문제 검증
    */
   private async validateGameProblems(clientAnswers: ClientAnswer[]): Promise<GameProblem[]> {
-    const problemIds = clientAnswers.map((a) => BigInt(a.problemId));
-    const problems = await this.gameRepository.findProblemsByIds(problemIds);
+    if (clientAnswers.length === 0) {
+      return [];
+    }
 
-    if (problems.length !== problemIds.length) {
+    const problemIds = clientAnswers.map((a) => BigInt(a.problemId));
+    const uniqueProblemIds = [...new Set(problemIds)];
+    const problems = await this.gameRepository.findProblemsByIds(uniqueProblemIds);
+
+    if (problems.length !== uniqueProblemIds.length) {
       const foundIds = new Set(problems.map((p) => p.id));
       const missingIds = problemIds.filter((id) => !foundIds.has(id));
       throw new NotFoundException(
