@@ -38,7 +38,7 @@ export class GameRepositoryImpl implements IGameRepository {
   ): Promise<GameSessionHistoryList> {
     const query = this.buildSessionHistoryFilterQuery(filter);
 
-    const [sessions, totalCount] = await Promise.all([
+    const [sessions, totalCount] = await this.prisma.$transaction([
       this.prisma.gameSession.findMany({
         ...query,
         include: {
@@ -79,18 +79,16 @@ export class GameRepositoryImpl implements IGameRepository {
     if (filter.startDate || filter.endDate) {
       where.playedAt = {
         ...(filter.startDate && { gte: new Date(filter.startDate) }),
-        ...(filter.endDate && { lte: new Date(filter.endDate) }),
+        ...(filter.endDate && { lt: new Date(filter.endDate + 'T23:59:59.999Z') }),
       };
     }
 
-    if (filter.categories) {
-      const categoryNames = filter.categories.split(',').map((c) => c.trim());
-      where.category = { name: { in: categoryNames } };
+    if (filter.categories?.length) {
+      where.category = { name: { in: filter.categories } };
     }
 
-    if (filter.difficultyModes) {
-      const modes = filter.difficultyModes.split(',').map((m) => m.trim());
-      where.difficultyMode = { in: modes };
+    if (filter.difficultyModes?.length) {
+      where.difficultyMode = { in: filter.difficultyModes };
     }
 
     if (filter.search) {
