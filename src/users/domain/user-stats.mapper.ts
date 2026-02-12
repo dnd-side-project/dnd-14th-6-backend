@@ -1,17 +1,19 @@
-import { ScoreDetailRaw } from './users.repository.interface';
+import { ScoreDetailOriginData } from './users.repository.interface';
 import { CategoryScore, DifficultyScoreDetail } from './user-stats.entity';
 
 export class UserStatsMapper {
   /**
    * @description 난이도 별 스코어와 카테고리를 그룹화하고 점수가 높은 순으로 정렬
    */
-  static groupAndSortScoreDetail(scoreDetailRaw: ScoreDetailRaw[]): DifficultyScoreDetail[] {
+  static groupAndSortScoreDetail(
+    scoreDetailOriginData: ScoreDetailOriginData[],
+  ): DifficultyScoreDetail[] {
     const difficultyModeGroup = new Map<
       string,
       { totalScore: bigint; categories: CategoryScore[] }
     >();
 
-    for (const detail of scoreDetailRaw) {
+    for (const detail of scoreDetailOriginData) {
       const existing = difficultyModeGroup.get(detail.difficultyMode);
       const categoryScore = CategoryScore.from({
         category: detail.category,

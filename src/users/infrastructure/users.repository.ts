@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
 
-import { IUsersRepository, ScoreDetailRaw } from '../domain/users.repository.interface';
+import { IUsersRepository, ScoreDetailOriginData } from '../domain/users.repository.interface';
 import { User } from '../domain/users.entity';
 
 @Injectable()
@@ -67,7 +67,7 @@ export class UsersRepositoryImpl implements IUsersRepository {
    * @description 유저의 플레이한 난이도, 카테고리 별 그룹화하여 획득한 총 점수(SUM)와 카테고리 정보를 조회
    * FIXME: 해당 로직은 게임 모듈 내로 이동 후 facade pattern 을 사용하는 방향으로 리팩터링 필요
    */
-  async getScoreDetailByUserId(userId: bigint): Promise<ScoreDetailRaw[]> {
+  async getScoreDetailByUserId(userId: bigint): Promise<ScoreDetailOriginData[]> {
     const results = await this.prisma.$queryRaw<
       { difficulty_mode: string; category: string; total_score: bigint }[]
     >`

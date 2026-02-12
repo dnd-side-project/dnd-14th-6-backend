@@ -24,7 +24,7 @@ export class UsersService {
    * @description 유저의 랭킹, 티어, 총 점수, 카테고리 별 누적점수를 조회
    */
   async getUserStats(userId: bigint): Promise<UserStats> {
-    const [user, avgScore, scoreDetailRaw] = await Promise.all([
+    const [user, avgScore, scoreDetailOriginData] = await Promise.all([
       this.usersRepository.findByIdWithTier(userId),
       this.usersRepository.getAverageScore(),
       this.usersRepository.getScoreDetailByUserId(userId),
@@ -36,7 +36,7 @@ export class UsersService {
     }
 
     const ranking = await this.usersRepository.getRankingByScore(user.totalScore);
-    const scoreDetail = UserStatsMapper.groupAndSortScoreDetail(scoreDetailRaw);
+    const scoreDetail = UserStatsMapper.groupAndSortScoreDetail(scoreDetailOriginData);
 
     return UserStats.from({
       nickname: user.nickname,

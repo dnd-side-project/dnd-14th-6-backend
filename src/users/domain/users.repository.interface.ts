@@ -1,6 +1,6 @@
 import { User } from './users.entity';
 
-export interface ScoreDetailRaw {
+export interface ScoreDetailOriginData {
   difficultyMode: string;
   category: string;
   totalScore: bigint;
@@ -12,7 +12,7 @@ export interface IUsersRepository {
   findByIdWithTier(userId: bigint): Promise<User | null>;
   getAverageScore(): Promise<bigint>;
   getRankingByScore(totalScore: bigint): Promise<number>;
-  getScoreDetailByUserId(userId: bigint): Promise<ScoreDetailRaw[]>;
+  getScoreDetailByUserId(userId: bigint): Promise<ScoreDetailOriginData[]>;
 }
 
 export const USER_REPOSITORY = Symbol('IUsersRepository');

@@ -7,7 +7,7 @@ import { UsersService } from './users.service';
 
 import {
   IUsersRepository,
-  ScoreDetailRaw,
+  ScoreDetailOriginData,
   USER_REPOSITORY,
 } from '../domain/users.repository.interface';
 import { User } from '../domain/users.entity';
@@ -128,7 +128,7 @@ describe('UsersService', () => {
       totalScore: 54610n,
       tier: mockTier,
     });
-    const mockScoreDetail: ScoreDetailRaw[] = [
+    const mockScoreDetail: ScoreDetailOriginData[] = [
       { difficultyMode: 'Hard', category: 'Git', totalScore: 17650n },
       { difficultyMode: 'Hard', category: 'Linux', totalScore: 11010n },
       { difficultyMode: 'Normal', category: 'Git', totalScore: 8500n },
