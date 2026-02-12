@@ -2,7 +2,11 @@ import { BadRequestException, Inject, Injectable, NotFoundException } from '@nes
 import { GAME_REPOSITORY, IGameRepository } from '../domain/games.repository.interface';
 import { GameOptions } from '../domain/game-options.entity';
 import { GameProblem } from '../domain/game-problem.entity';
-import { ProblemDifficulty, calculateServerScore } from '../domain/game.business-rules';
+import {
+  MAX_PROBLEMS_PER_GAME,
+  ProblemDifficulty,
+  calculateServerScore,
+} from '../domain/game.business-rules';
 import { CreateGameSessionServiceRequestDto } from './service-dto/create-game-session.service-dto';
 import { ClientAnswer } from '../domain/game-client-answers.interface';
 
@@ -52,6 +56,7 @@ export class GamesService {
     clientAnswers: ClientAnswer[],
   ): Promise<number> {
     await this.validateCategory(categoryId);
+    this.validateClientAnswersCount(clientAnswers);
     const problems = await this.validateGameProblems(clientAnswers);
     this.validateAnswerIntegrity(clientAnswers);
     return this.calculateScore(clientAnswers, problems);
@@ -69,13 +74,18 @@ export class GamesService {
   }
 
   /**
+   * @description 게임 문제 수 검증 - 게임당 정확히 MAX_PROBLEMS_PER_GAME(20)개여야 함
+   */
+  private validateClientAnswersCount(clientAnswers: ClientAnswer[]): void {
+    if (clientAnswers.length !== MAX_PROBLEMS_PER_GAME) {
+      throw new BadRequestException(`clientAnswers는 ${MAX_PROBLEMS_PER_GAME}개여야 합니다.`);
+    }
+  }
+
+  /**
    * @description 클라이언트가 푼 게임문제 검증
    */
   private async validateGameProblems(clientAnswers: ClientAnswer[]): Promise<GameProblem[]> {
-    if (clientAnswers.length === 0) {
-      return [];
-    }
-
     const problemIds = clientAnswers.map((a) => BigInt(a.problemId));
     const uniqueProblemIds = [...new Set(problemIds)];
     const problems = await this.gameRepository.findProblemsByIds(uniqueProblemIds);
