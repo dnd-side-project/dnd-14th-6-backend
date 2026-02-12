@@ -12,8 +12,8 @@ export function ApiSaveGameSession() {
     ApiBody({
       type: SaveGameSessionRequestDto,
       examples: {
-        '게임 결과 저장 예시': {
-          summary: '일부 정답 포함 게임 세션',
+        '일부 정답 포함': {
+          summary: '일부 문제를 맞춘 게임 세션',
           value: {
             categoryId: 1,
             difficultyMode: 'Easy',
@@ -68,6 +68,37 @@ export function ApiSaveGameSession() {
               { problemId: '7', inputs: [], solved: false },
               { problemId: '109', inputs: [], solved: false },
               { problemId: '241', inputs: [], solved: false },
+              { problemId: '43', inputs: [], solved: false },
+            ],
+          },
+        },
+        '모두 오답': {
+          summary: '아무것도 풀지 않은 게임 세션',
+          value: {
+            categoryId: 1,
+            difficultyMode: 'Easy',
+            score: 0,
+            clientAnswers: [
+              { problemId: '103', inputs: [], solved: false },
+              { problemId: '136', inputs: [], solved: false },
+              { problemId: '207', inputs: [], solved: false },
+              { problemId: '273', inputs: [], solved: false },
+              { problemId: '143', inputs: [], solved: false },
+              { problemId: '40', inputs: [], solved: false },
+              { problemId: '176', inputs: [], solved: false },
+              { problemId: '109', inputs: [], solved: false },
+              { problemId: '41', inputs: [], solved: false },
+              { problemId: '265', inputs: [], solved: false },
+              { problemId: '275', inputs: [], solved: false },
+              { problemId: '11', inputs: [], solved: false },
+              { problemId: '168', inputs: [], solved: false },
+              { problemId: '9', inputs: [], solved: false },
+              { problemId: '142', inputs: [], solved: false },
+              { problemId: '242', inputs: [], solved: false },
+              { problemId: '110', inputs: [], solved: false },
+              { problemId: '201', inputs: [], solved: false },
+              { problemId: '42', inputs: [], solved: false },
+              { problemId: '43', inputs: [], solved: false },
             ],
           },
         },
@@ -169,6 +200,16 @@ export function ApiSaveGameSession() {
                 statusCode: 400,
                 success: false,
                 message: `clientAnswers는 최대 ${MAX_PROBLEMS_PER_GAME}개까지 입력 가능합니다.`,
+              },
+            },
+
+            // ── 비즈니스 로직 검증 (clientAnswers 개수) ──
+            'clientAnswers 개수 불일치': {
+              summary: `clientAnswers가 정확히 ${MAX_PROBLEMS_PER_GAME}개가 아닌 경우 (빈 배열 포함)`,
+              value: {
+                statusCode: 400,
+                success: false,
+                message: `clientAnswers는 ${MAX_PROBLEMS_PER_GAME}개여야 합니다.`,
               },
             },
 
