@@ -1,7 +1,10 @@
 import { PrismaService } from '@prisma/prisma.service';
 import { Injectable } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { IGameRepository } from '../domain/games.repository.interface';
 import { GameCategory } from '../domain/game-categories.entity';
+import { GameSessionHistoryFilterEntity } from '../domain/game-session-history-filter.entity';
+import { GameSessionHistory, GameSessionHistoryList } from '../domain/game-session-history.entity';
 
 @Injectable()
 export class GameRepositoryImpl implements IGameRepository {
@@ -24,5 +27,90 @@ export class GameRepositoryImpl implements IGameRepository {
     });
 
     return categories.map((category) => GameCategory.from(category));
+  }
+
+  /**
+   * @description 필터 기반 게임 세션 히스토리 목록 조회
+   * 필터 별 where, sort 등의 동적 쿼리 지원
+   */
+  async getSessionHistoryByFilter(
+    filter: GameSessionHistoryFilterEntity,
+  ): Promise<GameSessionHistoryList> {
+    const query = this.buildSessionHistoryFilterQuery(filter);
+
+    const [sessions, totalCount] = await Promise.all([
+      this.prisma.gameSession.findMany({
+        ...query,
+        include: {
+          category: {
+            select: { name: true },
+          },
+          gameSessionLogs: {
+            take: 1,
+            select: {
+              problem: {
+                select: { title: true },
+              },
+            },
+            orderBy: { id: 'asc' },
+          },
+        },
+      }),
+      this.prisma.gameSession.count({ where: query.where }),
+    ]);
+
+    const sessionHistories = sessions.map((session) => GameSessionHistory.from(session));
+
+    return GameSessionHistoryList.from({
+      sessionHistories,
+      totalItems: totalCount,
+    });
+  }
+
+  /**
+   * @description 세션 히스토리 조회용 동적 필터 쿼리 생성
+   * where, orderBy, skip, take를 한 번에 구성
+   */
+  private buildSessionHistoryFilterQuery(filter: GameSessionHistoryFilterEntity) {
+    const where: Prisma.GameSessionWhereInput = {
+      userId: filter.userId,
+    };
+
+    if (filter.startDate || filter.endDate) {
+      where.playedAt = {
+        ...(filter.startDate && { gte: new Date(filter.startDate) }),
+        ...(filter.endDate && { lte: new Date(filter.endDate) }),
+      };
+    }
+
+    if (filter.categories) {
+      const categoryNames = filter.categories.split(',').map((c) => c.trim());
+      where.category = { name: { in: categoryNames } };
+    }
+
+    if (filter.difficultyModes) {
+      const modes = filter.difficultyModes.split(',').map((m) => m.trim());
+      where.difficultyMode = { in: modes };
+    }
+
+    if (filter.search) {
+      where.gameSessionLogs = {
+        some: {
+          problem: {
+            OR: [
+              { text: { contains: filter.search, mode: 'insensitive' } },
+              { answer: { contains: filter.search, mode: 'insensitive' } },
+            ],
+          },
+        },
+      };
+    }
+
+    return {
+      where,
+      orderBy: { [filter.sortBy]: filter.sortOrder },
+      skip: (filter.page - 1) * filter.size,
+      take: filter.size,
+    };
   }
 }
