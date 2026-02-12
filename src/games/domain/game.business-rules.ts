@@ -24,6 +24,16 @@ export const DIFFICULTY_SCORES: Readonly<Record<ProblemDifficulty, number>> = {
   Hard: 50,
 } as const;
 
+/**
+ * 서버 측 점수 계산: solved된 문제의 난이도별 배점 합산
+ */
+export function calculateServerScore(solvedProblemDifficulties: ProblemDifficulty[]): number {
+  return solvedProblemDifficulties.reduce(
+    (total, difficulty) => total + DIFFICULTY_SCORES[difficulty],
+    0,
+  );
+}
+
 /** 게임 제한 시간 (초) - 60초 후 게임 종료 */
 export const GAME_TIMER_DURATION = 60;
 
