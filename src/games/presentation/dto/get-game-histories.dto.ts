@@ -74,7 +74,8 @@ export class GetGameHistoriesQueryDto {
     required: false,
   })
   @IsOptional()
-  categories?: string;
+  @Transform(({ value }) => (value as string)?.split(',').map((v) => v.trim()))
+  categories?: string[];
 
   @ApiProperty({
     description: '게임 플레이 난이도 필터 (,로 구분)',
@@ -82,7 +83,8 @@ export class GetGameHistoriesQueryDto {
     required: false,
   })
   @IsOptional()
-  difficultyModes?: string;
+  @Transform(({ value }) => (value as string)?.split(',').map((v) => v.trim()))
+  difficultyModes?: string[];
 
   @ApiProperty({
     description: '정렬 기준 컬럼 (플레이 시간 순/ 점수 순/ 맞힌 문제 순)',

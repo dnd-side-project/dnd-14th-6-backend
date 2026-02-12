@@ -10,8 +10,8 @@ export class GameSessionHistoryFilterEntity {
     public readonly search?: string,
     public readonly startDate?: string,
     public readonly endDate?: string,
-    public readonly categories?: string,
-    public readonly difficultyModes?: string,
+    public readonly categories?: string[],
+    public readonly difficultyModes?: string[],
   ) {}
 
   static from(
