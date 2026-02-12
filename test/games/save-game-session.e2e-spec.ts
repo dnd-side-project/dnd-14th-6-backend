@@ -97,6 +97,7 @@ describe('POST /api/games/save (e2e)', () => {
             { problemId: '110', inputs: [], solved: false },
             { problemId: '201', inputs: [], solved: false },
             { problemId: '42', inputs: [], solved: false },
+            { problemId: '43', inputs: [], solved: false },
           ],
         })
         .expect(201);
@@ -163,6 +164,7 @@ describe('POST /api/games/save (e2e)', () => {
             { problemId: '7', inputs: [], solved: false },
             { problemId: '109', inputs: [], solved: false },
             { problemId: '241', inputs: [], solved: false },
+            { problemId: '43', inputs: [], solved: false },
           ],
         })
         .expect(201);
