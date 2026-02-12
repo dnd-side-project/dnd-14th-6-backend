@@ -173,22 +173,6 @@ describe('POST /api/games/save (e2e)', () => {
       expect(body.success).toBe(true);
       expect(body.data.gameSessionId).toBeDefined();
     });
-
-    it('clientAnswers가 빈 배열이어도 게임 세션을 저장한다.', async () => {
-      const response = await request(app.getHttpServer())
-        .post('/api/games/save')
-        .send({
-          categoryId: 1,
-          difficultyMode: 'Random',
-          score: 0,
-          clientAnswers: [],
-        })
-        .expect(201);
-
-      const body = response.body as SuccessResponse;
-      expect(body.success).toBe(true);
-      expect(body.data.gameSessionId).toBeDefined();
-    });
   });
 
   describe('❌ 실패 케이스 - RequestBody 유효성 검증', () => {
@@ -336,6 +320,22 @@ describe('POST /api/games/save (e2e)', () => {
   });
 
   describe('❌ 실패 케이스 - 비즈니스 로직 검증', () => {
+    it('clientAnswers가 빈 배열이면 400 에러를 응답한다.', async () => {
+      const response = await request(app.getHttpServer())
+        .post('/api/games/save')
+        .send({
+          categoryId: 1,
+          difficultyMode: 'Random',
+          score: 0,
+          clientAnswers: [],
+        })
+        .expect(400);
+
+      const body = response.body as ErrorResponse;
+      expect(body.success).toBe(false);
+      expect(body.message).toContain('clientAnswers');
+    });
+
     it('존재하지 않는 카테고리면 404 에러를 응답한다.', async () => {
       const response = await request(app.getHttpServer())
         .post('/api/games/save')
