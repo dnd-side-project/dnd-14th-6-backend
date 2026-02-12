@@ -12,6 +12,7 @@ import {
 } from '../domain/game.business-rules';
 import { capitalize } from '@common/utils/string.util';
 import { ProblemRawRow } from './types/problem-raw-row';
+import { ClientAnswerInput } from '../domain/game-client-answers.interface';
 
 @Injectable()
 export class GameRepositoryImpl implements IGameRepository {
@@ -56,7 +57,7 @@ export class GameRepositoryImpl implements IGameRepository {
         p.title, 
         p.text, 
         p.answer, 
-        p.difficulty, 
+        p.difficulty,
         sc.name as "subCategoryName"
       FROM problems p
       JOIN sub_categories sc ON p.sub_category_id = sc.id
@@ -69,8 +70,8 @@ export class GameRepositoryImpl implements IGameRepository {
   }
 
   private mapToGameProblem(p: ProblemRawRow): GameProblem {
-    const difficulty = capitalize(p.difficulty.toLowerCase()) as GameDifficultyMode;
-    const point = DIFFICULTY_SCORES[difficulty as ProblemDifficulty];
+    const difficulty = capitalize(p.difficulty.toLowerCase()) as ProblemDifficulty;
+    const point = DIFFICULTY_SCORES[difficulty];
 
     return GameProblem.from({
       id: BigInt(p.id),
@@ -93,6 +94,73 @@ export class GameRepositoryImpl implements IGameRepository {
     });
     return category !== null;
   }
+
+  /**
+   * @description 문제 ID 목록으로 문제 조회
+   */
+  async findProblemsByIds(problemIds: bigint[]): Promise<GameProblem[]> {
+    const problems = await this.prisma.problem.findMany({
+      where: { id: { in: problemIds } },
+      include: { subCategory: { select: { name: true } } },
+    });
+
+    return problems.map((p) =>
+      this.mapToGameProblem({
+        id: p.id,
+        title: p.title,
+        text: p.text,
+        answer: p.answer,
+        difficulty: p.difficulty,
+        subCategoryName: p.subCategory.name,
+      }),
+    );
+  }
+
+  /**
+   * @description 게임 세션과 세션 로그를 원자적으로 저장
+   */
+  async saveGameSession(data: {
+    categoryId: number;
+    difficultyMode: string;
+    score: number;
+    totalProblemCount: number;
+    correctProblemCount: number;
+    logs: {
+      problemId: bigint;
+      inputs: ClientAnswerInput[];
+      isSolved: boolean;
+      tryCount: number;
+    }[];
+  }): Promise<bigint> {
+    const session = await this.prisma.$transaction(async (tx) => {
+      const gameSession = await tx.gameSession.create({
+        data: {
+          categoryId: data.categoryId,
+          difficultyMode: data.difficultyMode,
+          score: data.score,
+          totalProblemCount: data.totalProblemCount,
+          correctProblemCount: data.correctProblemCount,
+        },
+      });
+
+      if (data.logs.length > 0) {
+        await tx.gameSessionLog.createMany({
+          data: data.logs.map((log) => ({
+            sessionId: gameSession.id,
+            problemId: log.problemId,
+            inputs: log.inputs.map(({ input, isCorrect }) => ({ input, isCorrect })),
+            isSolved: log.isSolved,
+            tryCount: log.tryCount,
+          })),
+        });
+      }
+
+      return gameSession;
+    });
+
+    return session.id;
+  }
+
   /**
    * @description 모든 학습 카테고리 목록을 조회
    */
