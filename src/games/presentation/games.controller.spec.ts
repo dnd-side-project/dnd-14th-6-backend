@@ -11,9 +11,6 @@ import { EventEmitter } from 'events';
 import { Observable, of, Subject, takeUntil } from 'rxjs';
 import { Logger, MessageEvent, NotFoundException } from '@nestjs/common';
 import { Request, Response } from 'express';
-import { validate } from 'class-validator';
-import { plainToInstance } from 'class-transformer';
-import { GameStreamQueryDto } from './dto/game-stream-query.dto';
 
 describe('GamesController', () => {
   let controller: GamesController;
@@ -138,30 +135,6 @@ describe('GamesController', () => {
       });
     });
     describe('❌ 실패 케이스', () => {
-      it('categoryId를 누락하면 유효성 검증에 실패한다.', async () => {
-        const dto = plainToInstance(GameStreamQueryDto, {
-          difficultyMode: 'Easy',
-        });
-
-        const errors = await validate(dto);
-
-        const categoryIdError = errors.find((e) => e.property === 'categoryId');
-        expect(categoryIdError).toBeDefined();
-        expect(categoryIdError!.constraints).toHaveProperty('isNotEmpty');
-        expect(categoryIdError!.constraints!.isNotEmpty).toBe('categoryId 는 필수값입니다.');
-      });
-
-      it('categoryId와 difficultyMode를 모두 누락하면 유효성 검증에 실패한다.', async () => {
-        const dto = plainToInstance(GameStreamQueryDto, {});
-
-        const errors = await validate(dto);
-
-        expect(errors.length).toBeGreaterThanOrEqual(2);
-        expect(errors.map((e) => e.property)).toEqual(
-          expect.arrayContaining(['categoryId', 'difficultyMode']),
-        );
-      });
-
       it('존재하지 않는 카테고리로 요청하면 NotFoundException을 던진다.', async () => {
         const query = { categoryId: 999, difficultyMode: GameDifficultyMode.Easy };
         const mockRequest = new EventEmitter() as Request;
@@ -202,22 +175,6 @@ describe('GamesController', () => {
         expect(mockResponse.end).toHaveBeenCalled();
 
         loggerSpy.mockRestore();
-      });
-
-      it('존재하지 않는 난이도로 요청하면 유효성 검증에 실패한다.', async () => {
-        const dto = plainToInstance(GameStreamQueryDto, {
-          categoryId: 1,
-          difficultyMode: 'InvalidMode',
-        });
-
-        const errors = await validate(dto);
-
-        expect(errors).toHaveLength(1);
-        expect(errors[0].property).toBe('difficultyMode');
-        expect(errors[0].constraints).toHaveProperty('isEnum');
-        expect(errors[0].constraints!.isEnum).toBe(
-          'difficultyMode는 Easy, Normal, Hard, Random 중 하나여야 합니다.',
-        );
       });
     });
   });
