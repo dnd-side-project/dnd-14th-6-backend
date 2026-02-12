@@ -4,6 +4,9 @@ import { seedCategories } from './seeds/category.seed';
 import { seedTiers } from './seeds/tier.seed';
 import { seedSubCategories } from './seeds/subcategory.seed';
 import { seedUsersAndSessions } from './seeds/user-session.seed';
+import { seedGitProblems } from './seeds/seed-problems-git';
+import { seedLinuxProblems } from './seeds/seed-problems-linux';
+import { seedDockerProblems } from './seeds/seed-problems-docker';
 
 const connectionString = process.env.DATABASE_URL;
 if (!connectionString) {
@@ -19,6 +22,9 @@ const seeds: Record<string, SeedFunction> = {
   category: seedCategories,
   subcategory: seedSubCategories,
   user_session: seedUsersAndSessions, // user + game_session
+  git_problems: seedGitProblems,
+  linux_problems: seedLinuxProblems,
+  docker_problems: seedDockerProblems,
 };
 
 async function main() {

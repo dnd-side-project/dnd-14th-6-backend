@@ -7,31 +7,56 @@ export async function seedSubCategories(prisma: PrismaClient) {
     return;
   }
 
-  const subCategoryData: Prisma.SubCategoryCreateManyInput[] = [];
+  const subCategoryMap: Record<string, string[]> = {
+    Git: ['Commit', 'Branch', 'Remote', 'Undo', 'Config', 'Merge', 'Rebase', 'Stash', 'Tag', 'Log'],
+    Linux: [
+      'Shell',
+      'File',
+      'Permissions',
+      'Process',
+      'Network',
+      'System',
+      'User',
+      'Disk',
+      'Package',
+      'Cron',
+    ],
+    Docker: [
+      'Container',
+      'Image',
+      'Volume',
+      'Compose',
+      'System',
+      'Network',
+      'Registry',
+      'Build',
+      'Log',
+      'Security',
+    ],
+  };
 
+  const existing = await prisma.subCategory.findMany({
+    select: { name: true, categoryId: true },
+  });
+  const existingSet = new Set(existing.map((s) => `${s.categoryId}:${s.name}`));
+
+  const subCategoryData: Prisma.SubCategoryCreateManyInput[] = [];
   for (const cat of categories) {
-    if (cat.name === 'Git') {
-      subCategoryData.push(
-        { name: 'Commit', categoryId: cat.id },
-        { name: 'Branch', categoryId: cat.id },
-      );
-    } else if (cat.name === 'Linux') {
-      subCategoryData.push(
-        { name: 'Shell', categoryId: cat.id },
-        { name: 'Permissions', categoryId: cat.id },
-      );
-    } else if (cat.name === 'Docker') {
-      subCategoryData.push(
-        { name: 'Container', categoryId: cat.id },
-        { name: 'Image', categoryId: cat.id },
-      );
+    const subCategoryNames = subCategoryMap[cat.name];
+    if (subCategoryNames) {
+      for (const name of subCategoryNames) {
+        if (!existingSet.has(`${cat.id}:${name}`)) {
+          subCategoryData.push({ name, categoryId: cat.id });
+        }
+      }
     }
   }
 
-  const result = await prisma.subCategory.createMany({
-    data: subCategoryData,
-    skipDuplicates: true,
-  });
+  if (subCategoryData.length === 0) {
+    console.log('🌱 SubCategories already seeded. Skipped.');
+    return;
+  }
 
+  const result = await prisma.subCategory.createMany({ data: subCategoryData });
   console.log(`🌱 SubCategories seeded: ${result.count}`);
 }
