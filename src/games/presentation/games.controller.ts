@@ -1,13 +1,15 @@
-import { Controller, Get, Logger, MessageEvent, Query, Req, Res } from '@nestjs/common';
+import { Body, Controller, Get, Logger, MessageEvent, Post, Query, Req, Res } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { GamesService } from '../application/games.service';
 import { GetGameOptionsResponseDto } from './dto/get-game-options.dto';
 import { ApiGetGameOptions } from './decorators/get-game-options-swagger.decorator';
 import { ApiGameStream } from './decorators/game-stream-swagger.decorator';
+import { ApiSaveGameSession } from './decorators/save-game-session-swagger.decorator';
 import { Request, Response } from 'express';
 import { Subject } from 'rxjs';
 import { GameStreamService } from '../application/game-stream.service';
 import { GameStreamQueryDto } from './dto/game-stream-query.dto';
+import { SaveGameSessionRequestDto, SaveGameSessionResponseDto } from './dto/save-game-session.dto';
 
 @ApiTags('Games')
 @Controller('games')
@@ -75,5 +77,20 @@ export class GamesController {
         response.end();
       },
     });
+  }
+
+  @Post('save')
+  @ApiSaveGameSession()
+  async saveGameSession(
+    @Body() dto: SaveGameSessionRequestDto,
+  ): Promise<SaveGameSessionResponseDto> {
+    const gameSessionId = await this.gameService.createGameSession({
+      categoryId: dto.categoryId,
+      difficultyMode: dto.difficultyMode,
+      score: dto.score,
+      clientAnswers: dto.clientAnswers,
+    });
+
+    return SaveGameSessionResponseDto.from(gameSessionId);
   }
 }
