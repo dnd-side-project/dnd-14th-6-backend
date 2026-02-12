@@ -4,11 +4,13 @@ import { GamesController } from './presentation/games.controller';
 import { GAME_REPOSITORY } from './domain/games.repository.interface';
 import { GameRepositoryImpl } from './infrastructure/games.repository';
 import { PrismaModule } from '@prisma/prisma.module';
+import { GameStreamService } from './application/game-stream.service';
 
 @Module({
   imports: [PrismaModule],
   providers: [
     GamesService,
+    GameStreamService,
     {
       provide: GAME_REPOSITORY,
       useClass: GameRepositoryImpl,
