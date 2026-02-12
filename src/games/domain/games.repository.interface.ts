@@ -42,7 +42,7 @@ export interface IGameRepository {
    */
   saveGameSession(data: {
     categoryId: number;
-    difficultyMode: string;
+    difficultyMode: GameDifficultyMode;
     score: number;
     totalProblemCount: number;
     correctProblemCount: number;

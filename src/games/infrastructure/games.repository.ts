@@ -121,7 +121,7 @@ export class GameRepositoryImpl implements IGameRepository {
    */
   async saveGameSession(data: {
     categoryId: number;
-    difficultyMode: string;
+    difficultyMode: GameDifficultyMode;
     score: number;
     totalProblemCount: number;
     correctProblemCount: number;
