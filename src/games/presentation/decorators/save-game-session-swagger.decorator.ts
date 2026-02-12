@@ -1,6 +1,7 @@
 import { applyDecorators, HttpStatus } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { SaveGameSessionRequestDto } from '../dto/save-game-session.dto';
+import { MAX_PROBLEMS_PER_GAME } from '@/games/domain/game.business-rules';
 
 export function ApiSaveGameSession() {
   return applyDecorators(
@@ -8,9 +9,72 @@ export function ApiSaveGameSession() {
       summary: '게임 세션 저장',
       description: '게임 종료 후 게임 세션 결과를 저장합니다.',
     }),
-    ApiBody({ type: SaveGameSessionRequestDto }),
+    ApiBody({
+      type: SaveGameSessionRequestDto,
+      examples: {
+        '게임 결과 저장 예시': {
+          summary: '일부 정답 포함 게임 세션',
+          value: {
+            categoryId: 1,
+            difficultyMode: 'Easy',
+            score: 30,
+            clientAnswers: [
+              {
+                problemId: '73',
+                inputs: [
+                  { input: 'git branch', isCorrect: false },
+                  { input: 'git remote', isCorrect: true },
+                ],
+                solved: true,
+              },
+              {
+                problemId: '103',
+                inputs: [
+                  { input: 'git revert', isCorrect: false },
+                  { input: 'git rolback', isCorrect: false },
+                ],
+                solved: false,
+              },
+              {
+                problemId: '265',
+                inputs: [{ input: 'git tag', isCorrect: true }],
+                solved: true,
+              },
+              {
+                problemId: '134',
+                inputs: [{ input: 'git config --email "john@example.com"', isCorrect: false }],
+                solved: false,
+              },
+              { problemId: '40', inputs: [], solved: false },
+              {
+                problemId: '34',
+                inputs: [{ input: 'git branch', isCorrect: true }],
+                solved: true,
+              },
+              { problemId: '4', inputs: [], solved: false },
+              { problemId: '174', inputs: [], solved: false },
+              { problemId: '306', inputs: [], solved: false },
+              { problemId: '200', inputs: [], solved: false },
+              {
+                problemId: '237',
+                inputs: [{ input: 'git stasy', isCorrect: false }],
+                solved: false,
+              },
+              { problemId: '69', inputs: [], solved: false },
+              { problemId: '11', inputs: [], solved: false },
+              { problemId: '10', inputs: [], solved: false },
+              { problemId: '6', inputs: [], solved: false },
+              { problemId: '307', inputs: [], solved: false },
+              { problemId: '7', inputs: [], solved: false },
+              { problemId: '109', inputs: [], solved: false },
+              { problemId: '241', inputs: [], solved: false },
+            ],
+          },
+        },
+      },
+    }),
 
-    // ── 200 성공 ──
+    // ── 201 성공 ──
     ApiResponse({
       status: HttpStatus.CREATED,
       description: '게임 세션 저장 성공',
@@ -104,7 +168,7 @@ export function ApiSaveGameSession() {
               value: {
                 statusCode: 400,
                 success: false,
-                message: 'clientAnswers는 최대 20개까지 입력 가능합니다.',
+                message: `clientAnswers는 최대 ${MAX_PROBLEMS_PER_GAME}개까지 입력 가능합니다.`,
               },
             },
 
