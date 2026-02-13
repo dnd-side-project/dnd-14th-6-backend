@@ -26,6 +26,7 @@ export class UsersController {
     return GetRanksResponseDto.from(users, totalItems, page, size);
   }
 
+  // FIXME: auth gurad 들어올 경우 private으로 변경 필요
   @Get('/:userId/analysis')
   @ApiGetUserAnalysis()
   async getUserAnalysis(
