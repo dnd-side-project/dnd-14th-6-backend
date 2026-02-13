@@ -6,6 +6,7 @@ import { UsersController } from './users.controller';
 import { UsersService } from '../application/users.service';
 
 import { User } from '../domain/users.entity';
+import { CategoryScore, DifficultyScoreDetail, UserStats } from '../domain/user-stats.entity';
 
 function createMockTier(overrides: Partial<Tier> = {}): Tier {
   return Tier.from({
@@ -44,6 +45,7 @@ describe('UsersController', () => {
   beforeEach(async () => {
     mockUsersService = {
       getRanksByPageAndSize: jest.fn(),
+      getUserStats: jest.fn(),
     } as unknown as jest.Mocked<UsersService>;
 
     const module: TestingModule = await Test.createTestingModule({
@@ -115,6 +117,71 @@ describe('UsersController', () => {
         query.size,
         3,
       );
+    });
+  });
+
+  describe('getUserStats', () => {
+    const mockTier = createMockTier({ id: 3, name: 'Master' });
+    const mockUserStats = UserStats.from({
+      nickname: 'Jin Park',
+      totalScore: 54610n,
+      averageScore: 190293n,
+      ranking: 131,
+      tier: mockTier,
+      scoreDetail: [
+        DifficultyScoreDetail.from({
+          difficultyMode: 'Hard',
+          totalScore: 32460n,
+          categoryScores: [
+            CategoryScore.from({ category: 'Git', score: 17650n }),
+            CategoryScore.from({ category: 'Linux', score: 11010n }),
+          ],
+        }),
+      ],
+    });
+
+    beforeEach(() => {
+      mockUsersService.getUserStats.mockResolvedValue(mockUserStats);
+    });
+
+    it('서비스를 호출하여 유저 통계를 조회하는지 확인', async () => {
+      await controller.getUserStats({ userId: 1n });
+
+      expect(mockUsersService.getUserStats).toHaveBeenCalledWith(1n);
+    });
+
+    it('유저 통계 응답 DTO가 올바르게 반환되는지 확인', async () => {
+      const result = await controller.getUserStats({ userId: 1n });
+
+      expect(result.nickname).toBe('Jin Park');
+      expect(result.totalScore).toBe('54610');
+      expect(result.averageScore).toBe('190293');
+      expect(result.ranking).toBe(131);
+    });
+
+    it('티어 정보가 올바르게 반환되는지 확인', async () => {
+      const result = await controller.getUserStats({ userId: 1n });
+
+      expect(result.tier).toEqual({
+        id: 3,
+        name: 'Master',
+        imageUrl: null,
+      });
+    });
+
+    it('scoreDetail이 올바르게 반환되는지 확인', async () => {
+      const result = await controller.getUserStats({ userId: 1n });
+
+      expect(result.scoreDetail).toEqual([
+        {
+          difficultyMode: 'Hard',
+          totalScore: '32460',
+          categoryScores: [
+            { category: 'Git', score: '17650' },
+            { category: 'Linux', score: '11010' },
+          ],
+        },
+      ]);
     });
   });
 });
