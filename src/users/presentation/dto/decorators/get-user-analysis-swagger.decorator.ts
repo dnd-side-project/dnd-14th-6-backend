@@ -4,11 +4,15 @@ import {
   ApiOkResponse,
   ApiOperation,
   ApiParam,
-  ApiResponse,
   getSchemaPath,
 } from '@nestjs/swagger';
 
 import { ApiResponseDto } from '@common/dto/api-response.dto';
+import {
+  createSwaggerBadRequest,
+  createSwaggerNotFound,
+  createSwaggerServerErrors,
+} from '@common/utils/swagger-error-response.util';
 import {
   FrequentWrongCategoryDto,
   FrequentWrongCommandDto,
@@ -40,21 +44,19 @@ export function ApiGetUserAnalysis() {
         },
       },
     }),
-    ApiResponse({
-      status: 400,
-      description: 'Validation Failed (e.g. Invalid userId format)',
-    }),
-    ApiResponse({
-      status: 404,
-      description: 'User not found',
-    }),
-    ApiResponse({
-      status: 500,
-      description: 'Internal Server Error',
-    }),
-    ApiResponse({
-      status: 503,
-      description: 'Service Unavailable',
-    }),
+    createSwaggerBadRequest([
+      { description: 'userId 필수 누락', message: 'userId는 필수값입니다.' },
+      {
+        description: '잘못된 userId 형식',
+        message: 'userId가 유효한 숫자 형식의 문자열이 아닙니다.',
+      },
+    ]),
+    createSwaggerNotFound([
+      {
+        description: '존재하지 않는 유저',
+        message: '존재하지 않는 유저입니다.',
+      },
+    ]),
+    ...createSwaggerServerErrors(),
   );
 }
