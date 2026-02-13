@@ -121,11 +121,11 @@ export class GameRepositoryImpl implements IGameRepository {
   async getSessionHistoryByFilter(
     filter: GameSessionHistoryFilterEntity,
   ): Promise<GameSessionHistoryList> {
-    const query = this.buildSessionHistoryFilterQuery(filter);
+    const sessionHistoryQueryArgs = this.buildGameSessionHistoryListQueryArgs(filter);
 
     const [sessions, totalCount] = await this.prisma.$transaction([
       this.prisma.gameSession.findMany({
-        ...query,
+        ...sessionHistoryQueryArgs,
         include: {
           category: {
             select: { name: true },
@@ -141,7 +141,7 @@ export class GameRepositoryImpl implements IGameRepository {
           },
         },
       }),
-      this.prisma.gameSession.count({ where: query.where }),
+      this.prisma.gameSession.count({ where: sessionHistoryQueryArgs.where }),
     ]);
 
     const sessionHistories = sessions.map((session) => GameSessionHistory.from(session));
@@ -152,20 +152,28 @@ export class GameRepositoryImpl implements IGameRepository {
     });
   }
 
-  /**
-   * @description 세션 히스토리 조회용 동적 필터 쿼리 생성
-   * where, orderBy, skip, take를 한 번에 구성
-   */
-  private buildSessionHistoryFilterQuery(filter: GameSessionHistoryFilterEntity) {
+  private buildGameSessionHistoryListQueryArgs(filter: GameSessionHistoryFilterEntity) {
+    const where = this.buildGameSessionHistoryFilterWhereClause(filter);
+
+    return {
+      where,
+      orderBy: { [filter.sortBy]: filter.sortOrder },
+      skip: (filter.page - 1) * filter.size,
+      take: filter.size,
+    };
+  }
+
+  private buildGameSessionHistoryFilterWhereClause(
+    filter: GameSessionHistoryFilterEntity,
+  ): Prisma.GameSessionWhereInput {
     const where: Prisma.GameSessionWhereInput = {
       userId: filter.userId,
     };
 
-    if (filter.startDate || filter.endDate) {
-      where.playedAt = {
-        ...(filter.startDate && { gte: new Date(filter.startDate) }),
-        ...(filter.endDate && { lt: new Date(filter.endDate + 'T23:59:59.999Z') }),
-      };
+    const playedAtDateRange = this.buildGameSessionHistoryPlayedAtDateRange(filter);
+
+    if (playedAtDateRange) {
+      where.playedAt = playedAtDateRange;
     }
 
     if (filter.categories?.length) {
@@ -176,24 +184,43 @@ export class GameRepositoryImpl implements IGameRepository {
       where.difficultyMode = { in: filter.difficultyModes };
     }
 
-    if (filter.search) {
+    const searchKeyword = filter.search?.trim();
+
+    if (searchKeyword) {
       where.gameSessionLogs = {
         some: {
           problem: {
             OR: [
-              { text: { contains: filter.search, mode: 'insensitive' } },
-              { answer: { contains: filter.search, mode: 'insensitive' } },
+              { text: { contains: searchKeyword, mode: 'insensitive' } },
+              { answer: { contains: searchKeyword, mode: 'insensitive' } },
             ],
           },
         },
       };
     }
 
-    return {
-      where,
-      orderBy: { [filter.sortBy]: filter.sortOrder },
-      skip: (filter.page - 1) * filter.size,
-      take: filter.size,
-    };
+    return where;
+  }
+
+  private buildGameSessionHistoryPlayedAtDateRange(
+    filter: GameSessionHistoryFilterEntity,
+  ): Prisma.DateTimeFilter | undefined {
+    if (!filter.startDate && !filter.endDate) {
+      return undefined;
+    }
+
+    const playedAtDateRange: Prisma.DateTimeFilter = {};
+
+    if (filter.startDate) {
+      playedAtDateRange.gte = new Date(`${filter.startDate}T00:00:00.000Z`);
+    }
+
+    if (filter.endDate) {
+      const endDateExclusive = new Date(`${filter.endDate}T00:00:00.000Z`);
+      endDateExclusive.setUTCDate(endDateExclusive.getUTCDate() + 1);
+      playedAtDateRange.lt = endDateExclusive;
+    }
+
+    return playedAtDateRange;
   }
 }
