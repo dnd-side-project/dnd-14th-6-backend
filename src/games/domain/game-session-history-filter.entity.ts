@@ -1,4 +1,4 @@
-import { GameSessionSortBy, SortOrder } from './game.business-rules';
+import { GameDifficultyMode, GameSessionSortBy, SortOrder } from './game.business-rules';
 
 export class GameSessionHistoryFilterEntity {
   private constructor(
@@ -11,7 +11,7 @@ export class GameSessionHistoryFilterEntity {
     public readonly startDate?: string,
     public readonly endDate?: string,
     public readonly categories?: string[],
-    public readonly difficultyModes?: string[],
+    public readonly difficultyModes?: GameDifficultyMode[],
   ) {}
 
   static from(

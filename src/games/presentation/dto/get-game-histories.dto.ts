@@ -1,9 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { BadRequestException } from '@nestjs/common';
 import { plainToInstance, Transform, Type } from 'class-transformer';
-import { IsEnum, IsInt, IsNotEmpty, IsOptional, Min } from 'class-validator';
+import { IsDateString, IsEnum, IsInt, IsNotEmpty, IsOptional, Min } from 'class-validator';
 
-import { GameSessionSortBy, SortOrder } from '../../domain/game.business-rules';
+import { GameDifficultyMode, GameSessionSortBy, SortOrder } from '../../domain/game.business-rules';
 import { GameSessionHistoryList } from '../../domain/game-session-history.entity';
 
 export class GetGameHistoriesQueryDto {
@@ -58,6 +58,7 @@ export class GetGameHistoriesQueryDto {
     required: false,
   })
   @IsOptional()
+  @IsDateString({}, { message: 'startDate는 YYYY-MM-DD 형식이어야 합니다.' })
   startDate?: string;
 
   @ApiProperty({
@@ -66,25 +67,44 @@ export class GetGameHistoriesQueryDto {
     required: false,
   })
   @IsOptional()
+  @IsDateString({}, { message: 'endDate는 YYYY-MM-DD 형식이어야 합니다.' })
   endDate?: string;
 
   @ApiProperty({
     description: '게임 카테고리 필터 (,로 구분)',
+    type: String,
+    isArray: false,
     example: 'Git,Linux',
     required: false,
   })
   @IsOptional()
-  @Transform(({ value }) => (value as string)?.split(',').map((v) => v.trim()))
+  @Transform(({ value }) =>
+    (value as string)
+      ?.split(',')
+      .map((v) => v.trim())
+      .filter(Boolean),
+  )
   categories?: string[];
 
   @ApiProperty({
     description: '게임 플레이 난이도 필터 (,로 구분)',
+    type: String,
+    isArray: false,
     example: 'Hard,Random',
     required: false,
   })
   @IsOptional()
-  @Transform(({ value }) => (value as string)?.split(',').map((v) => v.trim()))
-  difficultyModes?: string[];
+  @Transform(({ value }) =>
+    (value as string)
+      ?.split(',')
+      .map((v) => v.trim())
+      .filter(Boolean),
+  )
+  @IsEnum(GameDifficultyMode, {
+    each: true,
+    message: '게임 난이도는 Random, Hard, Normal, Easy 중 하나여야 합니다.',
+  })
+  difficultyModes?: GameDifficultyMode[];
 
   @ApiProperty({
     description: '정렬 기준 컬럼 (플레이 시간 순/ 점수 순/ 맞힌 문제 순)',
