@@ -14,7 +14,7 @@ describe('GamesService', () => {
   let gameRepository: jest.Mocked<IGameRepository>;
 
   beforeEach(async () => {
-    const mockGameRepository: jest.Mocked<IGameRepository> = {
+    const mockGameRepository: Partial<jest.Mocked<IGameRepository>> = {
       getCategories: jest.fn(),
       getFrequentWrongCommands: jest.fn(),
       getFrequentWrongCategories: jest.fn(),
@@ -25,7 +25,7 @@ describe('GamesService', () => {
         GamesService,
         {
           provide: GAME_REPOSITORY,
-          useValue: mockGameRepository,
+          useValue: mockGameRepository as IGameRepository,
         },
       ],
     }).compile();
