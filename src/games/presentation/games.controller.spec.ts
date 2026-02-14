@@ -1,17 +1,18 @@
+import { EventEmitter } from 'events';
+import { BadRequestException, Logger, MessageEvent, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { GamesController } from './games.controller';
+
+import { Request, Response } from 'express';
+import { Observable, of, Subject, takeUntil } from 'rxjs';
+
+import { GameStreamService } from '../application/game-stream.service';
 import { GamesService } from '../application/games.service';
 import { GameCategory } from '../domain/game-categories.entity';
 import { GameOptions } from '../domain/game-options.entity';
-import { DIFFICULTY_MODES } from '../domain/game.business-rules';
+import { DIFFICULTY_MODES, GameDifficultyMode } from '../domain/game.business-rules';
 import { GetGameOptionsResponseDto } from './dto/get-game-options.dto';
-import { GameStreamService } from '../application/game-stream.service';
-import { GameDifficultyMode } from '../domain/game.business-rules';
-import { EventEmitter } from 'events';
-import { Observable, of, Subject, takeUntil } from 'rxjs';
-import { BadRequestException, Logger, MessageEvent, NotFoundException } from '@nestjs/common';
-import { Request, Response } from 'express';
 import { ClientAnswerDto, InputDto, SaveGameSessionRequestDto } from './dto/save-game-session.dto';
+import { GamesController } from './games.controller';
 
 describe('GamesController', () => {
   let controller: GamesController;
@@ -50,9 +51,9 @@ describe('GamesController', () => {
   describe('getGameOptions', () => {
     it('게임옵션 정보를 정상적으로 응답한다.', async () => {
       const categories: GameCategory[] = [
-        { id: 1, name: 'Git' },
-        { id: 2, name: 'Linux' },
-        { id: 3, name: 'Docker' },
+        { id: 1, name: 'Git', iconUrl: 'https://fake-storage/categories/git.png' },
+        { id: 2, name: 'Linux', iconUrl: 'https://fake-storage/categories/linux.png' },
+        { id: 3, name: 'Docker', iconUrl: 'https://fake-storage/categories/docker.png' },
       ];
       const gameOptions = GameOptions.from(categories);
       gameService.getGameOptions.mockResolvedValue(gameOptions);
@@ -224,6 +225,15 @@ describe('GamesController', () => {
         );
 
         await expect(controller.saveGameSession(dto)).rejects.toThrow(NotFoundException);
+      });
+
+      it('중복된 problemId가 포함되어 있으면 BadRequestException을 던진다.', async () => {
+        const dto = createDto();
+        gameService.createGameSession.mockRejectedValue(
+          new BadRequestException('clientAnswers에 중복된 problemId가 포함되어 있습니다.'),
+        );
+
+        await expect(controller.saveGameSession(dto)).rejects.toThrow(BadRequestException);
       });
 
       it('존재하지 않는 문제 ID가 포함되어 있으면 NotFoundException을 던진다.', async () => {
