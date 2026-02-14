@@ -57,6 +57,9 @@ describe('UsersService', () => {
     mockUsersRepository = {
       findAllOrderByScoreDesc: jest.fn(),
       countAll: jest.fn(),
+      findByEmail: jest.fn(),
+      createSocialUser: jest.fn(),
+      updateRefreshToken: jest.fn(),
       findByIdWithTier: jest.fn(),
       getAverageScore: jest.fn(),
       getRankingByScore: jest.fn(),
