@@ -141,8 +141,8 @@ describe('UsersService', () => {
 
     beforeEach(() => {
       const mockCommands = [
-        FrequentWrongCommand.from({ subCategory: 'Branch', wrongCount: 12 }),
-        FrequentWrongCommand.from({ subCategory: 'Commit', wrongCount: 9 }),
+        FrequentWrongCommand.from({ category: 'Git', subCategory: 'Branch', wrongCount: 12 }),
+        FrequentWrongCommand.from({ category: 'Git', subCategory: 'Commit', wrongCount: 9 }),
       ];
 
       const mockCategories = [

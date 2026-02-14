@@ -120,22 +120,27 @@ export class GameRepositoryImpl implements IGameRepository {
    * - 오답 횟수가 많은 순으로 정렬 후 상위 5개만 반환
    */
   async getFrequentWrongCommands(userId: bigint): Promise<FrequentWrongCommand[]> {
-    const result = await this.prisma.$queryRaw<Array<{ subCategory: string; wrongCount: bigint }>>`
+    const result = await this.prisma.$queryRaw<
+      Array<{ category: string; subCategory: string; wrongCount: bigint }>
+    >`
       SELECT
+        c.name as "category",
         sc.name as "subCategory",
         COUNT(*) as "wrongCount"
       FROM game_session_logs gsl
       JOIN game_sessions gs ON gsl.session_id = gs.id
       JOIN problems p ON gsl.problem_id = p.id
+      JOIN categories c ON p.category_id = c.id
       JOIN sub_categories sc ON p.sub_category_id = sc.id
       WHERE gsl.is_solved = false AND gs.user_id = ${userId}
-      GROUP BY sc.id, sc.name
+      GROUP BY c.id, c.name, sc.id, sc.name
       ORDER BY "wrongCount" DESC
       LIMIT 5
     `;
 
     return result.map((row) =>
       FrequentWrongCommand.from({
+        category: row.category,
         subCategory: row.subCategory,
         wrongCount: Number(row.wrongCount),
       }),
@@ -151,7 +156,7 @@ export class GameRepositoryImpl implements IGameRepository {
       Array<{ category: string; wrongRatio: number; wrongCount: bigint; iconUrl: string | null }>
     >`
       SELECT
-        c.name as category,
+        c.name as "category",
         c.icon_url as "iconUrl",
         COUNT(CASE WHEN gsl.is_solved = false THEN 1 END) as "wrongCount",
         ROUND(

@@ -1,13 +1,14 @@
 export class FrequentWrongCommand {
   private constructor(
+    readonly category: string,
     readonly subCategory: string,
     readonly wrongCount: number,
   ) {}
 
   static from(
-    data: Pick<FrequentWrongCommand, 'subCategory' | 'wrongCount'>,
+    data: Pick<FrequentWrongCommand, 'category' | 'subCategory' | 'wrongCount'>,
   ): FrequentWrongCommand {
-    return new FrequentWrongCommand(data.subCategory, data.wrongCount);
+    return new FrequentWrongCommand(data.category, data.subCategory, data.wrongCount);
   }
 }
 

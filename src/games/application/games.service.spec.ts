@@ -58,11 +58,11 @@ describe('GamesService', () => {
 
     beforeEach(() => {
       mockCommands = [
-        FrequentWrongCommand.from({ subCategory: 'Branch', wrongCount: 12 }),
-        FrequentWrongCommand.from({ subCategory: 'Commit', wrongCount: 9 }),
-        FrequentWrongCommand.from({ subCategory: 'Merge', wrongCount: 7 }),
-        FrequentWrongCommand.from({ subCategory: 'Remote', wrongCount: 5 }),
-        FrequentWrongCommand.from({ subCategory: 'Rebase', wrongCount: 3 }),
+        FrequentWrongCommand.from({ category: 'Git', subCategory: 'Branch', wrongCount: 12 }),
+        FrequentWrongCommand.from({ category: 'Git', subCategory: 'Commit', wrongCount: 9 }),
+        FrequentWrongCommand.from({ category: 'Git', subCategory: 'Merge', wrongCount: 7 }),
+        FrequentWrongCommand.from({ category: 'Git', subCategory: 'Remote', wrongCount: 5 }),
+        FrequentWrongCommand.from({ category: 'Git', subCategory: 'Rebase', wrongCount: 3 }),
       ];
 
       mockCategories = [
@@ -109,14 +109,17 @@ describe('GamesService', () => {
       const result = await service.getUserMistakeAnalysis(userId);
 
       expect(result.frequentWrongCommands[0]).toMatchObject({
+        category: 'Git',
         subCategory: 'Branch',
         wrongCount: 12,
       });
       expect(result.frequentWrongCommands[1]).toMatchObject({
+        category: 'Git',
         subCategory: 'Commit',
         wrongCount: 9,
       });
       expect(result.frequentWrongCommands[4]).toMatchObject({
+        category: 'Git',
         subCategory: 'Rebase',
         wrongCount: 3,
       });
