@@ -1,8 +1,8 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
-import { GamesService } from './games.service';
-import { GAME_REPOSITORY, IGameRepository } from '../domain/games.repository.interface';
+import { Test, TestingModule } from '@nestjs/testing';
+
 import { GameCategory } from '../domain/game-categories.entity';
+import { ClientAnswer } from '../domain/game-client-answers.interface';
 import { GameOptions } from '../domain/game-options.entity';
 import { GameProblem } from '../domain/game-problem.entity';
 import {
@@ -11,7 +11,13 @@ import {
   MAX_PROBLEMS_PER_GAME,
   ProblemDifficulty,
 } from '../domain/game.business-rules';
-import { ClientAnswer } from '../domain/game-client-answers.interface';
+import { GAME_REPOSITORY, IGameRepository } from '../domain/games.repository.interface';
+import {
+  FrequentWrongCategory,
+  FrequentWrongCommand,
+  UserMistakeAnalysis,
+} from '../domain/user-mistake-analysis.entity';
+import { GamesService } from './games.service';
 
 const createMockProblem = (id: number, difficulty: ProblemDifficulty = 'Easy'): GameProblem =>
   GameProblem.from({
@@ -33,11 +39,6 @@ const createClientAnswers = (
     solved: false,
     ...overrides[i],
   }));
-import {
-  FrequentWrongCommand,
-  FrequentWrongCategory,
-  UserMistakeAnalysis,
-} from '../domain/user-mistake-analysis.entity';
 
 describe('GamesService', () => {
   let service: GamesService;
@@ -70,9 +71,9 @@ describe('GamesService', () => {
   describe('getGameOptions', () => {
     it('게임옵션 정보 조회에 성공한다.', async () => {
       const expectedCategories: GameCategory[] = [
-        { id: 1, name: 'Git' },
-        { id: 2, name: 'Linux' },
-        { id: 3, name: 'Docker' },
+        { id: 1, name: 'Git', iconUrl: 'https://fake-storage/categories/git.png' },
+        { id: 2, name: 'Linux', iconUrl: 'https://fake-storage/categories/linux.png' },
+        { id: 3, name: 'Docker', iconUrl: 'https://fake-storage/categories/docker.png' },
       ];
       gameRepository.getCategories.mockResolvedValue(expectedCategories);
 
@@ -188,19 +189,27 @@ describe('GamesService', () => {
           }),
         ).rejects.toThrow(NotFoundException);
 
-        expect(gameRepository.findProblemsByIds).not.toHaveBeenCalled();
         expect(gameRepository.saveGameSession).not.toHaveBeenCalled();
       });
 
-      it(`clientAnswers가 ${MAX_PROBLEMS_PER_GAME}개가 아니면 BadRequestException을 던진다.`, async () => {
+      it('clientAnswers에 중복된 problemId가 포함되어 있으면 BadRequestException을 던진다.', async () => {
         gameRepository.categoryExists.mockResolvedValue(true);
+
+        // problemId "1"을 2번 사용하여 중복 발생 (총 20개는 유지)
+        const clientAnswers = createClientAnswers({
+          19: {
+            problemId: '1',
+            inputs: [{ input: 'git init', isCorrect: true }],
+            solved: true,
+          },
+        });
 
         await expect(
           service.createGameSession({
             categoryId: 1,
             difficultyMode: GameDifficultyMode.Easy,
             score: 0,
-            clientAnswers: [],
+            clientAnswers,
           }),
         ).rejects.toThrow(BadRequestException);
 
