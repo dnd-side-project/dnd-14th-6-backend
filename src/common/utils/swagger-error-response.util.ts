@@ -1,4 +1,9 @@
-import { ApiBadRequestResponse, ApiNotFoundResponse, ApiResponse } from '@nestjs/swagger';
+import {
+  ApiBadRequestResponse,
+  ApiNotFoundResponse,
+  ApiResponse,
+  ApiUnauthorizedResponse,
+} from '@nestjs/swagger';
 
 interface ErrorExample {
   description: string;
@@ -47,6 +52,31 @@ export function createSwaggerNotFound(examples: ErrorExample[]) {
 
   return ApiNotFoundResponse({
     description: '리소스 찾을 수 없음',
+    content: {
+      'application/json': {
+        examples: exampleObject,
+      },
+    },
+  });
+}
+
+/**
+ * @description Unauthorized(401) Swagger 응답 명세를 생성하는 헬퍼 함수
+ */
+export function createSwaggerUnauthorized(examples: ErrorExample[]) {
+  const exampleObject = {};
+  examples.forEach((data) => {
+    exampleObject[data.description] = {
+      value: {
+        statusCode: 401,
+        success: false,
+        message: data.message,
+      },
+    };
+  });
+
+  return ApiUnauthorizedResponse({
+    description: '인증 실패',
     content: {
       'application/json': {
         examples: exampleObject,
