@@ -1,15 +1,12 @@
 import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { GAME_REPOSITORY, IGameRepository } from '../domain/games.repository.interface';
+
+import { ClientAnswer } from '../domain/game-client-answers.interface';
 import { GameOptions } from '../domain/game-options.entity';
 import { GameProblem } from '../domain/game-problem.entity';
-import {
-  MAX_PROBLEMS_PER_GAME,
-  ProblemDifficulty,
-  calculateServerScore,
-} from '../domain/game.business-rules';
-import { CreateGameSessionServiceRequestDto } from './service-dto/create-game-session.service-dto';
-import { ClientAnswer } from '../domain/game-client-answers.interface';
+import { calculateServerScore, ProblemDifficulty } from '../domain/game.business-rules';
+import { GAME_REPOSITORY, IGameRepository } from '../domain/games.repository.interface';
 import { UserMistakeAnalysis } from '../domain/user-mistake-analysis.entity';
+import { CreateGameSessionServiceRequestDto } from './service-dto/create-game-session.service-dto';
 
 @Injectable()
 export class GamesService {
@@ -56,10 +53,12 @@ export class GamesService {
     categoryId: number,
     clientAnswers: ClientAnswer[],
   ): Promise<number> {
-    await this.validateCategory(categoryId);
-    this.validateClientAnswersCount(clientAnswers);
-    const problems = await this.validateGameProblems(clientAnswers);
     this.validateAnswerIntegrity(clientAnswers);
+
+    const [, problems] = await Promise.all([
+      this.validateCategory(categoryId),
+      this.validateAndMatchedGameProblems(clientAnswers),
+    ]);
     return this.calculateScore(clientAnswers, problems);
   }
 
@@ -75,25 +74,23 @@ export class GamesService {
   }
 
   /**
-   * @description 게임 문제 수 검증 - 게임당 정확히 MAX_PROBLEMS_PER_GAME(20)개여야 함
-   */
-  private validateClientAnswersCount(clientAnswers: ClientAnswer[]): void {
-    if (clientAnswers.length !== MAX_PROBLEMS_PER_GAME) {
-      throw new BadRequestException(`clientAnswers는 ${MAX_PROBLEMS_PER_GAME}개여야 합니다.`);
-    }
-  }
-
-  /**
    * @description 클라이언트가 푼 게임문제 검증
    */
-  private async validateGameProblems(clientAnswers: ClientAnswer[]): Promise<GameProblem[]> {
+  private async validateAndMatchedGameProblems(
+    clientAnswers: ClientAnswer[],
+  ): Promise<GameProblem[]> {
     const problemIds = clientAnswers.map((a) => BigInt(a.problemId));
     const uniqueProblemIds = [...new Set(problemIds)];
+
+    if (uniqueProblemIds.length !== problemIds.length) {
+      throw new BadRequestException('clientAnswers에 중복된 problemId가 포함되어 있습니다.');
+    }
+
     const problems = await this.gameRepository.findProblemsByIds(uniqueProblemIds);
 
     if (problems.length !== uniqueProblemIds.length) {
       const foundIds = new Set(problems.map((p) => p.id));
-      const missingIds = problemIds.filter((id) => !foundIds.has(id));
+      const missingIds = uniqueProblemIds.filter((id) => !foundIds.has(id));
       throw new NotFoundException(
         `존재하지 않는 문제 ID가 포함되어 있습니다. (problemId: ${missingIds.join(', ')})`,
       );
@@ -103,7 +100,7 @@ export class GamesService {
   }
 
   /**
-   * @description 클라이언트 문제풀이 정답/오답 검증
+   * @description 클라이언트 문제풀이 입력데이터가 정답인지 검증
    */
   private validateAnswerIntegrity(clientAnswers: ClientAnswer[]): void {
     const invalid = clientAnswers.find(
