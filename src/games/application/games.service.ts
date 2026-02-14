@@ -31,6 +31,7 @@ export class GamesService {
 
   /**
    * @description 게임 세션에 유저 ID 연동
+   * FIXME: game-session.service.ts 병합 되면 이동
    */
   async attachUserToSession(sessionId: bigint, userId: bigint): Promise<void> {
     const isAttached = await this.gameRepository.updateUserIdToGameSession(sessionId, userId);
