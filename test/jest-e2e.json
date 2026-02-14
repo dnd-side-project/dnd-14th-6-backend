@@ -15,6 +15,7 @@
     "^@sse-sample/(.*)$": "<rootDir>/../src/sse-sample/$1",
     "^@games/(.*)$": "<rootDir>/../src/games/$1",
     "^@tiers/(.*)$": "<rootDir>/../src/tiers/$1",
-    "^@users/(.*)$": "<rootDir>/../src/users/$1"
+    "^@users/(.*)$": "<rootDir>/../src/users/$1",
+    "^@auth/(.*)$": "<rootDir>/../src/auth/$1"
   }
 }

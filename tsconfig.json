@@ -25,7 +25,8 @@
       "@sse-sample/*": ["src/sse-sample/*"],
       "@tiers/*": ["src/tiers/*"],
       "@users/*": ["src/users/*"],
-      "@games/*": ["src/games/*"]
+      "@games/*": ["src/games/*"],
+      "@auth/*": ["src/auth/*"]
     },
   }
 }
