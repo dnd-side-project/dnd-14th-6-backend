@@ -1,10 +1,6 @@
-import {
-  DIFFICULTY_MODES,
-  GameDifficultyMode,
-  MAX_PROBLEMS_PER_GAME,
-} from '@games/domain/game.business-rules';
 import { ApiProperty } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
+
+import { plainToInstance, Type } from 'class-transformer';
 import {
   ArrayMaxSize,
   ArrayMinSize,
@@ -19,6 +15,12 @@ import {
   Min,
   ValidateNested,
 } from 'class-validator';
+
+import {
+  DIFFICULTY_MODES,
+  GameDifficultyMode,
+  MAX_PROBLEMS_PER_GAME,
+} from '../../domain/game.business-rules';
 
 export class InputDto {
   @ApiProperty({
@@ -113,11 +115,14 @@ export class SaveGameSessionRequestDto {
 }
 
 export class SaveGameSessionResponseDto {
+  @ApiProperty({
+    description: '생성된 게임세션 ID',
+  })
   gameSessionId: string;
 
   static from(gameSessionId: bigint): SaveGameSessionResponseDto {
-    const dto = new SaveGameSessionResponseDto();
-    dto.gameSessionId = gameSessionId.toString();
-    return dto;
+    return plainToInstance(SaveGameSessionResponseDto, {
+      gameSessionId: String(gameSessionId),
+    });
   }
 }
