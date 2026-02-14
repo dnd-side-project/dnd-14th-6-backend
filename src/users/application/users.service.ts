@@ -26,6 +26,36 @@ export class UsersService {
     ]);
   }
 
+  /**
+   * @description 이메일로 유저 조회
+   */
+  async findByEmail(email: string): Promise<User | null> {
+    return this.usersRepository.findByEmail(email);
+  }
+
+  /**
+   * @description 소셜 정보로 유저 생성
+   */
+  async createSocialUser(socialUser: {
+    email: string;
+    nickname: string;
+    provider: string;
+    providerId: string;
+    profileImage: string | null;
+    githubUrl: string | null;
+    refreshToken: string;
+    tierId: number;
+  }): Promise<User> {
+    return this.usersRepository.createSocialUser(socialUser);
+  }
+
+  /**
+   * @description 유저 리프레시 토큰 업데이트
+   */
+  async updateRefreshToken(userId: bigint, refreshToken: string): Promise<User> {
+    return this.usersRepository.updateRefreshToken(userId, refreshToken);
+  }
+
   // FIXME: user facade 도입을 통해 도메인 결합 분리되도록 리팩터링 필요
   async getUserAnalysis(userId: bigint): Promise<UserMistakeAnalysis> {
     return this.gamesService.getUserMistakeAnalysis(userId);

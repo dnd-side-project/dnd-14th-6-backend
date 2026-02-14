@@ -25,6 +25,56 @@ export class UsersRepositoryImpl implements IUsersRepository {
   }
 
   /**
+   * @description 이메일로 유저 조회
+   */
+  async findByEmail(email: string): Promise<User | null> {
+    const user = await this.prisma.user.findUnique({
+      where: { email },
+      include: { tier: true },
+    });
+
+    if (!user) {
+      return null;
+    }
+
+    return User.from(user);
+  }
+
+  /**
+   * @description 소셜 로그인 유저 생성
+   */
+  async createSocialUser(socialUser: {
+    email: string;
+    nickname: string;
+    provider: string;
+    providerId: string;
+    profileImage: string | null;
+    githubUrl: string | null;
+    refreshToken: string;
+    tierId: number;
+  }): Promise<User> {
+    const user = await this.prisma.user.create({
+      data: socialUser,
+      include: { tier: true },
+    });
+
+    return User.from(user);
+  }
+
+  /**
+   * @description 리프레시 토큰 업데이트
+   */
+  async updateRefreshToken(userId: bigint, refreshToken: string): Promise<User> {
+    const user = await this.prisma.user.update({
+      where: { id: userId },
+      data: { refreshToken },
+      include: { tier: true },
+    });
+
+    return User.from(user);
+  }
+
+  /**
    * @description userId의 해당하는 tier 정보를 조회
    */
   async findByIdWithTier(userId: bigint): Promise<User | null> {
