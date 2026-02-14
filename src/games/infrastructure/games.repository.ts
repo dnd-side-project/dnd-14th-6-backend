@@ -178,4 +178,21 @@ export class GameRepositoryImpl implements IGameRepository {
       }),
     );
   }
+
+  /**
+   * @description 게임 세션에 유저 ID 업데이트
+   */
+  async updateUserIdToGameSession(sessionId: bigint, userId: bigint): Promise<boolean> {
+    const result = await this.prisma.gameSession.updateMany({
+      where: {
+        id: sessionId,
+        userId: null,
+      },
+      data: {
+        userId,
+      },
+    });
+
+    return result.count > 0;
+  }
 }
