@@ -270,6 +270,8 @@ describe('GamesService', () => {
 
         expect(gameRepository.saveGameSession).not.toHaveBeenCalled();
       });
+    });
+  });
   describe('getUserMistakeAnalysis', () => {
     const userId = 1n;
     let mockCommands: FrequentWrongCommand[];
