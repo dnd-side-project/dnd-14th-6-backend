@@ -156,7 +156,7 @@ export class GameRepositoryImpl implements IGameRepository {
       Array<{ category: string; wrongRatio: number; wrongCount: bigint; iconUrl: string | null }>
     >`
       SELECT
-        c.name as category,
+        c.name as "category",
         c.icon_url as "iconUrl",
         COUNT(CASE WHEN gsl.is_solved = false THEN 1 END) as "wrongCount",
         ROUND(
