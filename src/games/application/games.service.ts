@@ -130,6 +130,7 @@ export class GamesService {
 
     return calculateServerScore(solvedDifficulties);
   }
+  /*
    * @description 사용자의 명령어, 카테고리 실수 분석 조회
    * - 자주 틀린 명령어 Top 5 (서브 카테고리 별)
    * - 자주 틀린 카테고리 (오답 비율 포함)
