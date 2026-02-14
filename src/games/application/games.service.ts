@@ -9,6 +9,7 @@ import {
 } from '../domain/game.business-rules';
 import { CreateGameSessionServiceRequestDto } from './service-dto/create-game-session.service-dto';
 import { ClientAnswer } from '../domain/game-client-answers.interface';
+import { UserMistakeAnalysis } from '../domain/user-mistake-analysis.entity';
 
 @Injectable()
 export class GamesService {
@@ -128,5 +129,20 @@ export class GamesService {
       });
 
     return calculateServerScore(solvedDifficulties);
+  }
+   * @description 사용자의 명령어, 카테고리 실수 분석 조회
+   * - 자주 틀린 명령어 Top 5 (서브 카테고리 별)
+   * - 자주 틀린 카테고리 (오답 비율 포함)
+   */
+  async getUserMistakeAnalysis(userId: bigint): Promise<UserMistakeAnalysis> {
+    const [frequentWrongCommands, frequentWrongCategories] = await Promise.all([
+      this.gameRepository.getFrequentWrongCommands(userId),
+      this.gameRepository.getFrequentWrongCategories(userId),
+    ]);
+
+    return UserMistakeAnalysis.from({
+      frequentWrongCommands,
+      frequentWrongCategories,
+    });
   }
 }
