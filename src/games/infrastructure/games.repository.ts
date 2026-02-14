@@ -124,7 +124,7 @@ export class GameRepositoryImpl implements IGameRepository {
       Array<{ category: string; subCategory: string; wrongCount: bigint }>
     >`
       SELECT
-        c.name as category,
+        c.name as "category",
         sc.name as "subCategory",
         COUNT(*) as "wrongCount"
       FROM game_session_logs gsl
