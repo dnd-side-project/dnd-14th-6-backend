@@ -1,14 +1,16 @@
 import { Body, Controller, Get, Logger, MessageEvent, Post, Query, Req, Res } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { GamesService } from '../application/games.service';
-import { GetGameOptionsResponseDto } from './dto/get-game-options.dto';
-import { ApiGetGameOptions } from './decorators/get-game-options-swagger.decorator';
-import { ApiGameStream } from './decorators/game-stream-swagger.decorator';
-import { ApiSaveGameSession } from './decorators/save-game-session-swagger.decorator';
+
 import { Request, Response } from 'express';
 import { Subject } from 'rxjs';
+
 import { GameStreamService } from '../application/game-stream.service';
+import { GamesService } from '../application/games.service';
+import { ApiGameStream } from './decorators/game-stream-swagger.decorator';
+import { ApiGetGameOptions } from './decorators/get-game-options-swagger.decorator';
+import { ApiSaveGameSession } from './decorators/save-game-session-swagger.decorator';
 import { GameStreamQueryDto } from './dto/game-stream-query.dto';
+import { GetGameOptionsResponseDto } from './dto/get-game-options.dto';
 import { SaveGameSessionRequestDto, SaveGameSessionResponseDto } from './dto/save-game-session.dto';
 
 @ApiTags('Games')
@@ -91,6 +93,10 @@ export class GamesController {
       clientAnswers: dto.clientAnswers,
     });
 
+    // FIXME: (회원 한정) 게임세션 저장후
+    // user 도메인이 연관되므로 Facade application 계층 추가
+    // user_id에 매핑된 게임세션들의 score들을 합산하여 User.totalScore 업데이트
+    // 회원인경우에는 totalScore도 같이 리스폰스하도록 응답DTO(SaveGameSessionResponseDto) 업데이트
     return SaveGameSessionResponseDto.from(gameSessionId);
   }
 }
