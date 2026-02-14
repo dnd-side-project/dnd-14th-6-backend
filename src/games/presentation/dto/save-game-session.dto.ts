@@ -105,9 +105,11 @@ export class SaveGameSessionRequestDto {
     type: [ClientAnswerDto],
   })
   @IsArray({ message: 'clientAnswers는 배열 형식이어야 합니다.' })
-  @ArrayMinSize(0)
+  @ArrayMinSize(MAX_PROBLEMS_PER_GAME, {
+    message: `clientAnswers는 정확히 ${MAX_PROBLEMS_PER_GAME}개여야 합니다.`,
+  })
   @ArrayMaxSize(MAX_PROBLEMS_PER_GAME, {
-    message: `clientAnswers는 최대 ${MAX_PROBLEMS_PER_GAME}개까지 입력 가능합니다.`,
+    message: `clientAnswers는 정확히 ${MAX_PROBLEMS_PER_GAME}개여야 합니다.`,
   })
   @ValidateNested({ each: true })
   @Type(() => ClientAnswerDto)
