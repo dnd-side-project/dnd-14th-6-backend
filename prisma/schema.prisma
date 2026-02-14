@@ -55,6 +55,7 @@ model Tier {
 model Category {
   id   Int    @id @default(autoincrement()) /// 카테고리 ID
   name String @unique @db.VarChar(50)       /// 카테고리 이름
+  iconUrl String  @map("icon_url")          /// 아이콘 이미지
 
   subCategories SubCategory[]
   problems      Problem[]
