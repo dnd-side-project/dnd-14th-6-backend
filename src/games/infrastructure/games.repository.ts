@@ -8,6 +8,11 @@ import { capitalize } from '@common/utils/string.util';
 import { GameCategory } from '../domain/game-categories.entity';
 import { ClientAnswerInput } from '../domain/game-client-answers.interface';
 import { GameProblem } from '../domain/game-problem.entity';
+import {
+  GameResultProblemReport,
+  GameResultReport,
+  GameResultSummary,
+} from '../domain/game-result-report.entity';
 import { GameSessionHistoryFilterEntity } from '../domain/game-session-history-filter.entity';
 import { GameSessionHistory, GameSessionHistoryList } from '../domain/game-session-history.entity';
 import {
@@ -366,5 +371,57 @@ export class GameRepositoryImpl implements IGameRepository {
         iconUrl: row.iconUrl,
       }),
     );
+  }
+
+  /**
+   * @description 게임 결과 리포트 조회
+   */
+  async findGameResultReport(gameSessionId: bigint): Promise<GameResultReport | null> {
+    const session = await this.prisma.gameSession.findUnique({
+      where: { id: gameSessionId },
+      include: {
+        gameSessionLogs: {
+          include: {
+            problem: {
+              include: {
+                subCategory: { select: { name: true } },
+              },
+            },
+          },
+          orderBy: { id: 'asc' },
+        },
+      },
+    });
+
+    if (!session) {
+      return null;
+    }
+
+    const summary = GameResultSummary.from({
+      sessionId: session.id,
+      userId: session.userId,
+      score: session.score,
+      totalProblemCount: session.totalProblemCount,
+      correctProblemCount: session.correctProblemCount,
+    });
+
+    const reports = session.gameSessionLogs.map((log) =>
+      GameResultProblemReport.from({
+        problemId: log.problem.id,
+        subCategory: log.problem.subCategory.name,
+        text: log.problem.text,
+        explanation: log.problem.explanation,
+        inputs: log.inputs as unknown as ClientAnswerInput[],
+        answer: log.problem.answer,
+        isSolved: log.isSolved,
+        tryCount: log.tryCount,
+      }),
+    );
+
+    return GameResultReport.from({
+      isGuest: session.userId === null,
+      summary,
+      reports,
+    });
   }
 }
