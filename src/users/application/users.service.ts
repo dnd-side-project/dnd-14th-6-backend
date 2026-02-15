@@ -37,9 +37,9 @@ export class UsersService {
    * @description userId로 유저 존재 여부 조회
    */
   async isExistUser(userId: bigint): Promise<boolean> {
-    const user = await this.usersRepository.findByIdWithTier(userId);
+    const isExist = await this.usersRepository.isExistUser(userId);
 
-    return !!user;
+    return isExist;
   }
 
   /**
