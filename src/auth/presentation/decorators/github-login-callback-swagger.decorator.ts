@@ -34,6 +34,10 @@ export function ApiGithubLoginCallback() {
         description: '이메일 정보 없음',
         message: 'Github 계정 이메일 정보가 없어 로그인할 수 없습니다.',
       },
+      {
+        description: '이름 정보 없음',
+        message: 'Github 계정 이름 정보가 없어 로그인할 수 없습니다.',
+      },
     ]),
     ...createSwaggerServerErrors(),
   );

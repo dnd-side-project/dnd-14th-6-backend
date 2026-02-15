@@ -8,6 +8,9 @@ import { ProcessSocialLoginResponseDto } from './service-dto/process-social-logi
 export class AuthService {
   constructor(private readonly jwtService: JwtService) {}
 
+  /**
+   * @description access, refresh token 발급
+   */
   issueTokens(userId: bigint): ProcessSocialLoginResponseDto {
     return {
       accessToken: this.createAccessToken(userId),
@@ -15,6 +18,9 @@ export class AuthService {
     };
   }
 
+  /**
+   * @description accessToken 생성
+   */
   createAccessToken(userId: bigint): string {
     return this.jwtService.sign(
       {
@@ -26,6 +32,9 @@ export class AuthService {
     );
   }
 
+  /**
+   * @description refreshToken 생성
+   */
   createRefreshToken(): string {
     return randomBytes(48).toString('base64url');
   }
