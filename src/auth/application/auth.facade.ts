@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 
-import { GamesService } from '@games/application/games.service';
+import { GameSessionService } from '@games/application/game-session.service';
 import { TiersService } from '@tiers/application/tiers.service';
 import { UsersService } from '@users/application/users.service';
 
@@ -16,7 +16,7 @@ export class AuthFacade {
   constructor(
     private readonly authService: AuthService,
     private readonly usersService: UsersService,
-    private readonly gamesService: GamesService,
+    private readonly gameSessionService: GameSessionService,
     private readonly tiersService: TiersService,
   ) {}
 
@@ -80,6 +80,6 @@ export class AuthFacade {
       return;
     }
 
-    await this.gamesService.attachUserToSession(gameSessionId, userId);
+    await this.gameSessionService.attachUserToSession(gameSessionId, userId);
   }
 }

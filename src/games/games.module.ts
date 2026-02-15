@@ -19,6 +19,6 @@ import { GameStreamService } from './application/game-stream.service';
     },
   ],
   controllers: [GamesController],
-  exports: [GamesService],
+  exports: [GamesService, GameSessionService],
 })
 export class GamesModule {}
