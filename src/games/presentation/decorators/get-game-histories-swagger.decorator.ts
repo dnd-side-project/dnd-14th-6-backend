@@ -1,8 +1,15 @@
 import { applyDecorators } from '@nestjs/common';
-import { ApiExtraModels, ApiOkResponse, ApiOperation, getSchemaPath } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiExtraModels,
+  ApiOkResponse,
+  ApiOperation,
+  getSchemaPath,
+} from '@nestjs/swagger';
 
 import { ApiResponseDto } from '@common/dto/api-response.dto';
 import {
+  createSwaggerAuthErrors,
   createSwaggerBadRequest,
   createSwaggerServerErrors,
 } from '@common/utils/swagger-error-response.util';
@@ -11,6 +18,7 @@ import { GetGameHistoriesResponseDto } from '../dto/get-game-histories.dto';
 
 export function ApiGetGameHistories() {
   return applyDecorators(
+    ApiBearerAuth(),
     ApiOperation({ summary: '게임 세션 히스토리 목록 조회' }),
     ApiExtraModels(ApiResponseDto, GetGameHistoriesResponseDto),
     ApiOkResponse({
@@ -48,6 +56,7 @@ export function ApiGetGameHistories() {
         message: 'sortOrder는 asc, desc 중 하나여야 합니다.',
       },
     ]),
+    ...createSwaggerAuthErrors(),
     ...createSwaggerServerErrors(),
   );
 }
