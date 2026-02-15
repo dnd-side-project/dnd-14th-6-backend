@@ -11,6 +11,9 @@ interface ErrorExample {
   message: string;
 }
 
+/**
+ * @description BadRequest(400) Swagger 에러 응답 명세를 생성하는 헬퍼 함수
+ */
 export function createSwaggerBadRequest(examples: ErrorExample[]) {
   const exampleObject = {};
   examples.forEach((data) => {
@@ -33,6 +36,9 @@ export function createSwaggerBadRequest(examples: ErrorExample[]) {
   });
 }
 
+/**
+ * @description NotFound(404) Swagger 에러 응답 명세를 생성하는 헬퍼 함수
+ */
 export function createSwaggerNotFound(examples: ErrorExample[]) {
   const exampleObject = {};
   examples.forEach((data) => {
@@ -55,6 +61,9 @@ export function createSwaggerNotFound(examples: ErrorExample[]) {
   });
 }
 
+/**
+ * @description Unauthorized(401) Swagger 응답 명세를 생성하는 헬퍼 함수
+ */
 export function createSwaggerUnauthorized(examples: ErrorExample[]) {
   const exampleObject = {};
   examples.forEach((data) => {
@@ -77,6 +86,9 @@ export function createSwaggerUnauthorized(examples: ErrorExample[]) {
   });
 }
 
+/**
+ * @description Forbidden(403) Swagger 응답 명세를 생성하는 헬퍼 함수
+ */
 export function createSwaggerForbidden(examples: ErrorExample[]) {
   const exampleObject = {};
   examples.forEach((data) => {
@@ -99,6 +111,9 @@ export function createSwaggerForbidden(examples: ErrorExample[]) {
   });
 }
 
+/**
+ * @description Auth 인증 관련 전체 에러 명세 생성
+ */
 export function createSwaggerAuthErrors() {
   return [
     createSwaggerUnauthorized([
@@ -130,6 +145,9 @@ export function createSwaggerAuthErrors() {
   ];
 }
 
+/**
+ * @description 서버 에러(500, 503) Swagger 응답 명세를 생성하는 헬퍼 함수
+ */
 export function createSwaggerServerErrors() {
   return [
     ApiResponse({
