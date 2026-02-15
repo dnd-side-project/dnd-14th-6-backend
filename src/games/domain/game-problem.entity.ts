@@ -1,4 +1,4 @@
-import { GameDifficultyMode } from './game.business-rules';
+import { ProblemDifficulty } from './game.business-rules';
 
 export class GameProblem {
   private constructor(
@@ -8,7 +8,7 @@ export class GameProblem {
     readonly text: string,
     readonly answer: string,
     readonly point: number,
-    readonly difficulty: GameDifficultyMode,
+    readonly difficulty: ProblemDifficulty,
   ) {}
 
   static from(

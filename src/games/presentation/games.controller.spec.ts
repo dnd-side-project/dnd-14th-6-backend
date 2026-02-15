@@ -1,26 +1,29 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { Logger, MessageEvent, NotFoundException } from '@nestjs/common';
 import { EventEmitter } from 'events';
-import { Observable, of, Subject, takeUntil } from 'rxjs';
+import { BadRequestException, Logger, MessageEvent, NotFoundException } from '@nestjs/common';
+import { Test, TestingModule } from '@nestjs/testing';
+
 import { Request, Response } from 'express';
+import { Observable, of, Subject, takeUntil } from 'rxjs';
 
-import { GamesController } from './games.controller';
-
-import { GamesService } from '../application/games.service';
-import { GameStreamService } from '../application/game-stream.service';
 import { GameSessionService } from '../application/game-session.service';
-
+import { GameStreamService } from '../application/game-stream.service';
+import { GamesService } from '../application/games.service';
 import { GameCategory } from '../domain/game-categories.entity';
 import { GameOptions } from '../domain/game-options.entity';
 import { GameSessionHistoryList } from '../domain/game-session-history.entity';
-import { DIFFICULTY_MODES, GameSessionSortBy, SortOrder } from '../domain/game.business-rules';
-import { GameDifficultyMode } from '../domain/game.business-rules';
-
-import { GetGameOptionsResponseDto } from './dto/get-game-options.dto';
+import {
+  DIFFICULTY_MODES,
+  GameDifficultyMode,
+  GameSessionSortBy,
+  SortOrder,
+} from '../domain/game.business-rules';
 import {
   GetGameHistoriesQueryDto,
   GetGameHistoriesResponseDto,
 } from './dto/get-game-histories.dto';
+import { GetGameOptionsResponseDto } from './dto/get-game-options.dto';
+import { ClientAnswerDto, InputDto, SaveGameSessionRequestDto } from './dto/save-game-session.dto';
+import { GamesController } from './games.controller';
 
 describe('GamesController', () => {
   let controller: GamesController;
@@ -31,6 +34,7 @@ describe('GamesController', () => {
   beforeEach(async () => {
     const mockGameService = {
       getGameOptions: jest.fn(),
+      createGameSession: jest.fn(),
     };
     const mockGameStreamService = {
       validateGameStreamParams: jest.fn(),
@@ -68,9 +72,9 @@ describe('GamesController', () => {
   describe('getGameOptions', () => {
     it('게임옵션 정보를 정상적으로 응답한다.', async () => {
       const categories: GameCategory[] = [
-        { id: 1, name: 'Git' },
-        { id: 2, name: 'Linux' },
-        { id: 3, name: 'Docker' },
+        { id: 1, name: 'Git', iconUrl: 'https://fake-storage/categories/git.png' },
+        { id: 2, name: 'Linux', iconUrl: 'https://fake-storage/categories/linux.png' },
+        { id: 3, name: 'Docker', iconUrl: 'https://fake-storage/categories/docker.png' },
       ];
       const gameOptions = GameOptions.from(categories);
       gameService.getGameOptions.mockResolvedValue(gameOptions);
@@ -227,6 +231,82 @@ describe('GamesController', () => {
         expect(mockResponse.end).toHaveBeenCalled();
 
         loggerSpy.mockRestore();
+      });
+    });
+  });
+  describe('saveGameSession', () => {
+    const createDto = (): SaveGameSessionRequestDto => {
+      const input = Object.assign(new InputDto(), {
+        input: 'git init',
+        isCorrect: true,
+      });
+      const clientAnswer = Object.assign(new ClientAnswerDto(), {
+        problemId: '1',
+        inputs: [input],
+        solved: true,
+      });
+      return Object.assign(new SaveGameSessionRequestDto(), {
+        categoryId: 1,
+        difficultyMode: GameDifficultyMode.Easy,
+        score: 10,
+        clientAnswers: [clientAnswer],
+      });
+    };
+
+    describe('✅ 성공 케이스', () => {
+      it('게임 세션을 정상 저장하고 gameSessionId를 반환한다.', async () => {
+        const dto = createDto();
+        gameService.createGameSession.mockResolvedValue(BigInt(100));
+
+        const result = await controller.saveGameSession(dto);
+
+        expect(result).toEqual({ gameSessionId: '100' });
+        expect(gameService.createGameSession).toHaveBeenCalledWith({
+          categoryId: dto.categoryId,
+          difficultyMode: dto.difficultyMode,
+          score: dto.score,
+          clientAnswers: dto.clientAnswers,
+        });
+      });
+    });
+    describe('❌ 실패 케이스', () => {
+      it('존재하지 않는 카테고리면 NotFoundException을 던진다.', async () => {
+        const dto = createDto();
+        dto.categoryId = 999;
+        gameService.createGameSession.mockRejectedValue(
+          new NotFoundException('존재하지 않는 카테고리입니다.'),
+        );
+
+        await expect(controller.saveGameSession(dto)).rejects.toThrow(NotFoundException);
+      });
+
+      it('중복된 problemId가 포함되어 있으면 BadRequestException을 던진다.', async () => {
+        const dto = createDto();
+        gameService.createGameSession.mockRejectedValue(
+          new BadRequestException('clientAnswers에 중복된 problemId가 포함되어 있습니다.'),
+        );
+
+        await expect(controller.saveGameSession(dto)).rejects.toThrow(BadRequestException);
+      });
+
+      it('존재하지 않는 문제 ID가 포함되어 있으면 NotFoundException을 던진다.', async () => {
+        const dto = createDto();
+        gameService.createGameSession.mockRejectedValue(
+          new NotFoundException('존재하지 않는 문제 ID가 포함되어 있습니다. (problemId: 999)'),
+        );
+
+        await expect(controller.saveGameSession(dto)).rejects.toThrow(NotFoundException);
+      });
+
+      it('solved=true인데 정답 처리된 입력이 없으면 BadRequestException을 던진다.', async () => {
+        const dto = createDto();
+        gameService.createGameSession.mockRejectedValue(
+          new BadRequestException(
+            '데이터 무결성 오류: solved가 true이지만 정답 처리된 입력이 없습니다.',
+          ),
+        );
+
+        await expect(controller.saveGameSession(dto)).rejects.toThrow(BadRequestException);
       });
     });
   });

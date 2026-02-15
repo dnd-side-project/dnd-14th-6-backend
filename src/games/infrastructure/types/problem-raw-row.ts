@@ -1,10 +1,10 @@
-import { ProblemDifficulty } from '@games/domain/game.business-rules';
+import { Difficulty } from '@prisma/client';
 
 export interface ProblemRawRow {
   id: bigint;
   title: string;
   text: string;
   answer: string;
-  difficulty: ProblemDifficulty;
+  difficulty: Difficulty;
   subCategoryName: string;
 }
