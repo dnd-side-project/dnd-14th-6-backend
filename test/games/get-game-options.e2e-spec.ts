@@ -1,15 +1,18 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { execSync } from 'child_process';
 import { INestApplication } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
+import { Test, TestingModule } from '@nestjs/testing';
+
+import { PrismaClient } from '@prisma/client';
 import * as request from 'supertest';
 import { App } from 'supertest/types';
 import { GenericContainer, StartedTestContainer } from 'testcontainers';
-import { execSync } from 'child_process';
-import { PrismaClient } from '@prisma/client';
-import { AppModule } from '../../src/app.module';
+
 import { ResponseInterceptor } from '@common/interceptors/response.interceptor';
 import { DIFFICULTY_MODES, GameDifficultyMode } from '@games/domain/game.business-rules';
+
 import { seedCategories } from '../../prisma/seeds/category.seed';
+import { AppModule } from '../../src/app.module';
 
 interface GameOptionsApiResponse {
   statusCode: number;
@@ -68,9 +71,21 @@ describe('GET /api/games/options (e2e)', () => {
     expect(body.success).toBe(true);
     expect(body.data.categories).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ id: 1, name: 'Git' }),
-        expect.objectContaining({ id: 2, name: 'Linux' }),
-        expect.objectContaining({ id: 3, name: 'Docker' }),
+        expect.objectContaining({
+          id: 1,
+          name: 'Git',
+          iconUrl: 'https://cdn.orvit.net/categories/git.png',
+        }),
+        expect.objectContaining({
+          id: 2,
+          name: 'Linux',
+          iconUrl: 'https://cdn.orvit.net/categories/linux.png',
+        }),
+        expect.objectContaining({
+          id: 3,
+          name: 'Docker',
+          iconUrl: 'https://cdn.orvit.net/categories/docker.png',
+        }),
       ]),
     );
     expect(body.data.difficultyModes).toEqual(DIFFICULTY_MODES);
