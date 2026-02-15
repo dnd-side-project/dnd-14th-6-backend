@@ -1,8 +1,21 @@
-import { Body, Controller, Get, Logger, MessageEvent, Post, Query, Req, Res } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Logger,
+  MessageEvent,
+  Param,
+  Post,
+  Query,
+  Req,
+  Res,
+} from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 
 import { Request, Response } from 'express';
 import { Subject } from 'rxjs';
+
+import { ParseBigIntPipe } from '@common/pipes/parse-bigint.pipe';
 
 import { GameSessionService } from '../application/game-session.service';
 import { GameStreamService } from '../application/game-stream.service';
@@ -10,6 +23,7 @@ import { GamesService } from '../application/games.service';
 import { ApiGameStream } from './decorators/game-stream-swagger.decorator';
 import { ApiGetGameHistories } from './decorators/get-game-histories-swagger.decorator';
 import { ApiGetGameOptions } from './decorators/get-game-options-swagger.decorator';
+import { ApiGetGameResultReport } from './decorators/get-game-result-report-swagger.decorator';
 import { ApiSaveGameSession } from './decorators/save-game-session-swagger.decorator';
 import { GameStreamQueryDto } from './dto/game-stream-query.dto';
 import {
@@ -17,6 +31,7 @@ import {
   GetGameHistoriesResponseDto,
 } from './dto/get-game-histories.dto';
 import { GetGameOptionsResponseDto } from './dto/get-game-options.dto';
+import { GetGameResultReportResponseDto } from './dto/get-game-result-report.dto';
 import { SaveGameSessionRequestDto, SaveGameSessionResponseDto } from './dto/save-game-session.dto';
 
 @ApiTags('Games')
@@ -116,5 +131,16 @@ export class GamesController {
     const gameHistories = await this.gameSessionService.getSessionHistories(query);
 
     return GetGameHistoriesResponseDto.from(gameHistories, query.page, query.size);
+  }
+
+  @Get(':gameSessionId/reports')
+  @ApiGetGameResultReport()
+  async getGameResultReport(
+    @Param('gameSessionId', ParseBigIntPipe) gameSessionId: bigint,
+  ): Promise<GetGameResultReportResponseDto> {
+    // FIXME: 회원용 AuthGuard 붙이기
+    const gameReport = await this.gameSessionService.getGameResultReport(gameSessionId);
+
+    return GetGameResultReportResponseDto.from(gameReport);
   }
 }
