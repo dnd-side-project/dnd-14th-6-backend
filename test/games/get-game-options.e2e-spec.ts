@@ -18,7 +18,7 @@ interface GameOptionsApiResponse {
   statusCode: number;
   success: boolean;
   data: {
-    categories: { id: number; name: string }[];
+    categories: { id: number; name: string; iconUrl: string }[];
     difficultyModes: GameDifficultyMode[];
   };
 }
