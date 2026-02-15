@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { GamesService } from '@games/application/games.service';
+import { GameSessionService } from '@games/application/game-session.service';
 import { TiersService } from '@tiers/application/tiers.service';
 import { User } from '@users/domain/users.entity';
 import { UsersService } from '@users/application/users.service';
@@ -32,7 +32,7 @@ describe('AuthFacade', () => {
   let facade: AuthFacade;
   let authService: jest.Mocked<AuthService>;
   let usersService: jest.Mocked<UsersService>;
-  let gamesService: jest.Mocked<GamesService>;
+  let gameSessionService: jest.Mocked<GameSessionService>;
   let tiersService: jest.Mocked<TiersService>;
 
   const lowestTier: Tier = Tier.from({
@@ -64,7 +64,7 @@ describe('AuthFacade', () => {
           },
         },
         {
-          provide: GamesService,
+          provide: GameSessionService,
           useValue: {
             attachUserToSession: jest.fn(),
           },
@@ -81,7 +81,7 @@ describe('AuthFacade', () => {
     facade = module.get<AuthFacade>(AuthFacade);
     authService = module.get(AuthService);
     usersService = module.get(UsersService);
-    gamesService = module.get(GamesService);
+    gameSessionService = module.get(GameSessionService);
     tiersService = module.get(TiersService);
 
     tiersService.getLowestTier.mockResolvedValue(lowestTier);
@@ -109,7 +109,7 @@ describe('AuthFacade', () => {
     expect(tiersService.getLowestTier).not.toHaveBeenCalled();
     expect(usersService.updateRefreshToken).toHaveBeenCalledWith(10n, 'refresh-token');
     expect(usersService.createSocialUser).not.toHaveBeenCalled();
-    expect(gamesService.attachUserToSession).not.toHaveBeenCalled();
+    expect(gameSessionService.attachUserToSession).not.toHaveBeenCalled();
     expect(result).toEqual({
       accessToken: 'access-token',
       refreshToken: 'refresh-token',
@@ -151,7 +151,7 @@ describe('AuthFacade', () => {
       refreshToken: 'new-refresh-token',
       tierId: 1,
     });
-    expect(gamesService.attachUserToSession).toHaveBeenCalledWith(777n, 99n);
+    expect(gameSessionService.attachUserToSession).toHaveBeenCalledWith(777n, 99n);
     expect(authService.createAccessToken).toHaveBeenCalledWith(99n);
     expect(result).toEqual({
       accessToken: 'new-access-token',
@@ -181,6 +181,6 @@ describe('AuthFacade', () => {
       },
     });
 
-    expect(gamesService.attachUserToSession).not.toHaveBeenCalled();
+    expect(gameSessionService.attachUserToSession).not.toHaveBeenCalled();
   });
 });
