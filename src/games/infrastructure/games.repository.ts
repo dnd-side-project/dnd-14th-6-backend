@@ -1,13 +1,12 @@
-import { Prisma } from '@prisma/client';
-import { PrismaService } from '@prisma/prisma.service';
 import { Injectable } from '@nestjs/common';
+
+import { Prisma } from '@prisma/client';
+
 import { capitalize } from '@common/utils/string.util';
-import { IGameRepository, NonRandomGameDifficultyMode } from '../domain/games.repository.interface';
+import { PrismaService } from '@prisma/prisma.service';
+
 import { GameCategory } from '../domain/game-categories.entity';
-import {
-  FrequentWrongCommand,
-  FrequentWrongCategory,
-} from '../domain/user-mistake-analysis.entity';
+import { ClientAnswerInput } from '../domain/game-client-answers.interface';
 import { GameProblem } from '../domain/game-problem.entity';
 import {
   DIFFICULTY_SCORES,
@@ -15,8 +14,12 @@ import {
   MAX_PROBLEMS_PER_GAME,
   ProblemDifficulty,
 } from '../domain/game.business-rules';
+import { IGameRepository, NonRandomGameDifficultyMode } from '../domain/games.repository.interface';
+import {
+  FrequentWrongCategory,
+  FrequentWrongCommand,
+} from '../domain/user-mistake-analysis.entity';
 import { ProblemRawRow } from './types/problem-raw-row';
-import { ClientAnswerInput } from '../domain/game-client-answers.interface';
 
 @Injectable()
 export class GameRepositoryImpl implements IGameRepository {
@@ -173,6 +176,7 @@ export class GameRepositoryImpl implements IGameRepository {
       select: {
         id: true,
         name: true,
+        iconUrl: true,
       },
       orderBy: {
         id: 'asc',
