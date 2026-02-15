@@ -18,7 +18,7 @@ export function createSwaggerBadRequest(examples: ErrorExample[]) {
   examples.forEach((data) => {
     exampleObject[data.description] = {
       value: {
-        status: 400,
+        statusCode: 400,
         success: false,
         message: data.message,
       },
