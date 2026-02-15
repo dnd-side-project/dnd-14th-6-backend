@@ -1,7 +1,9 @@
+import { ApiProperty } from '@nestjs/swagger';
+
+import { plainToInstance } from 'class-transformer';
+
 import { GameOptions } from '../../domain/game-options.entity';
 import { GameDifficultyMode } from '../../domain/game.business-rules';
-import { ApiProperty } from '@nestjs/swagger';
-import { plainToInstance } from 'class-transformer';
 
 export class CategoryDto {
   @ApiProperty({
@@ -15,6 +17,12 @@ export class CategoryDto {
     example: 'Git',
   })
   name: string;
+
+  @ApiProperty({
+    description: '카테고리 icon Url',
+    example: 'https://cdn.orvit.net/categories/git.png',
+  })
+  iconUrl: string;
 }
 
 export class GetGameOptionsResponseDto {
@@ -22,9 +30,9 @@ export class GetGameOptionsResponseDto {
     description: '게임 카테고리 목록',
     type: [CategoryDto],
     example: [
-      { id: 1, name: 'Git' },
-      { id: 2, name: 'Linux' },
-      { id: 3, name: 'Docker' },
+      { id: 1, name: 'Git', iconUrl: 'https://cdn.orvit.net/categories/git.png' },
+      { id: 2, name: 'Linux', iconUrl: 'https://cdn.orvit.net/categories/linux.png' },
+      { id: 3, name: 'Docker', iconUrl: 'https://cdn.orvit.net/categories/docker.png' },
     ],
   })
   categories: CategoryDto[];

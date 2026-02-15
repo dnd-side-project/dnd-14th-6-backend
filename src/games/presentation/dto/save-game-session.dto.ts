@@ -119,6 +119,7 @@ export class SaveGameSessionRequestDto {
 export class SaveGameSessionResponseDto {
   @ApiProperty({
     description: '생성된 게임세션 ID',
+    example: '7',
   })
   gameSessionId: string;
 
