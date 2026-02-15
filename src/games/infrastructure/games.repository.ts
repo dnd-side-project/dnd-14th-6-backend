@@ -2,9 +2,9 @@ import { Injectable } from '@nestjs/common';
 
 import { Prisma } from '@prisma/client';
 
+import { PrismaService } from '@/prisma/prisma.service';
 import { capitalize } from '@common/utils/string.util';
 
-import { IGameRepository, NonRandomGameDifficultyMode } from '../domain/games.repository.interface';
 import { GameCategory } from '../domain/game-categories.entity';
 import { ClientAnswerInput } from '../domain/game-client-answers.interface';
 import { GameProblem } from '../domain/game-problem.entity';
@@ -16,7 +16,11 @@ import {
   MAX_PROBLEMS_PER_GAME,
   ProblemDifficulty,
 } from '../domain/game.business-rules';
-
+import { IGameRepository, NonRandomGameDifficultyMode } from '../domain/games.repository.interface';
+import {
+  FrequentWrongCategory,
+  FrequentWrongCommand,
+} from '../domain/user-mistake-analysis.entity';
 import { ProblemRawRow } from './types/problem-raw-row';
 
 @Injectable()

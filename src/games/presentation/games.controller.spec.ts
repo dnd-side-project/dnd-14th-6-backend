@@ -1,28 +1,29 @@
 import { EventEmitter } from 'events';
 import { BadRequestException, Logger, MessageEvent, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { Logger, MessageEvent, NotFoundException } from '@nestjs/common';
-import { EventEmitter } from 'events';
-import { Observable, of, Subject, takeUntil } from 'rxjs';
+
 import { Request, Response } from 'express';
+import { Observable, of, Subject, takeUntil } from 'rxjs';
 
-import { GamesController } from './games.controller';
-
-import { GamesService } from '../application/games.service';
-import { GameStreamService } from '../application/game-stream.service';
 import { GameSessionService } from '../application/game-session.service';
-
+import { GameStreamService } from '../application/game-stream.service';
+import { GamesService } from '../application/games.service';
 import { GameCategory } from '../domain/game-categories.entity';
 import { GameOptions } from '../domain/game-options.entity';
 import { GameSessionHistoryList } from '../domain/game-session-history.entity';
-import { DIFFICULTY_MODES, GameSessionSortBy, SortOrder } from '../domain/game.business-rules';
-import { GameDifficultyMode } from '../domain/game.business-rules';
-
-import { GetGameOptionsResponseDto } from './dto/get-game-options.dto';
+import {
+  DIFFICULTY_MODES,
+  GameDifficultyMode,
+  GameSessionSortBy,
+  SortOrder,
+} from '../domain/game.business-rules';
 import {
   GetGameHistoriesQueryDto,
   GetGameHistoriesResponseDto,
 } from './dto/get-game-histories.dto';
+import { GetGameOptionsResponseDto } from './dto/get-game-options.dto';
+import { ClientAnswerDto, InputDto, SaveGameSessionRequestDto } from './dto/save-game-session.dto';
+import { GamesController } from './games.controller';
 
 describe('GamesController', () => {
   let controller: GamesController;
