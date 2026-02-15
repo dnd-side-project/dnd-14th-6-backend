@@ -15,6 +15,7 @@ import {
 } from '@common/utils/swagger-error-response.util';
 
 import { GetGameResultReportResponseDto } from '../dto/get-game-result-report.dto';
+import { GAME_RESULT_REPORT_EXAMPLE } from './examples/get-game-result-report.example';
 
 export function ApiGetGameResultReport() {
   return applyDecorators(
@@ -27,12 +28,17 @@ export function ApiGetGameResultReport() {
     }),
     ApiExtraModels(ApiResponseDto, GetGameResultReportResponseDto),
     ApiOkResponse({
-      description: '게임 결과 리포트 조회 성공',
-      schema: {
-        type: 'object',
-        $ref: getSchemaPath(ApiResponseDto),
-        properties: {
-          data: { $ref: getSchemaPath(GetGameResultReportResponseDto) },
+      description: '(회원용) 게임 결과 리포트 조회 성공',
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            $ref: getSchemaPath(ApiResponseDto),
+            properties: {
+              data: { $ref: getSchemaPath(GetGameResultReportResponseDto) },
+            },
+          },
+          example: GAME_RESULT_REPORT_EXAMPLE,
         },
       },
     }),
