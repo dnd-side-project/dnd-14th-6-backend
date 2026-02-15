@@ -21,10 +21,11 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
       throw new UnauthorizedException('Google 계정 이메일 정보가 없어 로그인할 수 없습니다.');
     }
 
-    const fullName = `${name?.familyName ?? ''}${name?.givenName ?? ''}`.trim();
-    if (!fullName) {
+    if (!name?.familyName && !name?.givenName) {
       throw new UnauthorizedException('Google 계정 이름 정보가 없어 로그인할 수 없습니다.');
     }
+
+    const fullName = `${name?.familyName ?? ''}${name?.givenName ?? ''}`.trim();
 
     return {
       id,

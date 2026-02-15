@@ -21,6 +21,9 @@ export class GithubStrategy extends PassportStrategy(Strategy, 'github') {
       throw new UnauthorizedException('Github 계정 이메일 정보가 없어 로그인할 수 없습니다.');
     }
 
+    if (!username) {
+      throw new UnauthorizedException('Github 계정 이름 정보가 없어 로그인할 수 없습니다.');
+    }
     return {
       id,
       email: emails[0].value,
