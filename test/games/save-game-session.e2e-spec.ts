@@ -1,17 +1,20 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { execSync } from 'child_process';
 import { INestApplication } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
+import { Test, TestingModule } from '@nestjs/testing';
+
+import { PrismaClient } from '@prisma/client';
 import * as request from 'supertest';
 import { App } from 'supertest/types';
 import { GenericContainer, StartedTestContainer } from 'testcontainers';
-import { execSync } from 'child_process';
-import { PrismaClient } from '@prisma/client';
-import { AppModule } from '../../src/app.module';
+
 import { ResponseInterceptor } from '@common/interceptors/response.interceptor';
-import { seedCategories } from '../../prisma/seeds/category.seed';
-import { seedSubCategories } from '../../prisma/seeds/subcategory.seed';
-import { seedGitProblems } from '../../prisma/seeds/seed-problems-git';
 import { MAX_PROBLEMS_PER_GAME } from '@games/domain/game.business-rules';
+
+import { seedCategories } from '../../prisma/seeds/category.seed';
+import { seedGitProblems } from '../../prisma/seeds/seed-problems-git';
+import { seedSubCategories } from '../../prisma/seeds/subcategory.seed';
+import { AppModule } from '../../src/app.module';
 
 interface SuccessResponse {
   statusCode: number;
@@ -188,7 +191,9 @@ describe('POST /api/games/save (e2e)', () => {
 
       const body = response.body as ErrorResponse;
       expect(body.success).toBe(false);
-      expect(body.message).toContain('categoryId');
+      expect(body.message).toBe(
+        'categoryId는 1 이상이어야 합니다., categoryId는 정수여야 합니다., categoryId는 필수값입니다., clientAnswers는 정확히 20개여야 합니다.',
+      );
     });
 
     it('difficultyMode를 누락하면 400 에러를 응답한다.', async () => {
@@ -203,7 +208,9 @@ describe('POST /api/games/save (e2e)', () => {
 
       const body = response.body as ErrorResponse;
       expect(body.success).toBe(false);
-      expect(body.message).toContain('difficultyMode');
+      expect(body.message).toBe(
+        'difficultyMode는 Easy, Normal, Hard, Random 중 하나여야 합니다., difficultyMode는 필수값입니다., clientAnswers는 정확히 20개여야 합니다.',
+      );
     });
 
     it('잘못된 difficultyMode를 보내면 400 에러를 응답한다.', async () => {
@@ -219,7 +226,9 @@ describe('POST /api/games/save (e2e)', () => {
 
       const body = response.body as ErrorResponse;
       expect(body.success).toBe(false);
-      expect(body.message).toContain('difficultyMode');
+      expect(body.message).toBe(
+        'difficultyMode는 Easy, Normal, Hard, Random 중 하나여야 합니다., clientAnswers는 정확히 20개여야 합니다.',
+      );
     });
 
     it('score가 음수이면 400 에러를 응답한다.', async () => {
@@ -235,7 +244,9 @@ describe('POST /api/games/save (e2e)', () => {
 
       const body = response.body as ErrorResponse;
       expect(body.success).toBe(false);
-      expect(body.message).toContain('score');
+      expect(body.message).toBe(
+        'score는 0 이상이어야 합니다., clientAnswers는 정확히 20개여야 합니다.',
+      );
     });
 
     it('clientAnswers가 배열이 아니면 400 에러를 응답한다.', async () => {
@@ -251,7 +262,31 @@ describe('POST /api/games/save (e2e)', () => {
 
       const body = response.body as ErrorResponse;
       expect(body.success).toBe(false);
-      expect(body.message).toContain('clientAnswers');
+      expect(body.message).toBe(
+        'clientAnswers는 정확히 20개여야 합니다., clientAnswers는 정확히 20개여야 합니다., clientAnswers는 배열 형식이어야 합니다., each value in nested property clientAnswers must be either object or array',
+      );
+    });
+
+    it(`clientAnswers가 ${MAX_PROBLEMS_PER_GAME}개 미만이면 400 에러를 응답한다.`, async () => {
+      const underSizedAnswers = Array.from({ length: MAX_PROBLEMS_PER_GAME - 1 }, (_, i) => ({
+        problemId: String(i + 1),
+        inputs: [],
+        solved: false,
+      }));
+
+      const response = await request(app.getHttpServer())
+        .post('/api/games/save')
+        .send({
+          categoryId: 1,
+          difficultyMode: 'Easy',
+          score: 0,
+          clientAnswers: underSizedAnswers,
+        })
+        .expect(400);
+
+      const body = response.body as ErrorResponse;
+      expect(body.success).toBe(false);
+      expect(body.message).toBe('clientAnswers는 정확히 20개여야 합니다.');
     });
 
     it(`clientAnswers가 ${MAX_PROBLEMS_PER_GAME}개를 초과하면 400 에러를 응답한다.`, async () => {
@@ -273,7 +308,7 @@ describe('POST /api/games/save (e2e)', () => {
 
       const body = response.body as ErrorResponse;
       expect(body.success).toBe(false);
-      expect(body.message).toContain('clientAnswers');
+      expect(body.message).toBe('clientAnswers는 정확히 20개여야 합니다.');
     });
 
     it('problemId가 숫자 형식이 아니면 400 에러를 응답한다.', async () => {
@@ -333,61 +368,111 @@ describe('POST /api/games/save (e2e)', () => {
 
       const body = response.body as ErrorResponse;
       expect(body.success).toBe(false);
-      expect(body.message).toContain('clientAnswers');
+      expect(body.message).toBe('clientAnswers는 정확히 20개여야 합니다.');
     });
 
     it('존재하지 않는 카테고리면 404 에러를 응답한다.', async () => {
+      const dummyAnswers = Array.from({ length: MAX_PROBLEMS_PER_GAME }, (_, i) => ({
+        problemId: String(i + 1),
+        inputs: [],
+        solved: false,
+      }));
+
       const response = await request(app.getHttpServer())
         .post('/api/games/save')
         .send({
           categoryId: 999,
           difficultyMode: 'Easy',
           score: 0,
-          clientAnswers: [],
+          clientAnswers: dummyAnswers,
         })
         .expect(404);
 
       const body = response.body as ErrorResponse;
       expect(body.success).toBe(false);
-      expect(body.message).toContain('카테고리');
+      expect(body.message).toBe('존재하지 않는 카테고리입니다.');
     });
 
-    it('존재하지 않는 문제 ID가 포함되어 있으면 404 에러를 응답한다.', async () => {
+    it('clientAnswers에 중복된 problemId가 포함되어 있으면 400 에러를 응답한다.', async () => {
+      const answersWithDuplicateProblem = [
+        { problemId: '73', inputs: [], solved: false },
+        { problemId: '73', inputs: [], solved: false },
+        ...Array.from({ length: MAX_PROBLEMS_PER_GAME - 2 }, (_, i) => ({
+          problemId: String(i + 1),
+          inputs: [],
+          solved: false,
+        })),
+      ];
+
       const response = await request(app.getHttpServer())
         .post('/api/games/save')
         .send({
           categoryId: 1,
           difficultyMode: 'Easy',
           score: 0,
-          clientAnswers: [{ problemId: '999999', inputs: [], solved: false }],
+          clientAnswers: answersWithDuplicateProblem,
+        })
+        .expect(400);
+
+      const body = response.body as ErrorResponse;
+      expect(body.success).toBe(false);
+      expect(body.message).toBe('clientAnswers에 중복된 problemId가 포함되어 있습니다.');
+    });
+
+    it('존재하지 않는 문제 ID가 포함되어 있으면 404 에러를 응답한다.', async () => {
+      const answersWithInvalidProblem = [
+        { problemId: '999999', inputs: [], solved: false },
+        ...Array.from({ length: MAX_PROBLEMS_PER_GAME - 1 }, (_, i) => ({
+          problemId: String(i + 1),
+          inputs: [],
+          solved: false,
+        })),
+      ];
+
+      const response = await request(app.getHttpServer())
+        .post('/api/games/save')
+        .send({
+          categoryId: 1,
+          difficultyMode: 'Easy',
+          score: 0,
+          clientAnswers: answersWithInvalidProblem,
         })
         .expect(404);
 
       const body = response.body as ErrorResponse;
       expect(body.success).toBe(false);
-      expect(body.message).toContain('문제 ID');
+      expect(body.message).toBe('존재하지 않는 문제 ID가 포함되어 있습니다. (problemId: 999999)');
     });
 
     it('solved=true인데 정답 처리된 입력이 없으면 400 에러를 응답한다.', async () => {
+      const answersWithIntegrityError = [
+        {
+          problemId: '1',
+          inputs: [{ input: 'wrong', isCorrect: false }],
+          solved: true,
+        },
+        ...Array.from({ length: MAX_PROBLEMS_PER_GAME - 1 }, (_, i) => ({
+          problemId: String(i + 2),
+          inputs: [],
+          solved: true,
+        })),
+      ];
+
       const response = await request(app.getHttpServer())
         .post('/api/games/save')
         .send({
           categoryId: 1,
           difficultyMode: 'Easy',
           score: 10,
-          clientAnswers: [
-            {
-              problemId: '1',
-              inputs: [{ input: 'wrong', isCorrect: false }],
-              solved: true,
-            },
-          ],
+          clientAnswers: answersWithIntegrityError,
         })
         .expect(400);
 
       const body = response.body as ErrorResponse;
       expect(body.success).toBe(false);
-      expect(body.message).toContain('무결성');
+      expect(body.message).toBe(
+        '데이터 무결성 오류: solved가 true이지만 정답 처리된 입력이 없습니다.',
+      );
     });
   });
 });
