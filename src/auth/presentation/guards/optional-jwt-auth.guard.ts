@@ -11,7 +11,7 @@ import { AuthGuard } from '@nestjs/passport';
  * @example
  * @Get('sessions')
  * @UseGuards(OptionalJwtAuthGuard)
- * async getGameHistories(@CurrentUser() user?: AuthenticatedUser) {}
+ * async getGameHistories(@AuthenticatedUser() user?: { userId: bigint }) {}
  */
 @Injectable()
 export class OptionalJwtAuthGuard extends AuthGuard('jwt') {
