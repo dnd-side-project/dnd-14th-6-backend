@@ -1,6 +1,6 @@
 import { SocialLoginProvider } from '../../domain/auth.business-rule';
 
-export interface processSocialLoginRequestDto {
+export interface ProcessSocialLoginRequestDto {
   provider: SocialLoginProvider;
   socialUser: {
     id: string;

@@ -5,7 +5,7 @@ import { TiersService } from '@tiers/application/tiers.service';
 import { UsersService } from '@users/application/users.service';
 
 import {
-  processSocialLoginRequestDto,
+  ProcessSocialLoginRequestDto,
   ProcessSocialLoginResponseDto,
 } from './service-dto/process-social-login.service-dto';
 
@@ -24,7 +24,7 @@ export class AuthFacade {
    * @description 소셜 로그인 처리 서비스 함수
    */
   async processSocialLogin(
-    loginData: processSocialLoginRequestDto,
+    loginData: ProcessSocialLoginRequestDto,
   ): Promise<ProcessSocialLoginResponseDto> {
     const existingUser = await this.usersService.findByEmail(loginData.socialUser.email);
 
@@ -49,7 +49,7 @@ export class AuthFacade {
    * @description 새로운 소셜로그인 유저 생성
    */
   private async registerNewSocialUser(
-    loginData: processSocialLoginRequestDto,
+    loginData: ProcessSocialLoginRequestDto,
   ): Promise<ProcessSocialLoginResponseDto> {
     const refreshToken = this.authService.createRefreshToken();
     const lowestTier = await this.tiersService.getLowestTier();
