@@ -37,3 +37,20 @@ export const PROBLEM_INTERVAL_MIN = 1000;
 export const PROBLEM_INTERVAL_MAX = Math.floor(
   (GAME_TIMER_DURATION * 1000 * 0.8) / MAX_PROBLEMS_PER_GAME,
 );
+
+/**
+ * 게임 세션 히스토리 정렬 기준
+ */
+export enum GameSessionSortBy {
+  PlayedAt = 'playedAt',
+  Score = 'score',
+  CorrectProblemCount = 'correctProblemCount',
+}
+
+/**
+ * 정렬 방향
+ */
+export enum SortOrder {
+  Asc = 'asc',
+  Desc = 'desc',
+}

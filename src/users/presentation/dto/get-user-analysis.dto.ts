@@ -23,6 +23,12 @@ export class GetUserAnalysisParamDto {
 
 export class FrequentWrongCommandDto {
   @ApiProperty({
+    description: '카테고리 이름',
+    example: 'Git',
+  })
+  category: string;
+
+  @ApiProperty({
     description: '서브 카테고리 이름',
     example: 'Branch',
   })
