@@ -34,6 +34,15 @@ export class UsersService {
   }
 
   /**
+   * @description userId로 유저 존재 여부 조회
+   */
+  async isExistUser(userId: bigint): Promise<boolean> {
+    const user = await this.usersRepository.findByIdWithTier(userId);
+
+    return !!user;
+  }
+
+  /**
    * @description 소셜 정보로 유저 생성
    */
   async createSocialUser(socialUser: {
