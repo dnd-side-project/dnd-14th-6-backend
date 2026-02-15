@@ -2,6 +2,7 @@ import { Prisma } from '@prisma/client';
 import { PrismaService } from '@prisma/prisma.service';
 import { Injectable } from '@nestjs/common';
 import { capitalize } from '@common/utils/string.util';
+
 import { IGameRepository, NonRandomGameDifficultyMode } from '../domain/games.repository.interface';
 import { GameCategory } from '../domain/game-categories.entity';
 import {
@@ -9,12 +10,15 @@ import {
   FrequentWrongCategory,
 } from '../domain/user-mistake-analysis.entity';
 import { GameProblem } from '../domain/game-problem.entity';
+import { GameSessionHistoryFilterEntity } from '../domain/game-session-history-filter.entity';
+import { GameSessionHistory, GameSessionHistoryList } from '../domain/game-session-history.entity';
 import {
   DIFFICULTY_SCORES,
   GameDifficultyMode,
   MAX_PROBLEMS_PER_GAME,
   ProblemDifficulty,
 } from '../domain/game.business-rules';
+
 import { ProblemRawRow } from './types/problem-raw-row';
 
 @Injectable()
@@ -112,6 +116,116 @@ export class GameRepositoryImpl implements IGameRepository {
     });
 
     return categories.map((category) => GameCategory.from(category));
+  }
+
+  /**
+   * @description 필터 기반 게임 세션 히스토리 목록 조회
+   * 필터 별 where, sort 등의 동적 쿼리 지원
+   */
+  async getSessionHistoryByFilter(
+    filter: GameSessionHistoryFilterEntity,
+  ): Promise<GameSessionHistoryList> {
+    const sessionHistoryQueryArgs = this.buildGameSessionHistoryListQueryArgs(filter);
+
+    const [sessions, totalCount] = await this.prisma.$transaction([
+      this.prisma.gameSession.findMany({
+        ...sessionHistoryQueryArgs,
+        include: {
+          category: {
+            select: { name: true },
+          },
+          gameSessionLogs: {
+            take: 1,
+            select: {
+              problem: {
+                select: { title: true },
+              },
+            },
+            orderBy: { id: 'asc' },
+          },
+        },
+      }),
+      this.prisma.gameSession.count({ where: sessionHistoryQueryArgs.where }),
+    ]);
+
+    const sessionHistories = sessions.map((session) => GameSessionHistory.from(session));
+
+    return GameSessionHistoryList.from({
+      sessionHistories,
+      totalItems: totalCount,
+    });
+  }
+
+  private buildGameSessionHistoryListQueryArgs(filter: GameSessionHistoryFilterEntity) {
+    const where = this.buildGameSessionHistoryFilterWhereClause(filter);
+
+    return {
+      where,
+      orderBy: { [filter.sortBy]: filter.sortOrder },
+      skip: (filter.page - 1) * filter.size,
+      take: filter.size,
+    };
+  }
+
+  private buildGameSessionHistoryFilterWhereClause(
+    filter: GameSessionHistoryFilterEntity,
+  ): Prisma.GameSessionWhereInput {
+    const where: Prisma.GameSessionWhereInput = {
+      userId: filter.userId,
+    };
+
+    const playedAtDateRange = this.buildGameSessionHistoryPlayedAtDateRange(filter);
+
+    if (playedAtDateRange) {
+      where.playedAt = playedAtDateRange;
+    }
+
+    if (filter.categories?.length) {
+      where.category = { name: { in: filter.categories } };
+    }
+
+    if (filter.difficultyModes?.length) {
+      where.difficultyMode = { in: filter.difficultyModes };
+    }
+
+    const searchKeyword = filter.search?.trim();
+
+    if (searchKeyword) {
+      where.gameSessionLogs = {
+        some: {
+          problem: {
+            OR: [
+              { text: { contains: searchKeyword, mode: 'insensitive' } },
+              { answer: { contains: searchKeyword, mode: 'insensitive' } },
+            ],
+          },
+        },
+      };
+    }
+
+    return where;
+  }
+
+  private buildGameSessionHistoryPlayedAtDateRange(
+    filter: GameSessionHistoryFilterEntity,
+  ): Prisma.DateTimeFilter | undefined {
+    if (!filter.startDate && !filter.endDate) {
+      return undefined;
+    }
+
+    const playedAtDateRange: Prisma.DateTimeFilter = {};
+
+    if (filter.startDate) {
+      playedAtDateRange.gte = new Date(`${filter.startDate}T00:00:00.000Z`);
+    }
+
+    if (filter.endDate) {
+      const endDateExclusive = new Date(`${filter.endDate}T00:00:00.000Z`);
+      endDateExclusive.setUTCDate(endDateExclusive.getUTCDate() + 1);
+      playedAtDateRange.lt = endDateExclusive;
+    }
+
+    return playedAtDateRange;
   }
 
   /**

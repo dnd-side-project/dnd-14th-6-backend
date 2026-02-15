@@ -1,13 +1,22 @@
 import { Controller, Get, Logger, MessageEvent, Query, Req, Res } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { GamesService } from '../application/games.service';
-import { GetGameOptionsResponseDto } from './dto/get-game-options.dto';
-import { ApiGetGameOptions } from './decorators/get-game-options-swagger.decorator';
-import { ApiGameStream } from './decorators/game-stream-swagger.decorator';
 import { Request, Response } from 'express';
 import { Subject } from 'rxjs';
+
+import { GamesService } from '../application/games.service';
 import { GameStreamService } from '../application/game-stream.service';
+import { GameSessionService } from '../application/game-session.service';
+
+import { GetGameOptionsResponseDto } from './dto/get-game-options.dto';
 import { GameStreamQueryDto } from './dto/game-stream-query.dto';
+import {
+  GetGameHistoriesQueryDto,
+  GetGameHistoriesResponseDto,
+} from './dto/get-game-histories.dto';
+
+import { ApiGetGameOptions } from './decorators/get-game-options-swagger.decorator';
+import { ApiGetGameHistories } from './decorators/get-game-histories-swagger.decorator';
+import { ApiGameStream } from './decorators/game-stream-swagger.decorator';
 
 @ApiTags('Games')
 @Controller('games')
@@ -16,7 +25,9 @@ export class GamesController {
 
   constructor(
     private readonly gameService: GamesService,
+
     private readonly gameStreamService: GameStreamService,
+    private readonly gameSessionService: GameSessionService,
   ) {}
 
   @Get('options')
@@ -75,5 +86,15 @@ export class GamesController {
         response.end();
       },
     });
+  }
+
+  @Get('sessions')
+  @ApiGetGameHistories()
+  async getGameHistories(
+    @Query() query: GetGameHistoriesQueryDto,
+  ): Promise<GetGameHistoriesResponseDto> {
+    const gameHistories = await this.gameSessionService.getSessionHistories(query);
+
+    return GetGameHistoriesResponseDto.from(gameHistories, query.page, query.size);
   }
 }
