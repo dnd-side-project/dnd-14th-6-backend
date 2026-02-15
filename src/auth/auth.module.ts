@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
@@ -9,8 +9,12 @@ import { UsersModule } from '@users/users.module';
 import { AuthController } from './presentation/auth.controller';
 import { GoogleAuthGuard } from './presentation/guards/google-auth.guard';
 import { GithubAuthGuard } from './presentation/guards/github-auth.guard';
+import { JwtAuthGuard } from './presentation/guards/jwt-auth.guard';
+import { OptionalJwtAuthGuard } from './presentation/guards/optional-jwt-auth.guard';
+import { UserOwnershipGuard } from './presentation/guards/user-ownership.guard';
 import { GoogleStrategy } from './presentation/strategies/google.strategy';
 import { GithubStrategy } from './presentation/strategies/github.strategy';
+import { JwtStrategy } from './presentation/strategies/jwt.strategy';
 
 import { AuthFacade } from './application/auth.facade';
 import { AuthService } from './application/auth.service';
@@ -24,8 +28,8 @@ import { AuthService } from './application/auth.service';
         secret: configService.getOrThrow<string>('JWT_TOKEN_SECRET'),
       }),
     }),
-    UsersModule,
-    GamesModule,
+    forwardRef(() => UsersModule),
+    forwardRef(() => GamesModule),
     TiersModule,
   ],
   providers: [
@@ -35,8 +39,12 @@ import { AuthService } from './application/auth.service';
     GoogleAuthGuard,
     GithubStrategy,
     GithubAuthGuard,
+    JwtStrategy,
+    JwtAuthGuard,
+    OptionalJwtAuthGuard,
+    UserOwnershipGuard,
   ],
   controllers: [AuthController],
-  exports: [GoogleAuthGuard],
+  exports: [JwtAuthGuard, OptionalJwtAuthGuard, UserOwnershipGuard],
 })
 export class AuthModule {}
