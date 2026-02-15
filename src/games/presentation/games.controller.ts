@@ -1,7 +1,11 @@
-import { Controller, Get, Logger, MessageEvent, Query, Req, Res } from '@nestjs/common';
+import { Controller, Get, Logger, MessageEvent, Query, Req, Res, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { Request, Response } from 'express';
 import { Subject } from 'rxjs';
+
+import { JwtAuthGuard } from '@auth/presentation/guards/jwt-auth.guard';
+import { UserOwnershipGuard } from '@auth/presentation/guards/user-ownership.guard';
+import { CheckOwnership } from '@auth/presentation/decorators/check-ownership.decorator';
 
 import { GamesService } from '../application/games.service';
 import { GameStreamService } from '../application/game-stream.service';
@@ -88,7 +92,12 @@ export class GamesController {
     });
   }
 
+  /**
+   * @description 게임 세션 히스토리 조회 (본인만 가능)
+   */
   @Get('sessions')
+  @UseGuards(JwtAuthGuard, UserOwnershipGuard)
+  @CheckOwnership('userId')
   @ApiGetGameHistories()
   async getGameHistories(
     @Query() query: GetGameHistoriesQueryDto,

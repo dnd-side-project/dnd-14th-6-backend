@@ -1,5 +1,9 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
+import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
+
+import { JwtAuthGuard } from '@auth/presentation/guards/jwt-auth.guard';
+import { UserOwnershipGuard } from '@auth/presentation/guards/user-ownership.guard';
+import { CheckOwnership } from '@auth/presentation/decorators/check-ownership.decorator';
 
 import { UsersService } from '../application/users.service';
 
@@ -26,8 +30,12 @@ export class UsersController {
     return GetRanksResponseDto.from(users, totalItems, page, size);
   }
 
-  // FIXME: auth gurad 들어올 경우 private으로 변경 필요
+  /**
+   * @description 특정 유저의 실수 분석 조회 (본인만 가능)
+   */
   @Get('/:userId/analysis')
+  @UseGuards(JwtAuthGuard, UserOwnershipGuard)
+  @CheckOwnership('userId')
   @ApiGetUserAnalysis()
   async getUserAnalysis(
     @Param() param: GetUserAnalysisParamDto,
@@ -37,8 +45,12 @@ export class UsersController {
     return GetUserAnalysisResponseDto.from(userAnalysis);
   }
 
-  // FIXME: auth gurad 들어올 경우 private으로 변경 필요
+  /**
+   * @description 특정 유저의 통계 조회 (본인만 가능)
+   */
   @Get('/:userId/stats')
+  @UseGuards(JwtAuthGuard, UserOwnershipGuard)
+  @CheckOwnership('userId')
   @ApiGetUserStats()
   async getUserStats(@Param() param: GetUserStatsParamDto): Promise<GetUserStatsResponseDto> {
     const userStats = await this.usersService.getUserStats(param.userId);
