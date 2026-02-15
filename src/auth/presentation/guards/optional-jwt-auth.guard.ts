@@ -20,7 +20,6 @@ export class OptionalJwtAuthGuard extends AuthGuard('jwt') {
       throw err;
     }
 
-    // user가 없어도 에러를 던지지 않음
     return user;
   }
 }
