@@ -5,11 +5,11 @@ import { createParamDecorator, ExecutionContext } from '@nestjs/common';
  * @example
  * @Get('profile')
  * @UseGuards(JwtAuthGuard)
- * getProfile(@CurrentUser() user: { userId: bigint }) {
+ * getProfile(@AuthenticatedUser() user: { userId: bigint }) {
  *   return { userId: user.userId };
  * }
  */
-export const CurrentUser = createParamDecorator(
+export const AuthenticatedUser = createParamDecorator(
   (
     _data: unknown,
     ctx: ExecutionContext,
