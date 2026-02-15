@@ -2,6 +2,7 @@ import { GameCategory } from './game-categories.entity';
 import { GameProblem } from './game-problem.entity';
 import { GameSessionHistoryFilterEntity } from './game-session-history-filter.entity';
 import { GameSessionHistoryList } from './game-session-history.entity';
+import { FrequentWrongCommand, FrequentWrongCategory } from './user-mistake-analysis.entity';
 import { GameDifficultyMode } from './game.business-rules';
 
 export type NonRandomGameDifficultyMode = Exclude<GameDifficultyMode, GameDifficultyMode.Random>;
@@ -19,12 +20,14 @@ export interface IGameRepository {
     categoryId: number,
     difficulty: NonRandomGameDifficultyMode,
   ): Promise<GameProblem[]>;
+
   /**
    * @description 게임난이도 - 랜덤(Random) 선택시
    *
    * - 사용자가 선택한 '카테고리'의 '문제 난이도'는 Easy/Normal/Hard 무작위로 20개 출제
    */
   getGameCategoryProblemsByRandomDifficulty(categoryId: number): Promise<GameProblem[]>;
+
   /**
    * @description 모든 카테고리 목록을 조회
    */
@@ -41,4 +44,14 @@ export interface IGameRepository {
   getSessionHistoryByFilter(
     filter: GameSessionHistoryFilterEntity,
   ): Promise<GameSessionHistoryList>;
+
+  /**
+   * @description 사용자가 자주 틀린 명령어 Top 5 조회 (서브 카테고리 별)
+   */
+  getFrequentWrongCommands(userId: bigint): Promise<FrequentWrongCommand[]>;
+
+  /**
+   * @description 사용자가 자주 틀린 카테고리 조회 (오답 비율 포함)
+   */
+  getFrequentWrongCategories(userId: bigint): Promise<FrequentWrongCategory[]>;
 }

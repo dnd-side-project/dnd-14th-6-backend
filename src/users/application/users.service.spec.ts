@@ -2,6 +2,12 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
 
 import { Tier } from '@tiers/domain/tiers.entity';
+import { GamesService } from '@games/application/games.service';
+import {
+  UserMistakeAnalysis,
+  FrequentWrongCommand,
+  FrequentWrongCategory,
+} from '@games/domain/user-mistake-analysis.entity';
 
 import { UsersService } from './users.service';
 
@@ -45,6 +51,7 @@ function createMockUser(overrides: Partial<User> = {}): User {
 describe('UsersService', () => {
   let service: UsersService;
   let mockUsersRepository: jest.Mocked<IUsersRepository>;
+  let mockGamesService: jest.Mocked<GamesService>;
 
   beforeEach(async () => {
     mockUsersRepository = {
@@ -56,12 +63,20 @@ describe('UsersService', () => {
       getScoreDetailByUserId: jest.fn(),
     };
 
+    mockGamesService = {
+      getUserMistakeAnalysis: jest.fn(),
+    } as unknown as jest.Mocked<GamesService>;
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         UsersService,
         {
           provide: USER_REPOSITORY,
           useValue: mockUsersRepository,
+        },
+        {
+          provide: GamesService,
+          useValue: mockGamesService,
         },
       ],
     }).compile();
@@ -117,6 +132,61 @@ describe('UsersService', () => {
       const ret = await service.getRanksByPageAndSize(page, size, tierId);
 
       expect(ret).toEqual([mockUsers, mockUsers.length]);
+    });
+  });
+
+  describe('getUserAnalysis', () => {
+    const userId = 1n;
+    let mockAnalysis: UserMistakeAnalysis;
+
+    beforeEach(() => {
+      const mockCommands = [
+        FrequentWrongCommand.from({ category: 'Git', subCategory: 'Branch', wrongCount: 12 }),
+        FrequentWrongCommand.from({ category: 'Git', subCategory: 'Commit', wrongCount: 9 }),
+      ];
+
+      const mockCategories = [
+        FrequentWrongCategory.from({
+          category: 'Git',
+          wrongRatio: 48,
+          wrongCount: 24,
+          iconUrl: 'https://example.com/git.png',
+        }),
+        FrequentWrongCategory.from({
+          category: 'Docker',
+          wrongRatio: 30,
+          wrongCount: 12,
+          iconUrl: 'https://example.com/docker.png',
+        }),
+      ];
+
+      mockAnalysis = UserMistakeAnalysis.from({
+        frequentWrongCommands: mockCommands,
+        frequentWrongCategories: mockCategories,
+      });
+
+      mockGamesService.getUserMistakeAnalysis.mockResolvedValue(mockAnalysis);
+    });
+
+    it('GamesService를 호출하여 사용자 실수 분석을 조회하는지 확인', async () => {
+      await service.getUserAnalysis(userId);
+
+      expect(mockGamesService.getUserMistakeAnalysis).toHaveBeenCalledWith(userId);
+    });
+
+    it('GamesService에서 받은 분석 결과를 그대로 반환하는지 확인', async () => {
+      const result = await service.getUserAnalysis(userId);
+
+      expect(result).toBe(mockAnalysis);
+      expect(result.frequentWrongCommands).toHaveLength(2);
+      expect(result.frequentWrongCategories).toHaveLength(2);
+    });
+
+    it('카테고리에 iconUrl이 포함되어 있는지 확인', async () => {
+      const result = await service.getUserAnalysis(userId);
+
+      expect(result.frequentWrongCategories[0].iconUrl).toBe('https://example.com/git.png');
+      expect(result.frequentWrongCategories[1].iconUrl).toBe('https://example.com/docker.png');
     });
   });
 
