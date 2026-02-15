@@ -1,5 +1,6 @@
 import {
   ApiBadRequestResponse,
+  ApiForbiddenResponse,
   ApiNotFoundResponse,
   ApiResponse,
   ApiUnauthorizedResponse,
@@ -10,9 +11,6 @@ interface ErrorExample {
   message: string;
 }
 
-/**
- * @description BadRequest(400) Swagger 에러 응답 명세를 생성하는 헬퍼 함수
- */
 export function createSwaggerBadRequest(examples: ErrorExample[]) {
   const exampleObject = {};
   examples.forEach((data) => {
@@ -35,9 +33,6 @@ export function createSwaggerBadRequest(examples: ErrorExample[]) {
   });
 }
 
-/**
- * @description NotFound(404) Swagger 에러 응답 명세를 생성하는 헬퍼 함수
- */
 export function createSwaggerNotFound(examples: ErrorExample[]) {
   const exampleObject = {};
   examples.forEach((data) => {
@@ -60,9 +55,6 @@ export function createSwaggerNotFound(examples: ErrorExample[]) {
   });
 }
 
-/**
- * @description Unauthorized(401) Swagger 응답 명세를 생성하는 헬퍼 함수
- */
 export function createSwaggerUnauthorized(examples: ErrorExample[]) {
   const exampleObject = {};
   examples.forEach((data) => {
@@ -85,9 +77,59 @@ export function createSwaggerUnauthorized(examples: ErrorExample[]) {
   });
 }
 
-/**
- * @description 서버 에러(500, 503) Swagger 응답 명세를 생성하는 헬퍼 함수
- */
+export function createSwaggerForbidden(examples: ErrorExample[]) {
+  const exampleObject = {};
+  examples.forEach((data) => {
+    exampleObject[data.description] = {
+      value: {
+        statusCode: 403,
+        success: false,
+        message: data.message,
+      },
+    };
+  });
+
+  return ApiForbiddenResponse({
+    description: '접근 권한 없음',
+    content: {
+      'application/json': {
+        examples: exampleObject,
+      },
+    },
+  });
+}
+
+export function createSwaggerAuthErrors() {
+  return [
+    createSwaggerUnauthorized([
+      {
+        description: '토큰 없음',
+        message: '인증이 필요합니다.',
+      },
+      {
+        description: '토큰 만료',
+        message: '토큰이 만료되었습니다.',
+      },
+      {
+        description: '유효하지 않은 토큰',
+        message: '유효하지 않은 토큰입니다.',
+      },
+    ]),
+    createSwaggerForbidden([
+      {
+        description: '권한 없음',
+        message: '본인의 정보만 조회할 수 있습니다.',
+      },
+    ]),
+    createSwaggerNotFound([
+      {
+        description: '사용자 없음',
+        message: '존재하지 않는 사용자입니다.',
+      },
+    ]),
+  ];
+}
+
 export function createSwaggerServerErrors() {
   return [
     ApiResponse({
