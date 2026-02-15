@@ -45,6 +45,9 @@ export class AuthFacade {
     };
   }
 
+  /**
+   * @description 새로운 소셜로그인 유저 생성
+   */
   private async registerNewSocialUser(
     loginData: processSocialLoginRequestDto,
   ): Promise<ProcessSocialLoginResponseDto> {
@@ -72,6 +75,9 @@ export class AuthFacade {
     };
   }
 
+  /**
+   * @description gameSessionId가 존재하면 유저ID와 연동
+   */
   private async attachGameSessionIfExists(
     gameSessionId: bigint | undefined,
     userId: bigint,
