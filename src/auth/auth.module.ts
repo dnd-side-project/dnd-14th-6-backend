@@ -37,6 +37,5 @@ import { AuthService } from './application/auth.service';
     GithubAuthGuard,
   ],
   controllers: [AuthController],
-  exports: [GoogleAuthGuard],
 })
 export class AuthModule {}
