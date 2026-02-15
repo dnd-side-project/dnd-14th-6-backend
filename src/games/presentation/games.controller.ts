@@ -49,6 +49,7 @@ export class GamesController {
   @Get('options')
   @ApiGetGameOptions()
   async getGameOptions(): Promise<GetGameOptionsResponseDto> {
+    // FIXME: 회원용 AuthGuard 붙이기
     const gameOptions = await this.gameService.getGameOptions();
     return GetGameOptionsResponseDto.from(gameOptions);
   }
@@ -60,6 +61,7 @@ export class GamesController {
     @Req() request: Request,
     @Res() response: Response,
   ): Promise<void> {
+    // FIXME: 회원용 AuthGuard 붙이기
     await this.gameStreamService.validateGameStreamParams(query.categoryId);
 
     response.setHeader('Content-Type', 'text/event-stream');
@@ -109,6 +111,8 @@ export class GamesController {
   async saveGameSession(
     @Body() dto: SaveGameSessionRequestDto,
   ): Promise<SaveGameSessionResponseDto> {
+    // FIXME: 회원용 AuthGuard 붙이기
+    // FIXME: 회원연결시 user_id 매핑
     const gameSessionId = await this.gameService.createGameSession({
       categoryId: dto.categoryId,
       difficultyMode: dto.difficultyMode,
@@ -118,7 +122,7 @@ export class GamesController {
 
     // FIXME: (회원 한정) 게임세션 저장후
     // user 도메인이 연관되므로 Facade application 계층 추가
-    // user_id에 매핑된 게임세션들의 score들을 합산하여 User.totalScore 업데이트
+    // user_id에 매핑된 게임세션들의 score들을 합산하여 User.totalScore 업데이트 (#32)
     // 회원인경우에는 totalScore도 같이 리스폰스하도록 응답DTO(SaveGameSessionResponseDto) 업데이트
     return SaveGameSessionResponseDto.from(gameSessionId);
   }
