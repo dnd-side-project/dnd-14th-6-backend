@@ -1,16 +1,22 @@
 import { Body, Controller, Get, Logger, MessageEvent, Post, Query, Req, Res } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-
 import { Request, Response } from 'express';
 import { Subject } from 'rxjs';
 
-import { GameStreamService } from '../application/game-stream.service';
 import { GamesService } from '../application/games.service';
-import { ApiGameStream } from './decorators/game-stream-swagger.decorator';
-import { ApiGetGameOptions } from './decorators/get-game-options-swagger.decorator';
-import { ApiSaveGameSession } from './decorators/save-game-session-swagger.decorator';
-import { GameStreamQueryDto } from './dto/game-stream-query.dto';
+import { GameStreamService } from '../application/game-stream.service';
+import { GameSessionService } from '../application/game-session.service';
+
 import { GetGameOptionsResponseDto } from './dto/get-game-options.dto';
+import { GameStreamQueryDto } from './dto/game-stream-query.dto';
+import {
+  GetGameHistoriesQueryDto,
+  GetGameHistoriesResponseDto,
+} from './dto/get-game-histories.dto';
+
+import { ApiGetGameOptions } from './decorators/get-game-options-swagger.decorator';
+import { ApiGetGameHistories } from './decorators/get-game-histories-swagger.decorator';
+import { ApiGameStream } from './decorators/game-stream-swagger.decorator';
 import { SaveGameSessionRequestDto, SaveGameSessionResponseDto } from './dto/save-game-session.dto';
 
 @ApiTags('Games')
@@ -20,7 +26,9 @@ export class GamesController {
 
   constructor(
     private readonly gameService: GamesService,
+
     private readonly gameStreamService: GameStreamService,
+    private readonly gameSessionService: GameSessionService,
   ) {}
 
   @Get('options')
@@ -98,5 +106,15 @@ export class GamesController {
     // user_id에 매핑된 게임세션들의 score들을 합산하여 User.totalScore 업데이트
     // 회원인경우에는 totalScore도 같이 리스폰스하도록 응답DTO(SaveGameSessionResponseDto) 업데이트
     return SaveGameSessionResponseDto.from(gameSessionId);
+  }
+  
+  @Get('sessions')
+  @ApiGetGameHistories()
+  async getGameHistories(
+    @Query() query: GetGameHistoriesQueryDto,
+  ): Promise<GetGameHistoriesResponseDto> {
+    const gameHistories = await this.gameSessionService.getSessionHistories(query);
+
+    return GetGameHistoriesResponseDto.from(gameHistories, query.page, query.size);
   }
 }

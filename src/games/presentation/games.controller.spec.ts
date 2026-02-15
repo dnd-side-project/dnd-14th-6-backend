@@ -1,23 +1,34 @@
 import { EventEmitter } from 'events';
 import { BadRequestException, Logger, MessageEvent, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-
-import { Request, Response } from 'express';
+import { Logger, MessageEvent, NotFoundException } from '@nestjs/common';
+import { EventEmitter } from 'events';
 import { Observable, of, Subject, takeUntil } from 'rxjs';
+import { Request, Response } from 'express';
 
-import { GameStreamService } from '../application/game-stream.service';
+import { GamesController } from './games.controller';
+
 import { GamesService } from '../application/games.service';
+import { GameStreamService } from '../application/game-stream.service';
+import { GameSessionService } from '../application/game-session.service';
+
 import { GameCategory } from '../domain/game-categories.entity';
 import { GameOptions } from '../domain/game-options.entity';
-import { DIFFICULTY_MODES, GameDifficultyMode } from '../domain/game.business-rules';
+import { GameSessionHistoryList } from '../domain/game-session-history.entity';
+import { DIFFICULTY_MODES, GameSessionSortBy, SortOrder } from '../domain/game.business-rules';
+import { GameDifficultyMode } from '../domain/game.business-rules';
+
 import { GetGameOptionsResponseDto } from './dto/get-game-options.dto';
-import { ClientAnswerDto, InputDto, SaveGameSessionRequestDto } from './dto/save-game-session.dto';
-import { GamesController } from './games.controller';
+import {
+  GetGameHistoriesQueryDto,
+  GetGameHistoriesResponseDto,
+} from './dto/get-game-histories.dto';
 
 describe('GamesController', () => {
   let controller: GamesController;
   let gameService: jest.Mocked<GamesService>;
   let gameStreamService: jest.Mocked<GameStreamService>;
+  let gameSessionService: jest.Mocked<GameSessionService>;
 
   beforeEach(async () => {
     const mockGameService = {
@@ -27,6 +38,10 @@ describe('GamesController', () => {
     const mockGameStreamService = {
       validateGameStreamParams: jest.fn(),
       createGameStream: jest.fn(),
+    };
+
+    const mockGameSessionService = {
+      getSessionHistories: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -40,12 +55,17 @@ describe('GamesController', () => {
           provide: GameStreamService,
           useValue: mockGameStreamService,
         },
+        {
+          provide: GameSessionService,
+          useValue: mockGameSessionService,
+        },
       ],
     }).compile();
 
     controller = module.get<GamesController>(GamesController);
     gameService = module.get(GamesService);
     gameStreamService = module.get(GameStreamService);
+    gameSessionService = module.get(GameSessionService);
   });
 
   describe('getGameOptions', () => {
@@ -66,6 +86,37 @@ describe('GamesController', () => {
         difficultyModes: DIFFICULTY_MODES,
       });
       expect(gameService.getGameOptions).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('getGameHistories', () => {
+    const createQuery = (
+      overrides?: Partial<GetGameHistoriesQueryDto>,
+    ): GetGameHistoriesQueryDto => ({
+      userId: 1n,
+      page: 1,
+      size: 10,
+      sortBy: GameSessionSortBy.PlayedAt,
+      sortOrder: SortOrder.Desc,
+      ...overrides,
+    });
+
+    it('세션 히스토리 목록을 정상적으로 응답한다.', async () => {
+      const query = createQuery();
+      const historyList = GameSessionHistoryList.from({
+        sessionHistories: [],
+        totalItems: 0,
+      });
+      gameSessionService.getSessionHistories.mockResolvedValue(historyList);
+
+      const result = await controller.getGameHistories(query);
+
+      expect(result).toBeInstanceOf(GetGameHistoriesResponseDto);
+      expect(result).toEqual({
+        sessions: [],
+        metadata: { page: 1, size: 10, totalItems: 0, totalPages: 0 },
+      });
+      expect(gameSessionService.getSessionHistories).toHaveBeenCalledWith(query);
     });
   });
 
@@ -137,6 +188,7 @@ describe('GamesController', () => {
         expect(mockResponse.write).not.toHaveBeenCalled();
       });
     });
+
     describe('❌ 실패 케이스', () => {
       it('존재하지 않는 카테고리로 요청하면 NotFoundException을 던진다.', async () => {
         const query = { categoryId: 999, difficultyMode: GameDifficultyMode.Easy };

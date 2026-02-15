@@ -1,6 +1,8 @@
 import { GameCategory } from './game-categories.entity';
 import { ClientAnswerInput } from './game-client-answers.interface';
 import { GameProblem } from './game-problem.entity';
+import { GameSessionHistoryFilterEntity } from './game-session-history-filter.entity';
+import { GameSessionHistoryList } from './game-session-history.entity';
 import { FrequentWrongCommand, FrequentWrongCategory } from './user-mistake-analysis.entity';
 import { GameDifficultyMode } from './game.business-rules';
 
@@ -57,6 +59,13 @@ export interface IGameRepository {
       tryCount: number;
     }[];
   }): Promise<bigint>;
+
+  /**
+   * @description 필터 기반 사용자 게임 세션 히스토리 목록 조회
+   */
+  getSessionHistoryByFilter(
+    filter: GameSessionHistoryFilterEntity,
+  ): Promise<GameSessionHistoryList>;
 
   /**
    * @description 사용자가 자주 틀린 명령어 Top 5 조회 (서브 카테고리 별)

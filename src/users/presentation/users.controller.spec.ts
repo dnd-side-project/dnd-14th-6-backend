@@ -132,9 +132,9 @@ describe('UsersController', () => {
 
     beforeEach(() => {
       const mockCommands = [
-        FrequentWrongCommand.from({ subCategory: 'Branch', wrongCount: 12 }),
-        FrequentWrongCommand.from({ subCategory: 'Commit', wrongCount: 9 }),
-        FrequentWrongCommand.from({ subCategory: 'Merge', wrongCount: 7 }),
+        FrequentWrongCommand.from({ category: 'Git', subCategory: 'Branch', wrongCount: 12 }),
+        FrequentWrongCommand.from({ category: 'Git', subCategory: 'Commit', wrongCount: 9 }),
+        FrequentWrongCommand.from({ category: 'Git', subCategory: 'Merge', wrongCount: 7 }),
       ];
 
       const mockCategories = [
@@ -171,6 +171,7 @@ describe('UsersController', () => {
 
       expect(result.frequentWrongCommands).toHaveLength(3);
       expect(result.frequentWrongCommands[0]).toMatchObject({
+        category: 'Git',
         subCategory: 'Branch',
         wrongCount: 12,
       });
