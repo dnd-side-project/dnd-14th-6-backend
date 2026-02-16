@@ -7,11 +7,11 @@ import {
   getSchemaPath,
 } from '@nestjs/swagger';
 
+import { ApiResponseDto } from '@common/dto/api-response.dto';
 import {
   createSwaggerAuthErrors,
   createSwaggerServerErrors,
-} from '@/common/utils/swagger-error-response.util';
-import { ApiResponseDto } from '@common/dto/api-response.dto';
+} from '@common/utils/swagger-error-response.util';
 
 import { GetMyInfoResponseDto } from '../dto/get-my-info.dto';
 
