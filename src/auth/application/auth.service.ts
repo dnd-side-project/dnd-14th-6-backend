@@ -1,3 +1,4 @@
+import { timingSafeEqual } from 'crypto';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 
@@ -49,7 +50,13 @@ export class AuthService {
    * @description 저장된 리프레시 토큰과 요청한 리프레시 토큰이 같은지 검증
    */
   verifyRefreshTokenWithSavedToken(requestedToken: string, savedToken: string): void {
-    if (requestedToken !== savedToken) {
+    const requestedTokenBuf = Buffer.from(requestedToken);
+    const savedTokenBuf = Buffer.from(savedToken);
+
+    if (
+      requestedTokenBuf.length !== savedTokenBuf.length ||
+      !timingSafeEqual(requestedTokenBuf, savedTokenBuf)
+    ) {
       throw new UnauthorizedException('유효하지 않은 토큰입니다.');
     }
   }
