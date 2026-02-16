@@ -47,11 +47,7 @@ export class JwtRefreshStrategy extends PassportStrategy(Strategy, 'jwt-refresh'
     }
 
     const userId = BigInt(payload.sub);
-    const refreshToken = getRefreshToken(request);
-
-    if (!refreshToken) {
-      throw new UnauthorizedException('유효하지 않은 토큰입니다.');
-    }
+    const { refreshToken } = request.body as { refreshToken: string };
 
     await this.authFacade.verifyRefreshToken(userId, refreshToken);
 
