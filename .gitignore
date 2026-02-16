@@ -60,6 +60,3 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
 # claude
 .claude/setting.local.json
-.claude/*
-CLAUDE.md
-AGENTS.md
