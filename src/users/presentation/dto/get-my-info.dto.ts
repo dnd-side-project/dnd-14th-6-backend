@@ -11,11 +11,12 @@ export class GetMyInfoResponseDto {
   @ApiProperty({ description: '유저 닉네임', example: 'John' })
   nickname: string;
 
+  // FIXME: default profile image 작업 시 string으로 변경
   @ApiProperty({
     description: '유저 프로필 사진 (없을 경우 default image)',
     example: 'https://example.com/profile.png',
   })
-  profileImage: string;
+  profileImage: string | null;
 
   static from(user: User) {
     return plainToInstance(GetMyInfoResponseDto, {
