@@ -411,7 +411,7 @@ export class GameRepositoryImpl implements IGameRepository {
         subCategory: log.problem.subCategory.name,
         text: log.problem.text,
         explanation: log.problem.explanation,
-        inputs: log.inputs as unknown as ClientAnswerInput[],
+        inputs: this.parseClientAnswerInputs(log.inputs),
         answer: log.problem.answer,
         isSolved: log.isSolved,
         tryCount: log.tryCount,
@@ -423,5 +423,21 @@ export class GameRepositoryImpl implements IGameRepository {
       summary,
       reports,
     });
+  }
+
+  private parseClientAnswerInputs(json: Prisma.JsonValue): ClientAnswerInput[] {
+    if (!Array.isArray(json)) {
+      return [];
+    }
+
+    return json
+      .filter(
+        (item): item is { input: string; isCorrect: boolean } =>
+          typeof item === 'object' &&
+          item !== null &&
+          typeof (item as Record<string, unknown>).input === 'string' &&
+          typeof (item as Record<string, unknown>).isCorrect === 'boolean',
+      )
+      .map((item) => ({ input: item.input, isCorrect: item.isCorrect }));
   }
 }
