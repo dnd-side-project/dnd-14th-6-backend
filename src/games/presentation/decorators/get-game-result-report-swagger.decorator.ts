@@ -32,11 +32,15 @@ export function ApiGetGameResultReport() {
       content: {
         'application/json': {
           schema: {
-            type: 'object',
-            $ref: getSchemaPath(ApiResponseDto),
-            properties: {
-              data: { $ref: getSchemaPath(GetGameResultReportResponseDto) },
-            },
+            allOf: [
+              { $ref: getSchemaPath(ApiResponseDto) },
+              {
+                type: 'object',
+                properties: {
+                  data: { $ref: getSchemaPath(GetGameResultReportResponseDto) },
+                },
+              },
+            ],
           },
           example: GAME_RESULT_REPORT_EXAMPLE,
         },
