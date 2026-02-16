@@ -122,10 +122,7 @@ describe('GameSessionService', () => {
           gameRepository.findGameResultReport.mockResolvedValue(null);
 
           await expect(service.getGameResultReport(gameSessionId)).rejects.toThrow(
-            NotFoundException,
-          );
-          await expect(service.getGameResultReport(gameSessionId)).rejects.toThrow(
-            '존재하지 않는 게임 세션입니다.',
+            new NotFoundException('존재하지 않는 게임 세션입니다.'),
           );
         });
       });
