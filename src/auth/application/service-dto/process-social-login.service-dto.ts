@@ -1,6 +1,6 @@
 import { SocialLoginProvider } from '../../domain/auth.business-rule';
 
-export interface ProcessSocialLoginRequestDto {
+export interface ProcessSocialLoginFacadeRequestDto {
   provider: SocialLoginProvider;
   socialUser: {
     id: string;
@@ -12,7 +12,7 @@ export interface ProcessSocialLoginRequestDto {
   gameSessionId?: bigint;
 }
 
-export interface ProcessSocialLoginResponseDto {
+export interface ProcessSocialLoginFacadeResponseDto {
   accessToken: string;
   refreshToken: string;
 }

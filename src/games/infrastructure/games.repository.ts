@@ -1,14 +1,12 @@
-import { Prisma } from '@prisma/client';
-import { PrismaService } from '@prisma/prisma.service';
 import { Injectable } from '@nestjs/common';
+
+import { Prisma } from '@prisma/client';
+
+import { PrismaService } from '@/prisma/prisma.service';
 import { capitalize } from '@common/utils/string.util';
 
-import { IGameRepository, NonRandomGameDifficultyMode } from '../domain/games.repository.interface';
 import { GameCategory } from '../domain/game-categories.entity';
-import {
-  FrequentWrongCommand,
-  FrequentWrongCategory,
-} from '../domain/user-mistake-analysis.entity';
+import { ClientAnswerInput } from '../domain/game-client-answers.interface';
 import { GameProblem } from '../domain/game-problem.entity';
 import { GameSessionHistoryFilterEntity } from '../domain/game-session-history-filter.entity';
 import { GameSessionHistory, GameSessionHistoryList } from '../domain/game-session-history.entity';
@@ -18,7 +16,11 @@ import {
   MAX_PROBLEMS_PER_GAME,
   ProblemDifficulty,
 } from '../domain/game.business-rules';
-
+import { IGameRepository, NonRandomGameDifficultyMode } from '../domain/games.repository.interface';
+import {
+  FrequentWrongCategory,
+  FrequentWrongCommand,
+} from '../domain/user-mistake-analysis.entity';
 import { ProblemRawRow } from './types/problem-raw-row';
 
 @Injectable()
@@ -64,7 +66,7 @@ export class GameRepositoryImpl implements IGameRepository {
         p.title, 
         p.text, 
         p.answer, 
-        p.difficulty, 
+        p.difficulty,
         sc.name as "subCategoryName"
       FROM problems p
       JOIN sub_categories sc ON p.sub_category_id = sc.id
@@ -77,8 +79,8 @@ export class GameRepositoryImpl implements IGameRepository {
   }
 
   private mapToGameProblem(p: ProblemRawRow): GameProblem {
-    const difficulty = capitalize(p.difficulty.toLowerCase()) as GameDifficultyMode;
-    const point = DIFFICULTY_SCORES[difficulty as ProblemDifficulty];
+    const difficulty = capitalize(p.difficulty.toLowerCase()) as ProblemDifficulty;
+    const point = DIFFICULTY_SCORES[difficulty];
 
     return GameProblem.from({
       id: BigInt(p.id),
@@ -101,6 +103,73 @@ export class GameRepositoryImpl implements IGameRepository {
     });
     return category !== null;
   }
+
+  /**
+   * @description 문제 ID 목록으로 문제 조회
+   */
+  async findProblemsByIds(problemIds: bigint[]): Promise<GameProblem[]> {
+    const problems = await this.prisma.problem.findMany({
+      where: { id: { in: problemIds } },
+      include: { subCategory: { select: { name: true } } },
+    });
+
+    return problems.map((p) =>
+      this.mapToGameProblem({
+        id: p.id,
+        title: p.title,
+        text: p.text,
+        answer: p.answer,
+        difficulty: p.difficulty,
+        subCategoryName: p.subCategory.name,
+      }),
+    );
+  }
+
+  /**
+   * @description 게임 세션과 세션 로그를 원자적으로 저장
+   */
+  async saveGameSession(data: {
+    categoryId: number;
+    difficultyMode: GameDifficultyMode;
+    score: number;
+    totalProblemCount: number;
+    correctProblemCount: number;
+    logs: {
+      problemId: bigint;
+      inputs: ClientAnswerInput[];
+      isSolved: boolean;
+      tryCount: number;
+    }[];
+  }): Promise<bigint> {
+    const session = await this.prisma.$transaction(async (tx) => {
+      const gameSession = await tx.gameSession.create({
+        data: {
+          categoryId: data.categoryId,
+          difficultyMode: data.difficultyMode,
+          score: data.score,
+          totalProblemCount: data.totalProblemCount,
+          correctProblemCount: data.correctProblemCount,
+        },
+      });
+
+      if (data.logs.length > 0) {
+        await tx.gameSessionLog.createMany({
+          data: data.logs.map((log) => ({
+            sessionId: gameSession.id,
+            problemId: log.problemId,
+            inputs: log.inputs.map(({ input, isCorrect }) => ({ input, isCorrect })),
+            isSolved: log.isSolved,
+            tryCount: log.tryCount,
+          })),
+        });
+      }
+
+      return gameSession;
+    });
+
+    return session.id;
+  }
+
   /**
    * @description 모든 학습 카테고리 목록을 조회
    */
@@ -109,6 +178,7 @@ export class GameRepositoryImpl implements IGameRepository {
       select: {
         id: true,
         name: true,
+        iconUrl: true,
       },
       orderBy: {
         id: 'asc',

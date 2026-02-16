@@ -4,12 +4,11 @@ import { GameSessionService } from '@games/application/game-session.service';
 import { TiersService } from '@tiers/application/tiers.service';
 import { UsersService } from '@users/application/users.service';
 
-import {
-  ProcessSocialLoginRequestDto,
-  ProcessSocialLoginResponseDto,
-} from './service-dto/process-social-login.service-dto';
-
 import { AuthService } from './auth.service';
+import {
+  ProcessSocialLoginFacadeRequestDto,
+  ProcessSocialLoginFacadeResponseDto,
+} from './service-dto/process-social-login.service-dto';
 
 @Injectable()
 export class AuthFacade {
@@ -24,8 +23,8 @@ export class AuthFacade {
    * @description 소셜 로그인 처리 서비스 함수
    */
   async processSocialLogin(
-    loginData: ProcessSocialLoginRequestDto,
-  ): Promise<ProcessSocialLoginResponseDto> {
+    loginData: ProcessSocialLoginFacadeRequestDto,
+  ): Promise<ProcessSocialLoginFacadeResponseDto> {
     const existingUser = await this.usersService.findByEmail(loginData.socialUser.email);
 
     if (existingUser) {
@@ -42,7 +41,7 @@ export class AuthFacade {
     return this.usersService.isExistUser(userId);
   }
 
-  private async loginExistingUser(userId: bigint): Promise<ProcessSocialLoginResponseDto> {
+  private async loginExistingUser(userId: bigint): Promise<ProcessSocialLoginFacadeResponseDto> {
     const tokens = this.authService.issueTokens(userId);
 
     await this.usersService.updateRefreshToken(userId, tokens.refreshToken);
@@ -56,8 +55,8 @@ export class AuthFacade {
    * @description 새로운 소셜로그인 유저 생성
    */
   private async registerNewSocialUser(
-    loginData: ProcessSocialLoginRequestDto,
-  ): Promise<ProcessSocialLoginResponseDto> {
+    loginData: ProcessSocialLoginFacadeRequestDto,
+  ): Promise<ProcessSocialLoginFacadeResponseDto> {
     const refreshToken = this.authService.createRefreshToken();
     const lowestTier = await this.tiersService.getLowestTier();
 

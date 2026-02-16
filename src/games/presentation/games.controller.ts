@@ -1,26 +1,37 @@
-import { Controller, Get, Logger, MessageEvent, Query, Req, Res, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Logger,
+  MessageEvent,
+  Post,
+  Query,
+  Req,
+  Res,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
+
+import { CheckOwnership } from '@auth/presentation/decorators/check-ownership.decorator';
+import { JwtAuthGuard } from '@auth/presentation/guards/jwt-auth.guard';
+import { UserOwnershipGuard } from '@auth/presentation/guards/user-ownership.guard';
 import { Request, Response } from 'express';
 import { Subject } from 'rxjs';
 
-import { JwtAuthGuard } from '@auth/presentation/guards/jwt-auth.guard';
-import { UserOwnershipGuard } from '@auth/presentation/guards/user-ownership.guard';
-import { CheckOwnership } from '@auth/presentation/decorators/check-ownership.decorator';
-
-import { GamesService } from '../application/games.service';
-import { GameStreamService } from '../application/game-stream.service';
 import { GameSessionService } from '../application/game-session.service';
-
-import { GetGameOptionsResponseDto } from './dto/get-game-options.dto';
+import { GameStreamService } from '../application/game-stream.service';
+import { GamesService } from '../application/games.service';
+import { ApiGameStream } from './decorators/game-stream-swagger.decorator';
+import { ApiGetGameHistories } from './decorators/get-game-histories-swagger.decorator';
+import { ApiGetGameOptions } from './decorators/get-game-options-swagger.decorator';
+import { ApiSaveGameSession } from './decorators/save-game-session-swagger.decorator';
 import { GameStreamQueryDto } from './dto/game-stream-query.dto';
 import {
   GetGameHistoriesQueryDto,
   GetGameHistoriesResponseDto,
 } from './dto/get-game-histories.dto';
-
-import { ApiGetGameOptions } from './decorators/get-game-options-swagger.decorator';
-import { ApiGetGameHistories } from './decorators/get-game-histories-swagger.decorator';
-import { ApiGameStream } from './decorators/game-stream-swagger.decorator';
+import { GetGameOptionsResponseDto } from './dto/get-game-options.dto';
+import { SaveGameSessionRequestDto, SaveGameSessionResponseDto } from './dto/save-game-session.dto';
 
 @ApiTags('Games')
 @Controller('games')
@@ -95,6 +106,25 @@ export class GamesController {
   /**
    * @description 게임 세션 히스토리 조회 (본인만 가능)
    */
+  @Post('save')
+  @ApiSaveGameSession()
+  async saveGameSession(
+    @Body() dto: SaveGameSessionRequestDto,
+  ): Promise<SaveGameSessionResponseDto> {
+    const gameSessionId = await this.gameService.createGameSession({
+      categoryId: dto.categoryId,
+      difficultyMode: dto.difficultyMode,
+      score: dto.score,
+      clientAnswers: dto.clientAnswers,
+    });
+
+    // FIXME: (회원 한정) 게임세션 저장후
+    // user 도메인이 연관되므로 Facade application 계층 추가
+    // user_id에 매핑된 게임세션들의 score들을 합산하여 User.totalScore 업데이트
+    // 회원인경우에는 totalScore도 같이 리스폰스하도록 응답DTO(SaveGameSessionResponseDto) 업데이트
+    return SaveGameSessionResponseDto.from(gameSessionId);
+  }
+
   @Get('sessions')
   @UseGuards(JwtAuthGuard, UserOwnershipGuard)
   @CheckOwnership('userId')

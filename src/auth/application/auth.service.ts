@@ -1,8 +1,8 @@
+import { randomBytes } from 'crypto';
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { randomBytes } from 'crypto';
 
-import { ProcessSocialLoginResponseDto } from './service-dto/process-social-login.service-dto';
+import { ProcessSocialLoginFacadeResponseDto } from './service-dto/process-social-login.service-dto';
 
 @Injectable()
 export class AuthService {
@@ -11,7 +11,7 @@ export class AuthService {
   /**
    * @description access, refresh token 발급
    */
-  issueTokens(userId: bigint): ProcessSocialLoginResponseDto {
+  issueTokens(userId: bigint): ProcessSocialLoginFacadeResponseDto {
     return {
       accessToken: this.createAccessToken(userId),
       refreshToken: this.createRefreshToken(),

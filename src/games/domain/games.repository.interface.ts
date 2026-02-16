@@ -1,9 +1,10 @@
 import { GameCategory } from './game-categories.entity';
+import { ClientAnswerInput } from './game-client-answers.interface';
 import { GameProblem } from './game-problem.entity';
 import { GameSessionHistoryFilterEntity } from './game-session-history-filter.entity';
 import { GameSessionHistoryList } from './game-session-history.entity';
-import { FrequentWrongCommand, FrequentWrongCategory } from './user-mistake-analysis.entity';
 import { GameDifficultyMode } from './game.business-rules';
+import { FrequentWrongCategory, FrequentWrongCommand } from './user-mistake-analysis.entity';
 
 export type NonRandomGameDifficultyMode = Exclude<GameDifficultyMode, GameDifficultyMode.Random>;
 
@@ -37,6 +38,27 @@ export interface IGameRepository {
    * @description categoryId로 카테고리 존재여부 확인
    */
   categoryExists(categoryId: number): Promise<boolean>;
+  /**
+   * @description 문제 ID 목록으로 문제 조회
+   */
+  findProblemsByIds(problemIds: bigint[]): Promise<GameProblem[]>;
+  /**
+   * @description 게임 세션과 세션 로그를 원자적으로 저장
+   * @returns 생성된 GameSession ID
+   */
+  saveGameSession(data: {
+    categoryId: number;
+    difficultyMode: GameDifficultyMode;
+    score: number;
+    totalProblemCount: number;
+    correctProblemCount: number;
+    logs: {
+      problemId: bigint;
+      inputs: ClientAnswerInput[];
+      isSolved: boolean;
+      tryCount: number;
+    }[];
+  }): Promise<bigint>;
 
   /**
    * @description 필터 기반 사용자 게임 세션 히스토리 목록 조회
