@@ -4,12 +4,11 @@ import { GameSessionService } from '@games/application/game-session.service';
 import { TiersService } from '@tiers/application/tiers.service';
 import { UsersService } from '@users/application/users.service';
 
+import { AuthService } from './auth.service';
 import {
   ProcessSocialLoginFacadeRequestDto,
   ProcessSocialLoginFacadeResponseDto,
 } from './service-dto/process-social-login.service-dto';
-
-import { AuthService } from './auth.service';
 
 @Injectable()
 export class AuthFacade {
@@ -19,6 +18,22 @@ export class AuthFacade {
     private readonly gameSessionService: GameSessionService,
     private readonly tiersService: TiersService,
   ) {}
+
+  /**
+   * @description 유효한 refreshToken인지 검증
+   */
+  async verifyRefreshToken(userId: bigint, refreshToken: string): Promise<void> {
+    const user = await this.usersService.findById(userId);
+
+    this.authService.verifyRefreshTokenWithSavedToken(refreshToken, user.refreshToken);
+  }
+
+  /**
+   * @description 기존 유저 로그인 플로우를 통한 토큰 갱신
+   */
+  async processRefreshTokens(userId: bigint): Promise<ProcessSocialLoginFacadeResponseDto> {
+    return this.loginExistingUser(userId);
+  }
 
   /**
    * @description 소셜 로그인 처리 서비스 함수
@@ -51,7 +66,6 @@ export class AuthFacade {
   private async registerNewSocialUser(
     loginData: ProcessSocialLoginFacadeRequestDto,
   ): Promise<ProcessSocialLoginFacadeResponseDto> {
-    const refreshToken = this.authService.createRefreshToken();
     const lowestTier = await this.tiersService.getLowestTier();
 
     const createdUser = await this.usersService.createSocialUser({
@@ -61,17 +75,17 @@ export class AuthFacade {
       providerId: loginData.socialUser.id,
       profileImage: loginData.socialUser.profileImage ?? null,
       githubUrl: loginData.socialUser.githubUrl ?? null,
-      refreshToken,
+      refreshToken: '',
       tierId: lowestTier.id,
     });
 
     await this.attachGameSessionIfExists(loginData.gameSessionId, createdUser.id);
 
-    const accessToken = this.authService.createAccessToken(createdUser.id);
+    const tokens = this.authService.issueTokens(createdUser.id);
+    await this.usersService.updateRefreshToken(createdUser.id, tokens.refreshToken);
 
     return {
-      accessToken,
-      refreshToken,
+      ...tokens,
     };
   }
 
