@@ -4,12 +4,12 @@ export class GameResultProblemReport {
   private constructor(
     public readonly problemId: bigint,
     public readonly subCategory: string,
-    public readonly text: string,
+    public readonly text: string | null,
     public readonly explanation: string | null,
     public readonly inputs: ClientAnswerInput[],
-    public readonly answer: string,
-    public readonly isSolved: boolean,
-    public readonly tryCount: number,
+    public readonly answer: string | null,
+    public readonly isSolved: boolean | null,
+    public readonly tryCount: number | null,
   ) {}
 
   static from(
@@ -42,10 +42,10 @@ export class GameResultSummary {
   private constructor(
     public readonly sessionId: bigint,
     public readonly userId: bigint | null,
-    public readonly score: number,
-    public readonly totalProblemCount: number,
-    public readonly correctProblemCount: number,
-    public readonly correctRate: number,
+    public readonly score: number | null,
+    public readonly totalProblemCount: number | null,
+    public readonly correctProblemCount: number | null,
+    public readonly correctRate: number | null,
   ) {}
 
   static from(
@@ -55,9 +55,11 @@ export class GameResultSummary {
     >,
   ) {
     const correctRate =
-      data.totalProblemCount > 0
-        ? Math.round((data.correctProblemCount / data.totalProblemCount) * 100)
-        : 0;
+      data.totalProblemCount == null
+        ? null
+        : data.totalProblemCount > 0
+          ? Math.round(((data.correctProblemCount ?? 0) / data.totalProblemCount) * 100)
+          : 0;
 
     return new GameResultSummary(
       data.sessionId,
