@@ -19,8 +19,12 @@ class ReportDto {
   @ApiProperty({ description: '하위 카테고리', example: 'Branch' })
   subCategory: string;
 
-  @ApiProperty({ description: '문제 지문', example: '다음 중 브랜치를 생성하는 명령어는?' })
-  text: string;
+  @ApiProperty({
+    description: '문제 지문',
+    example: '다음 중 브랜치를 생성하는 명령어는?',
+    nullable: true,
+  })
+  text: string | null;
 
   @ApiProperty({
     description: '문제 해설',
@@ -32,14 +36,14 @@ class ReportDto {
   @ApiProperty({ description: '사용자 입력 정답 이력', type: [InputDto] })
   inputs: InputDto[];
 
-  @ApiProperty({ description: '정답', example: 'git branch feature' })
-  answer: string;
+  @ApiProperty({ description: '정답', example: 'git branch feature', nullable: true })
+  answer: string | null;
 
-  @ApiProperty({ description: '해결 여부', example: true })
-  isSolved: boolean;
+  @ApiProperty({ description: '해결 여부', example: true, nullable: true })
+  isSolved: boolean | null;
 
-  @ApiProperty({ description: '시도 횟수', example: 1 })
-  tryCount: number;
+  @ApiProperty({ description: '시도 횟수', example: 1, nullable: true })
+  tryCount: number | null;
 }
 
 class SummaryDto {
@@ -49,17 +53,17 @@ class SummaryDto {
   @ApiProperty({ description: '유저 ID (비회원은 null)', example: '1', nullable: true })
   userId: string | null;
 
-  @ApiProperty({ description: '총 획득 점수', example: 170 })
-  score: number;
+  @ApiProperty({ description: '총 획득 점수', example: 170, nullable: true })
+  score: number | null;
 
-  @ApiProperty({ description: '문제 개수', example: 20 })
-  totalProblemCount: number;
+  @ApiProperty({ description: '문제 개수', example: 20, nullable: true })
+  totalProblemCount: number | null;
 
-  @ApiProperty({ description: '맞춘 문제 개수', example: 17 })
-  correctProblemCount: number;
+  @ApiProperty({ description: '맞춘 문제 개수', example: 17, nullable: true })
+  correctProblemCount: number | null;
 
-  @ApiProperty({ description: '정답률(%)', example: 85 })
-  correctRate: number;
+  @ApiProperty({ description: '정답률(%)', example: 85, nullable: true })
+  correctRate: number | null;
 }
 
 export class GetGameResultReportResponseDto {
