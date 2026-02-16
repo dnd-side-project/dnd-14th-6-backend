@@ -1,24 +1,35 @@
 import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 
+import { CheckOwnership } from '@auth/presentation/decorators/check-ownership.decorator';
 import { JwtAuthGuard } from '@auth/presentation/guards/jwt-auth.guard';
 import { UserOwnershipGuard } from '@auth/presentation/guards/user-ownership.guard';
-import { CheckOwnership } from '@auth/presentation/decorators/check-ownership.decorator';
+
+import { AuthenticatedUser } from '@/auth/presentation/decorators/authenticated-user.decorator';
 
 import { UsersService } from '../application/users.service';
-
+import { ApiGetMyInfo } from './decorators/get-my-info.swagger.decorator';
+import { ApiGetRanks } from './decorators/get-ranks-swagger.decorator';
+import { ApiGetUserAnalysis } from './decorators/get-user-analysis-swagger.decorator';
+import { ApiGetUserStats } from './decorators/get-user-stats-swagger.decorator';
+import { GetMyInfoResponseDto } from './dto/get-my-info.dto';
 import { GetRanksQueryDto, GetRanksResponseDto } from './dto/get-ranks.dto';
 import { GetUserAnalysisParamDto, GetUserAnalysisResponseDto } from './dto/get-user-analysis.dto';
 import { GetUserStatsParamDto, GetUserStatsResponseDto } from './dto/get-user-stats.dto';
-
-import { ApiGetRanks } from './decorators/get-ranks-swagger.decorator';
-import { ApiGetUserStats } from './decorators/get-user-stats-swagger.decorator';
-import { ApiGetUserAnalysis } from './dto/decorators/get-user-analysis-swagger.decorator';
 
 @ApiTags('Users')
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
+
+  @Get('/me')
+  @ApiGetMyInfo()
+  @UseGuards(JwtAuthGuard)
+  async getMyInfo(@AuthenticatedUser() user: { userId: bigint }) {
+    const userInfo = await this.usersService.findById(user.userId);
+
+    return GetMyInfoResponseDto.from(userInfo);
+  }
 
   @Get('/ranks')
   @ApiGetRanks()
