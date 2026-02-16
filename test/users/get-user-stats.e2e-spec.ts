@@ -4,6 +4,7 @@ import { Reflector } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { PrismaClient } from '@prisma/client';
+import { JwtAuthGuard } from '@auth/presentation/guards/jwt-auth.guard';
 import * as request from 'supertest';
 import { App } from 'supertest/types';
 import { GenericContainer, StartedTestContainer } from 'testcontainers';
@@ -17,6 +18,7 @@ import { seedSubCategories } from '../../prisma/seeds/subcategory.seed';
 import { seedTiers } from '../../prisma/seeds/tier.seed';
 import { seedUsersAndSessions } from '../../prisma/seeds/user-session.seed';
 import { AppModule } from '../../src/app.module';
+import { createMockAuthGuard } from '../utils/mock-auth.guard';
 
 describe('GET /api/users/:userId/stats (e2e)', () => {
   let app: INestApplication<App>;
@@ -50,7 +52,10 @@ describe('GET /api/users/:userId/stats (e2e)', () => {
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
-    }).compile();
+    })
+      .overrideGuard(JwtAuthGuard)
+      .useValue(createMockAuthGuard())
+      .compile();
 
     app = moduleFixture.createNestApplication();
     app.setGlobalPrefix('api');
