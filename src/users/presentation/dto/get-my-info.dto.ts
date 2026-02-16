@@ -8,7 +8,7 @@ export class GetMyInfoResponseDto {
   @ApiProperty({ description: '유저 ID', example: '121' })
   id: string;
 
-  @ApiProperty({ description: '유지 닉네임', example: 'John' })
+  @ApiProperty({ description: '유저 닉네임', example: 'John' })
   nickname: string;
 
   @ApiProperty({
