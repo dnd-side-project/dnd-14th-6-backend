@@ -36,6 +36,23 @@ export class GameResultProblemReport {
       data.tryCount,
     );
   }
+
+  /**
+   * @description 비회원 열람 제한 문제 리포트 생성
+   * - problemId, subCategory만 노출하고 나머지 필드는 잠금 처리
+   */
+  toLocked(): GameResultProblemReport {
+    return new GameResultProblemReport(
+      this.problemId,
+      this.subCategory,
+      null,
+      null,
+      [],
+      null,
+      null,
+      null,
+    );
+  }
 }
 
 export class GameResultSummary {
@@ -70,6 +87,14 @@ export class GameResultSummary {
       correctRate,
     );
   }
+
+  /**
+   * @description 비회원 열람 제한 요약 생성
+   * - sessionId, userId만 노출하고 나머지 필드는 잠금 처리
+   */
+  toGuestView(): GameResultSummary {
+    return new GameResultSummary(this.sessionId, this.userId, null, null, null, null);
+  }
 }
 
 export class GameResultReport {
@@ -85,5 +110,19 @@ export class GameResultReport {
     reports: GameResultProblemReport[];
   }) {
     return new GameResultReport(data.isGuest, data.summary, data.reports);
+  }
+
+  /**
+   * @description 비회원 열람 제한 적용
+   * - summary: 점수/문제수/정답률 잠금
+   * - reports: maxViewableProblems 이후 문제는 잠금 처리
+   */
+  toGuestView(maxViewableProblems: number): GameResultReport {
+    const guestSummary = this.summary.toGuestView();
+    const guestReports = this.reports.map((report, index) =>
+      index < maxViewableProblems ? report : report.toLocked(),
+    );
+
+    return new GameResultReport(this.isGuest, guestSummary, guestReports);
   }
 }
