@@ -15,7 +15,10 @@ import {
 } from '@common/utils/swagger-error-response.util';
 
 import { GetGameResultReportResponseDto } from '../dto/get-game-result-report.dto';
-import { GAME_RESULT_REPORT_EXAMPLE } from './examples/get-game-result-report.example';
+import {
+  GUEST_GAME_RESULT_REPORT_EXAMPLE,
+  USER_GAME_RESULT_REPORT_EXAMPLE,
+} from './examples/get-game-result-report.example';
 
 export function ApiGetGameResultReport() {
   return applyDecorators(
@@ -28,7 +31,7 @@ export function ApiGetGameResultReport() {
     }),
     ApiExtraModels(ApiResponseDto, GetGameResultReportResponseDto),
     ApiOkResponse({
-      description: '(회원용) 게임 결과 리포트 조회 성공',
+      description: '게임 결과 리포트 조회 성공',
       content: {
         'application/json': {
           schema: {
@@ -42,7 +45,16 @@ export function ApiGetGameResultReport() {
               },
             ],
           },
-          example: GAME_RESULT_REPORT_EXAMPLE,
+          examples: {
+            guest: {
+              summary: '비회원 (열람 제한 적용)',
+              value: GUEST_GAME_RESULT_REPORT_EXAMPLE,
+            },
+            user: {
+              summary: '회원 (전체 열람)',
+              value: USER_GAME_RESULT_REPORT_EXAMPLE,
+            },
+          },
         },
       },
     }),
