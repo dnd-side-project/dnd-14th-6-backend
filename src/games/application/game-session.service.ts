@@ -3,6 +3,7 @@ import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { GameResultReport } from '../domain/game-result-report.entity';
 import { GameSessionHistoryFilterEntity } from '../domain/game-session-history-filter.entity';
 import { GameSessionHistoryList } from '../domain/game-session-history.entity';
+import { GUEST_MAX_VIEWABLE_PROBLEMS } from '../domain/game.business-rules';
 import { GAME_REPOSITORY, IGameRepository } from '../domain/games.repository.interface';
 
 @Injectable()
@@ -20,19 +21,19 @@ export class GameSessionService {
 
   /**
    * @description 게임종료후 게임결과 리포트 조회
-   */
-  async getGameResultReport(gameSessionId: bigint): Promise<GameResultReport> {
-    // FIXME 비회원일 경우 결과 데이터 다르게 응답하도록 수정
-    // 1. 비회원 - 데이터 응답 제한사항
-    // - 문제해설: 1~10번 문제만 문제해설 열람 가능
-    // - 문제별 시도횟수: 열람 제한
-    // - 획득한 스코어: 열람제한
-    // - 정답률: 열람제한
+   * - 비회원: gameSessionId만 사용, 결과데이터 일부 열람 제한
+   * - 회원: gameSessionId, userId 모두 사용, 전체 열람 가능
 
-    const gameResultReport = await this.gameRepository.findGameResultReport(gameSessionId);
+   */
+  async getGameResultReport(gameSessionId: bigint, userId?: bigint): Promise<GameResultReport> {
+    const gameResultReport = await this.gameRepository.findGameResultReport(gameSessionId, userId);
 
     if (!gameResultReport) {
       throw new NotFoundException('존재하지 않는 게임 세션입니다.');
+    }
+
+    if (gameResultReport.isGuest) {
+      return gameResultReport.toGuestView(GUEST_MAX_VIEWABLE_PROBLEMS);
     }
 
     return gameResultReport;
