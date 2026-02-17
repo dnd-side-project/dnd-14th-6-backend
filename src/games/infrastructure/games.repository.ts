@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 
 import { Prisma } from '@prisma/client';
 
@@ -30,6 +30,8 @@ import { ProblemRawRow } from './types/problem-raw-row';
 
 @Injectable()
 export class GameRepositoryImpl implements IGameRepository {
+  private readonly logger = new Logger(GameRepositoryImpl.name);
+
   constructor(private readonly prisma: PrismaService) {}
 
   /**
@@ -376,9 +378,12 @@ export class GameRepositoryImpl implements IGameRepository {
   /**
    * @description 게임 결과 리포트 조회
    */
-  async findGameResultReport(gameSessionId: bigint): Promise<GameResultReport | null> {
+  async findGameResultReport(
+    gameSessionId: bigint,
+    userId?: bigint,
+  ): Promise<GameResultReport | null> {
     const session = await this.prisma.gameSession.findUnique({
-      where: { id: gameSessionId },
+      where: { id: gameSessionId, userId: userId ?? null },
       include: {
         gameSessionLogs: {
           include: {
@@ -430,14 +435,23 @@ export class GameRepositoryImpl implements IGameRepository {
       return [];
     }
 
-    return json
-      .filter(
-        (item): item is { input: string; isCorrect: boolean } =>
-          typeof item === 'object' &&
-          item !== null &&
-          typeof (item as Record<string, unknown>).input === 'string' &&
-          typeof (item as Record<string, unknown>).isCorrect === 'boolean',
-      )
-      .map((item) => ({ input: item.input, isCorrect: item.isCorrect }));
+    // ClientAnswerInput 구조({ input, isCorrect })에 부합하는 항목만 추출
+    const valid = json.filter(
+      (item): item is { input: string; isCorrect: boolean } =>
+        typeof item === 'object' &&
+        item !== null &&
+        typeof (item as Record<string, unknown>).input === 'string' &&
+        typeof (item as Record<string, unknown>).isCorrect === 'boolean',
+    );
+
+    // 유효하지 않은 항목이 존재하면 데이터 손상 가능성 경고
+    if (valid.length < json.length) {
+      this.logger.warn(
+        `Invalid inputs detected in game session log (${json.length - valid.length} items filtered)`,
+      );
+    }
+
+    // 검증된 필드만 추출하여 도메인 타입으로 변환
+    return valid.map((item) => ({ input: item.input, isCorrect: item.isCorrect }));
   }
 }
