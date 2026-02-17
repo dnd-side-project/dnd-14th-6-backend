@@ -8,7 +8,11 @@ import {
 } from '../domain/game-result-report.entity';
 import { GameSessionHistoryFilterEntity } from '../domain/game-session-history-filter.entity';
 import { GameSessionHistoryList } from '../domain/game-session-history.entity';
-import { GameSessionSortBy, SortOrder } from '../domain/game.business-rules';
+import {
+  GameSessionSortBy,
+  GUEST_MAX_VIEWABLE_PROBLEMS,
+  SortOrder,
+} from '../domain/game.business-rules';
 import { GAME_REPOSITORY, IGameRepository } from '../domain/games.repository.interface';
 import { GameSessionService } from './game-session.service';
 
@@ -67,30 +71,34 @@ describe('GameSessionService', () => {
   });
 
   describe('getGameResultReport', () => {
-    const createMockGameResultReport = (userId: bigint | null): GameResultReport => {
+    const createMockProblemReport = (index: number): GameResultProblemReport =>
+      GameResultProblemReport.from({
+        problemId: BigInt(100 + index),
+        subCategory: index < 10 ? 'Remote' : 'Branch',
+        text: `문제${index + 1} 지문`,
+        explanation: `문제${index + 1} 해설`,
+        inputs: [
+          { input: '오답', isCorrect: false },
+          { input: '정답', isCorrect: true },
+        ],
+        answer: `문제${index + 1} 정답`,
+        isSolved: true,
+        tryCount: 2,
+      });
+
+    const createMockGameResultReport = (
+      userId: bigint | null,
+      problemCount = 20,
+    ): GameResultReport => {
       const summary = GameResultSummary.from({
         sessionId: 7n,
         userId,
         score: 30,
-        totalProblemCount: 20,
+        totalProblemCount: problemCount,
         correctProblemCount: 3,
       });
 
-      const reports = [
-        GameResultProblemReport.from({
-          problemId: 73n,
-          subCategory: 'Remote',
-          text: '등록된 원격 저장소의 이름만 확인하는 명령어는?',
-          explanation: '`git remote`는 등록된 원격 저장소의 이름(별칭)만 간단히 나열합니다.',
-          inputs: [
-            { input: 'git branch', isCorrect: false },
-            { input: 'git remote', isCorrect: true },
-          ],
-          answer: 'git remote',
-          isSolved: true,
-          tryCount: 2,
-        }),
-      ];
+      const reports = Array.from({ length: problemCount }, (_, i) => createMockProblemReport(i));
 
       return GameResultReport.from({
         isGuest: userId === null,
@@ -103,16 +111,17 @@ describe('GameSessionService', () => {
       describe('✅ 성공 케이스', () => {
         it('게임 결과 리포트를 정상적으로 반환한다.', async () => {
           const gameSessionId = 7n;
-          const expectedReport = createMockGameResultReport(1n);
+          const userId = 1n;
+          const expectedReport = createMockGameResultReport(userId);
           gameRepository.findGameResultReport.mockResolvedValue(expectedReport);
 
-          const result = await service.getGameResultReport(gameSessionId);
+          const result = await service.getGameResultReport(gameSessionId, userId);
 
           expect(result).toEqual(expectedReport);
           expect(result.isGuest).toBe(false);
           expect(result.summary.userId).toBe(1n);
           expect(result.summary.correctRate).toBe(15);
-          expect(gameRepository.findGameResultReport).toHaveBeenCalledWith(gameSessionId);
+          expect(gameRepository.findGameResultReport).toHaveBeenCalledWith(gameSessionId, userId);
         });
       });
 
@@ -130,19 +139,59 @@ describe('GameSessionService', () => {
 
     describe('비회원용', () => {
       describe('✅ 성공 케이스', () => {
-        it('비회원 게임 결과 리포트를 정상적으로 반환한다.', async () => {
+        it('비회원 게임 결과 리포트에 열람 제한이 적용된다.', async () => {
           const gameSessionId = 7n;
-          const expectedReport = createMockGameResultReport(null);
-          gameRepository.findGameResultReport.mockResolvedValue(expectedReport);
+          const mockReport = createMockGameResultReport(null);
+          gameRepository.findGameResultReport.mockResolvedValue(mockReport);
 
-          // FIXME: 비회원용 테스트케이스 작성
-          // - 일부 데이터 열람 제한부분 반영
           const result = await service.getGameResultReport(gameSessionId);
 
-          expect(result).toEqual(expectedReport);
           expect(result.isGuest).toBe(true);
           expect(result.summary.userId).toBeNull();
-          expect(gameRepository.findGameResultReport).toHaveBeenCalledWith(gameSessionId);
+          expect(result.summary.score).toBeNull();
+          expect(result.summary.totalProblemCount).toBeNull();
+          expect(result.summary.correctProblemCount).toBeNull();
+          expect(result.summary.correctRate).toBeNull();
+          expect(gameRepository.findGameResultReport).toHaveBeenCalledWith(
+            gameSessionId,
+            undefined,
+          );
+        });
+
+        it(`비회원은 문제 1~${GUEST_MAX_VIEWABLE_PROBLEMS}만 전체 열람이 가능하다.`, async () => {
+          const gameSessionId = 7n;
+          const mockReport = createMockGameResultReport(null);
+          gameRepository.findGameResultReport.mockResolvedValue(mockReport);
+
+          const result = await service.getGameResultReport(gameSessionId);
+          const viewableReports = result.reports.slice(0, GUEST_MAX_VIEWABLE_PROBLEMS);
+
+          for (const report of viewableReports) {
+            expect(report.text).not.toBeNull();
+            expect(report.explanation).not.toBeNull();
+            expect(report.inputs.length).toBeGreaterThan(0);
+            expect(report.answer).not.toBeNull();
+          }
+        });
+
+        it(`비회원은 문제 ${GUEST_MAX_VIEWABLE_PROBLEMS + 1} 이후 데이터가 잠금 처리된다.`, async () => {
+          const gameSessionId = 7n;
+          const mockReport = createMockGameResultReport(null);
+          gameRepository.findGameResultReport.mockResolvedValue(mockReport);
+
+          const result = await service.getGameResultReport(gameSessionId);
+          const lockedReports = result.reports.slice(GUEST_MAX_VIEWABLE_PROBLEMS);
+
+          for (const report of lockedReports) {
+            expect(report.problemId).toBeDefined();
+            expect(report.subCategory).toBeDefined();
+            expect(report.text).toBeNull();
+            expect(report.explanation).toBeNull();
+            expect(report.inputs).toEqual([]);
+            expect(report.answer).toBeNull();
+            expect(report.isSolved).toBeNull();
+            expect(report.tryCount).toBeNull();
+          }
         });
       });
 
