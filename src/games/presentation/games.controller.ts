@@ -143,6 +143,7 @@ export class GamesController {
     @Param('gameSessionId', ParseBigIntPipe) gameSessionId: bigint,
   ): Promise<GetGameResultReportResponseDto> {
     // FIXME: 회원용 AuthGuard 붙이기
+    // FIXME: 회원용 userId 파라미터 인자로 붙이기
     const gameReport = await this.gameSessionService.getGameResultReport(gameSessionId);
 
     return GetGameResultReportResponseDto.from(gameReport);
