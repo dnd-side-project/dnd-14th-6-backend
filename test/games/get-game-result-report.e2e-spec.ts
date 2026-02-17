@@ -31,20 +31,20 @@ interface ReportSuccessResponse {
     summary: {
       sessionId: string;
       userId: string | null;
-      score: number;
-      totalProblemCount: number;
-      correctProblemCount: number;
-      correctRate: number;
+      score: number | null;
+      totalProblemCount: number | null;
+      correctProblemCount: number | null;
+      correctRate: number | null;
     };
     reports: Array<{
       problemId: string;
       subCategory: string;
-      text: string;
+      text: string | null;
       explanation: string | null;
       inputs: Array<{ input: string; isCorrect: boolean }>;
-      answer: string;
-      isSolved: boolean;
-      tryCount: number;
+      answer: string | null;
+      isSolved: boolean | null;
+      tryCount: number | null;
     }>;
   };
 }
@@ -170,52 +170,105 @@ describe('GET /api/games/:gameSessionId/reports (e2e)', () => {
   });
 
   describe('✅ 성공 케이스', () => {
-    it('저장된 게임 세션의 결과 리포트를 정상적으로 조회한다.', async () => {
-      const response = await request(app.getHttpServer())
-        .get(`/api/games/${savedGameSessionId}/reports`)
-        .expect(200);
+    describe('비회원', () => {
+      it('비회원 게임 결과 리포트를 정상적으로 조회한다.', async () => {
+        const response = await request(app.getHttpServer())
+          .get(`/api/games/${savedGameSessionId}/reports`)
+          .expect(200);
 
-      const body = response.body as ReportSuccessResponse;
-      expect(body.success).toBe(true);
+        const body = response.body as ReportSuccessResponse;
+        expect(body.success).toBe(true);
+        expect(body.data.isGuest).toBe(true);
+      });
 
-      // summary 검증
-      const { summary } = body.data;
-      expect(summary.sessionId).toBe(savedGameSessionId);
-      expect(summary.userId).toBeNull();
-      expect(summary.score).toBe(30);
-      expect(summary.totalProblemCount).toBe(20);
-      expect(summary.correctProblemCount).toBe(3);
-      expect(summary.correctRate).toBe(15);
+      it('비회원 summary는 sessionId만 노출되고 나머지는 잠금 처리된다.', async () => {
+        const response = await request(app.getHttpServer())
+          .get(`/api/games/${savedGameSessionId}/reports`)
+          .expect(200);
 
-      // isGuest 검증 (비회원)
-      expect(body.data.isGuest).toBe(true);
+        const { summary } = (response.body as ReportSuccessResponse).data;
+        expect(summary.sessionId).toBe(savedGameSessionId);
+        expect(summary.userId).toBeNull();
+        expect(summary.score).toBeNull();
+        expect(summary.totalProblemCount).toBeNull();
+        expect(summary.correctProblemCount).toBeNull();
+        expect(summary.correctRate).toBeNull();
+      });
 
-      // reports 개수 검증
-      expect(body.data.reports).toHaveLength(20);
+      it('비회원 reports는 총 20개가 반환된다.', async () => {
+        const response = await request(app.getHttpServer())
+          .get(`/api/games/${savedGameSessionId}/reports`)
+          .expect(200);
 
-      // 정답 문제 검증 (problemId: 73 - solved)
-      const solvedReport = body.data.reports.find((r) => r.problemId === '73');
-      expect(solvedReport).toBeDefined();
-      expect(solvedReport!.isSolved).toBe(true);
-      expect(solvedReport!.tryCount).toBe(2);
-      expect(solvedReport!.inputs).toHaveLength(2);
-      expect(solvedReport!.subCategory).toBeDefined();
-      expect(solvedReport!.text).toBeDefined();
-      expect(solvedReport!.answer).toBeDefined();
+        const { reports } = (response.body as ReportSuccessResponse).data;
+        expect(reports).toHaveLength(20);
+      });
 
-      // 오답 문제 검증 (problemId: 103 - not solved, 시도함)
-      const failedReport = body.data.reports.find((r) => r.problemId === '103');
-      expect(failedReport).toBeDefined();
-      expect(failedReport!.isSolved).toBe(false);
-      expect(failedReport!.tryCount).toBe(2);
-      expect(failedReport!.inputs).toHaveLength(2);
+      it('비회원 문제 1~10은 전체 데이터가 열람 가능하다.', async () => {
+        const response = await request(app.getHttpServer())
+          .get(`/api/games/${savedGameSessionId}/reports`)
+          .expect(200);
 
-      // 놓친 문제 검증 (problemId: 40 - not solved, 시도 안함)
-      const skippedReport = body.data.reports.find((r) => r.problemId === '40');
-      expect(skippedReport).toBeDefined();
-      expect(skippedReport!.isSolved).toBe(false);
-      expect(skippedReport!.tryCount).toBe(0);
-      expect(skippedReport!.inputs).toHaveLength(0);
+        const { reports } = (response.body as ReportSuccessResponse).data;
+        const viewableReports = reports.slice(0, 10);
+
+        for (const report of viewableReports) {
+          expect(report.problemId).toBeDefined();
+          expect(report.subCategory).toBeDefined();
+          expect(report.text).not.toBeNull();
+          expect(report.explanation).not.toBeNull();
+          expect(report.answer).not.toBeNull();
+          expect(report.isSolved).not.toBeNull();
+          expect(report.tryCount).not.toBeNull();
+        }
+
+        // 정답 문제 검증 (problemId: 73 - solved)
+        const solvedReport = viewableReports.find((r) => r.problemId === '73');
+        expect(solvedReport).toBeDefined();
+        expect(solvedReport!.isSolved).toBe(true);
+        expect(solvedReport!.tryCount).toBe(2);
+        expect(solvedReport!.inputs).toHaveLength(2);
+
+        // 오답 문제 검증 (problemId: 103 - not solved, 시도함)
+        const failedReport = viewableReports.find((r) => r.problemId === '103');
+        expect(failedReport).toBeDefined();
+        expect(failedReport!.isSolved).toBe(false);
+        expect(failedReport!.tryCount).toBe(2);
+        expect(failedReport!.inputs).toHaveLength(2);
+
+        // 놓친 문제 검증 (problemId: 40 - not solved, 시도 안함)
+        const skippedReport = viewableReports.find((r) => r.problemId === '40');
+        expect(skippedReport).toBeDefined();
+        expect(skippedReport!.isSolved).toBe(false);
+        expect(skippedReport!.tryCount).toBe(0);
+        expect(skippedReport!.inputs).toHaveLength(0);
+      });
+
+      it('비회원 문제 11~20은 잠금 처리된다.', async () => {
+        const response = await request(app.getHttpServer())
+          .get(`/api/games/${savedGameSessionId}/reports`)
+          .expect(200);
+
+        const { reports } = (response.body as ReportSuccessResponse).data;
+        const lockedReports = reports.slice(10);
+
+        expect(lockedReports).toHaveLength(10);
+
+        for (const report of lockedReports) {
+          expect(report.problemId).toBeDefined();
+          expect(report.subCategory).toBeDefined();
+          expect(report.text).toBeNull();
+          expect(report.explanation).toBeNull();
+          expect(report.inputs).toEqual([]);
+          expect(report.answer).toBeNull();
+          expect(report.isSolved).toBeNull();
+          expect(report.tryCount).toBeNull();
+        }
+      });
+    });
+
+    describe('회원', () => {
+      // FIXME: AuthGuard 셋팅후 진행예정
     });
   });
 
