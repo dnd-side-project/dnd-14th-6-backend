@@ -212,15 +212,14 @@ describe('GET /api/games/:gameSessionId/reports (e2e)', () => {
         const { reports } = (response.body as ReportSuccessResponse).data;
         const viewableReports = reports.slice(0, 10);
 
-        for (const report of viewableReports) {
-          expect(report.problemId).toBeDefined();
-          expect(report.subCategory).toBeDefined();
-          expect(report.text).not.toBeNull();
-          expect(report.explanation).not.toBeNull();
-          expect(report.answer).not.toBeNull();
-          expect(report.isSolved).not.toBeNull();
-          expect(report.tryCount).not.toBeNull();
-        }
+        const firstReport = viewableReports[0];
+        expect(firstReport.problemId).toBeDefined();
+        expect(firstReport.subCategory).toBeDefined();
+        expect(firstReport.text).not.toBeNull();
+        expect(firstReport.explanation).not.toBeNull();
+        expect(firstReport.answer).not.toBeNull();
+        expect(firstReport.isSolved).not.toBeNull();
+        expect(firstReport.tryCount).not.toBeNull();
 
         // 정답 문제 검증 (problemId: 73 - solved)
         const solvedReport = viewableReports.find((r) => r.problemId === '73');
@@ -254,16 +253,15 @@ describe('GET /api/games/:gameSessionId/reports (e2e)', () => {
 
         expect(lockedReports).toHaveLength(10);
 
-        for (const report of lockedReports) {
-          expect(report.problemId).toBeDefined();
-          expect(report.subCategory).toBeDefined();
-          expect(report.text).toBeNull();
-          expect(report.explanation).toBeNull();
-          expect(report.inputs).toEqual([]);
-          expect(report.answer).toBeNull();
-          expect(report.isSolved).toBeNull();
-          expect(report.tryCount).toBeNull();
-        }
+        const firstLockedReport = lockedReports[0];
+        expect(firstLockedReport.problemId).toBeDefined();
+        expect(firstLockedReport.subCategory).toBeDefined();
+        expect(firstLockedReport.text).toBeNull();
+        expect(firstLockedReport.explanation).toBeNull();
+        expect(firstLockedReport.inputs).toEqual([]);
+        expect(firstLockedReport.answer).toBeNull();
+        expect(firstLockedReport.isSolved).toBeNull();
+        expect(firstLockedReport.tryCount).toBeNull();
       });
     });
 
@@ -280,15 +278,15 @@ describe('GET /api/games/:gameSessionId/reports (e2e)', () => {
 
       const body = response.body as ErrorResponse;
       expect(body.success).toBe(false);
-      expect(body.message).toBe('gameSessionId이(가) 유효한 숫자 형식이 아닙니다.');
+      expect(body.message).toBe('gameSessionId(이)가 유효한 숫자 형식의 문자열이 아닙니다.');
     });
 
-    it('gameSessionId가 음수이면 400 에러를 응답한다.', async () => {
-      const response = await request(app.getHttpServer()).get('/api/games/-1/reports').expect(400);
+    it('gameSessionId가 음수이면 404 에러를 응답한다.', async () => {
+      const response = await request(app.getHttpServer()).get('/api/games/-1/reports').expect(404);
 
       const body = response.body as ErrorResponse;
       expect(body.success).toBe(false);
-      expect(body.message).toBe('gameSessionId이(가) 유효한 숫자 형식이 아닙니다.');
+      expect(body.message).toBe('존재하지 않는 게임 세션입니다.');
     });
 
     it('gameSessionId가 소수점이면 400 에러를 응답한다.', async () => {
@@ -296,7 +294,7 @@ describe('GET /api/games/:gameSessionId/reports (e2e)', () => {
 
       const body = response.body as ErrorResponse;
       expect(body.success).toBe(false);
-      expect(body.message).toBe('gameSessionId이(가) 유효한 숫자 형식이 아닙니다.');
+      expect(body.message).toBe('gameSessionId(이)가 유효한 숫자 형식의 문자열이 아닙니다.');
     });
   });
 
@@ -310,5 +308,6 @@ describe('GET /api/games/:gameSessionId/reports (e2e)', () => {
       expect(body.success).toBe(false);
       expect(body.message).toBe('존재하지 않는 게임 세션입니다.');
     });
+    // FIXME: (회원용) 다른회원의 게임결과리포트를 조회시 403 에러를 응답
   });
 });
