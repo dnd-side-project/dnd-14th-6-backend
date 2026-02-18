@@ -29,6 +29,7 @@ export function setupSwagger(app: INestApplication): void {
     .setDescription(SWAGGER_DESCRIPTION)
     .setVersion('1.0')
     .addTag('SSE', 'Server-Sent Events 관련 API')
+    .addBearerAuth()
     .build();
 
   const document = SwaggerModule.createDocument(app, config);

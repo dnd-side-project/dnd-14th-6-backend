@@ -1,17 +1,16 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { Tier } from '@tiers/domain/tiers.entity';
 import {
-  UserMistakeAnalysis,
-  FrequentWrongCommand,
   FrequentWrongCategory,
+  FrequentWrongCommand,
+  UserMistakeAnalysis,
 } from '@games/domain/user-mistake-analysis.entity';
+import { Tier } from '@tiers/domain/tiers.entity';
 
-import { UsersController } from './users.controller';
 import { UsersService } from '../application/users.service';
-
-import { User } from '../domain/users.entity';
 import { CategoryScore, DifficultyScoreDetail, UserStats } from '../domain/user-stats.entity';
+import { User } from '../domain/users.entity';
+import { UsersController } from './users.controller';
 
 function createMockTier(overrides: Partial<Tier> = {}): Tier {
   return Tier.from({
@@ -49,6 +48,7 @@ describe('UsersController', () => {
 
   beforeEach(async () => {
     mockUsersService = {
+      findById: jest.fn(),
       getRanksByPageAndSize: jest.fn(),
       getUserAnalysis: jest.fn(),
       getUserStats: jest.fn(),
@@ -65,6 +65,37 @@ describe('UsersController', () => {
     }).compile();
 
     controller = module.get<UsersController>(UsersController);
+  });
+
+  describe('getMyInfo', () => {
+    const mockUser = createMockUser({
+      id: 1n,
+      nickname: 'John',
+      profileImage: 'https://example.com/profile.png',
+    });
+    const userId = 1n;
+
+    beforeEach(() => {
+      mockUsersService.findById.mockResolvedValue(mockUser);
+    });
+
+    it('조회한 유저의 id, 닉네임, 프로필 이미지가 올바르게 반환되는지 확인', async () => {
+      const result = await controller.getMyInfo({ userId });
+
+      expect(result).toEqual({
+        id: '1',
+        nickname: 'John',
+        profileImage: 'https://example.com/profile.png',
+      });
+    });
+
+    it('유저 조회 중 에러 발생 시 에러 전파하는지 확인', async () => {
+      const expectedError = new Error('Test Error');
+
+      mockUsersService.findById.mockRejectedValue(expectedError);
+
+      await expect(controller.getMyInfo({ userId })).rejects.toThrow(expectedError);
+    });
   });
 
   describe('getRanks', () => {

@@ -19,7 +19,7 @@ export class GameSessionService {
     return this.gameRepository.getSessionHistoryByFilter(filter);
   }
 
-  /**
+  /*
    * @description 게임종료후 게임결과 리포트 조회
    * - 비회원: gameSessionId만 사용, 결과데이터 일부 열람 제한
    * - 회원: gameSessionId, userId 모두 사용, 전체 열람 가능
@@ -42,4 +42,14 @@ export class GameSessionService {
     return gameResultReport;
   }
   // FIXME 게임결과 저장 (createGameSession) 리팩터링 이관 (#41)
+  /*
+   * @description 게임 세션에 유저 ID 연동
+   */
+  async attachUserToSession(sessionId: bigint, userId: bigint): Promise<void> {
+    const isAttached = await this.gameRepository.updateUserIdToGameSession(sessionId, userId);
+
+    if (!isAttached) {
+      throw new NotFoundException('연결할 게임 세션을 찾을 수 없습니다.');
+    }
+  }
 }

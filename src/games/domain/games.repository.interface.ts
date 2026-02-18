@@ -77,8 +77,14 @@ export interface IGameRepository {
    * @description 사용자가 자주 틀린 카테고리 조회 (오답 비율 포함)
    */
   getFrequentWrongCategories(userId: bigint): Promise<FrequentWrongCategory[]>;
+  
   /**
    * @description 게임 결과 리포트 조회
    */
   findGameResultReport(gameSessionId: bigint): Promise<GameResultReport | null>;
+
+  /**
+   * @description 게임 세션에 유저 ID 업데이트
+   */
+  updateUserIdToGameSession(sessionId: bigint, userId: bigint): Promise<boolean>;
 }

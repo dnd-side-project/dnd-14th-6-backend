@@ -15,5 +15,6 @@ import { TiersRepositoryImpl } from './infrastructure/tiers.repository';
       useClass: TiersRepositoryImpl,
     },
   ],
+  exports: [TiersService],
 })
 export class TiersModule {}

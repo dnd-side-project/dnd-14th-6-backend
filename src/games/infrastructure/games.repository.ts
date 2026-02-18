@@ -375,7 +375,7 @@ export class GameRepositoryImpl implements IGameRepository {
     );
   }
 
-  /**
+  /*
    * @description 게임 결과 리포트 조회
    */
   async findGameResultReport(gameSessionId: bigint): Promise<GameResultReport | null> {
@@ -450,5 +450,21 @@ export class GameRepositoryImpl implements IGameRepository {
 
     // 검증된 필드만 추출하여 도메인 타입으로 변환
     return valid.map((item) => ({ input: item.input, isCorrect: item.isCorrect }));
+  }
+  /*
+   * @description 게임 세션에 유저 ID 업데이트
+   */
+  async updateUserIdToGameSession(sessionId: bigint, userId: bigint): Promise<boolean> {
+    const result = await this.prisma.gameSession.updateMany({
+      where: {
+        id: sessionId,
+        userId: null,
+      },
+      data: {
+        userId,
+      },
+    });
+
+    return result.count > 0;
   }
 }

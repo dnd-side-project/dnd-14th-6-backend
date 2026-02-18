@@ -2,7 +2,7 @@ name: orvit-server-dev
 
 on:
   push:
-    branches: [develop, feature/issue-12]
+    branches: [develop]
 
 jobs:
   ci:
@@ -14,18 +14,24 @@ jobs:
 
       - uses: pnpm/action-setup@v3
         with:
-          version: 9 
+          version: 9
 
       - name: Use Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 24.x
-          cache: "pnpm"
-          
+          cache: 'pnpm'
+
       - name: Create .env file
         run: |
           printf "PORT=%s\n" "${{ secrets.PORT }}" >> .env
           printf "DATABASE_URL=%s\n" "${{ secrets.DATABASE_URL }}" >> .env
+          printf "GOOGLE_CLIENT_ID=%s\n" "${{ secrets.GOOGLE_CLIENT_ID }}" >> .env
+          printf "GOOGLE_CLIENT_SECRET=%s\n" "${{ secrets.GOOGLE_CLIENT_SECRET }}" >> .env
+          printf "GITHUB_CLIENT_ID=%s\n" "${{ secrets.CLIENT_ID_FOR_GITHUB }}" >> .env
+          printf "GITHUB_CLIENT_SECRET=%s\n" "${{ secrets.CLIENT_SECRET_FOR_GITHUB }}" >> .env
+          printf "JWT_TOKEN_SECRET=%s\n" "${{ secrets.JWT_TOKEN_SECRET }}" >> .env
+          printf "SERVER_URL=%s\n" "${{ secrets.SERVER_URL }}" >> .env
 
       - name: Install & Build
         run: |
@@ -66,18 +72,18 @@ jobs:
         run: |
           # OCI CLI 설치
           bash -c "$(curl -L https://raw.githubusercontent.com/oracle/oci-cli/master/scripts/install/install.sh)" -- --accept-all-defaults
-          
+
           # 환경 변수 경로 설정
           echo "/home/runner/bin" >> $GITHUB_PATH
           export PATH=$PATH:/home/runner/bin
-          
+
           # .oci 디렉토리 생성
           mkdir -p ~/.oci
-          
+
           # API 프라이빗 키 파일 생성 (개행 문자 처리를 위해 printf 사용)
           printf "%s" "${{ secrets.OCI_PRIVATE_KEY }}" > ~/.oci/oci_api_key.pem
           chmod 600 ~/.oci/oci_api_key.pem
-          
+
           # 설정 파일(config) 생성
           cat <<EOF > ~/.oci/config
           [DEFAULT]
@@ -113,6 +119,12 @@ jobs:
             cd /opt/orvit/docker
             echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" | sudo tee .env.dev > /dev/null
             echo "PORT=${{ secrets.PORT }}" | sudo tee -a .env.dev > /dev/null
+            echo "GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}" | sudo tee -a .env.dev > /dev/null
+            echo "GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}" | sudo tee -a .env.dev > /dev/null
+            echo "GITHUB_CLIENT_ID=${{ secrets.CLIENT_ID_FOR_GITHUB }}" | sudo tee -a .env.dev > /dev/null
+            echo "GITHUB_CLIENT_SECRET=${{ secrets.CLIENT_SECRET_FOR_GITHUB }}" | sudo tee -a .env.dev > /dev/null
+            echo "JWT_TOKEN_SECRET=${{ secrets.JWT_TOKEN_SECRET }}" | sudo tee -a .env.dev > /dev/null
+            echo "SERVER_URL=${{ secrets.SERVER_URL }}" | sudo tee -a .env.dev > /dev/null
             sudo ./deploy.sh
 
       - name: Close Port 22
@@ -120,7 +132,7 @@ jobs:
         run: |
           RULE_ID=$(~/bin/oci network nsg rules list --nsg-id ${{ secrets.OCI_NSG_ID }} \
             --query "data[?description=='GHA-TEMP-${{ github.run_id }}'].id | [0]" --raw-output)
-          
+
           if [ "$RULE_ID" != "null" ] && [ -n "$RULE_ID" ]; then
             ~/bin/oci network nsg rules remove --nsg-id ${{ secrets.OCI_NSG_ID }} --security-rule-ids "[\"$RULE_ID\"]" 
           fi
