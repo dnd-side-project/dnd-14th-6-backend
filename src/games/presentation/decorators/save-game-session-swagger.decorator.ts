@@ -1,6 +1,7 @@
 import { applyDecorators } from '@nestjs/common';
-import { ApiBody, ApiCreatedResponse, ApiOperation } from '@nestjs/swagger';
+import { ApiBody, ApiCreatedResponse, ApiOperation, getSchemaPath } from '@nestjs/swagger';
 
+import { ApiResponseDto } from '@common/dto/api-response.dto';
 import {
   createSwaggerBadRequest,
   createSwaggerNotFound,
@@ -8,7 +9,10 @@ import {
 } from '@common/utils/swagger-error-response.util';
 
 import { MAX_PROBLEMS_PER_GAME } from '../../domain/game.business-rules';
-import { SaveGameSessionRequestDto } from '../dto/save-game-session.dto';
+import {
+  SaveGameSessionRequestDto,
+  SaveGameSessionResponseDto,
+} from '../dto/save-game-session.dto';
 
 export function ApiSaveGameSession() {
   return applyDecorators(
@@ -116,6 +120,17 @@ export function ApiSaveGameSession() {
       description: '게임 세션 저장 성공',
       content: {
         'application/json': {
+          schema: {
+            allOf: [
+              { $ref: getSchemaPath(ApiResponseDto) },
+              {
+                type: 'object',
+                properties: {
+                  data: { $ref: getSchemaPath(SaveGameSessionResponseDto) },
+                },
+              },
+            ],
+          },
           examples: {
             비회원: {
               summary: '비회원 응답',
