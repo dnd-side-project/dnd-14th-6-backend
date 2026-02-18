@@ -16,8 +16,9 @@ import {
 export function ApiSaveGameSession() {
   return applyDecorators(
     ApiOperation({
-      summary: '게임 세션 저장',
-      description: '게임 종료 후 게임 세션 결과를 저장합니다.',
+      summary: '게임 세션 저장 ( 회원 / 비회원 공용 )',
+      description:
+        '게임 종료 후 게임 세션 결과를 저장합니다. <br> **(단, 회원/비회원 에 따라 응답데이터가 다릅니다.)**',
     }),
     ApiBody({
       type: SaveGameSessionRequestDto,
@@ -115,6 +116,7 @@ export function ApiSaveGameSession() {
       },
     }),
     ApiCreatedResponse({
+      // FIXME: 회원/비회원 응답 데이터 구분 필요
       description: '게임 세션 저장 성공',
       type: SaveGameSessionResponseDto,
       content: {
