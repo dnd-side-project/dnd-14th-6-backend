@@ -22,6 +22,7 @@ import {
   ProblemDifficulty,
 } from '../domain/game.business-rules';
 import { IGameRepository, NonRandomGameDifficultyMode } from '../domain/games.repository.interface';
+import { SaveGameSessionEntity } from '../domain/save-game-session.entity';
 import {
   FrequentWrongCategory,
   FrequentWrongCommand,
@@ -135,25 +136,14 @@ export class GameRepositoryImpl implements IGameRepository {
   /**
    * @description 게임 세션과 세션 로그를 원자적으로 저장
    */
-  async saveGameSession(data: {
-    categoryId: number;
-    difficultyMode: GameDifficultyMode;
-    score: number;
-    totalProblemCount: number;
-    correctProblemCount: number;
-    logs: {
-      problemId: bigint;
-      inputs: ClientAnswerInput[];
-      isSolved: boolean;
-      tryCount: number;
-    }[];
-  }): Promise<bigint> {
+  async saveGameSession(data: SaveGameSessionEntity): Promise<bigint> {
     const session = await this.prisma.$transaction(async (tx) => {
       const gameSession = await tx.gameSession.create({
         data: {
           categoryId: data.categoryId,
           difficultyMode: data.difficultyMode,
           score: data.score,
+          userId: data.userId ?? null,
           totalProblemCount: data.totalProblemCount,
           correctProblemCount: data.correctProblemCount,
         },
