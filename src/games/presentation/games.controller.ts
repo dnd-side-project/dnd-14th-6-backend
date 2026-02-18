@@ -121,7 +121,7 @@ export class GamesController {
     @Body() dto: SaveGameSessionRequestDto,
     @AuthenticatedUser() user?: { userId: bigint },
   ): Promise<SaveGameSessionResponseDto> {
-    const gameSessionId = await this.gameService.createGameSession({
+    const gameSessionId = await this.gameSessionService.createGameSession({
       categoryId: dto.categoryId,
       difficultyMode: dto.difficultyMode,
       score: dto.score,
