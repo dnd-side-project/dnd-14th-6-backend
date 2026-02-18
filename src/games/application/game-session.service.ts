@@ -17,6 +17,7 @@ import {
   ProblemDifficulty,
 } from '../domain/game.business-rules';
 import { GAME_REPOSITORY, IGameRepository } from '../domain/games.repository.interface';
+import { SaveGameSessionEntity, SaveGameSessionLog } from '../domain/save-game-session.entity';
 import { CreateGameSessionServiceRequestDto } from './service-dto/create-game-session.service-dto';
 
 @Injectable()
@@ -54,7 +55,7 @@ export class GameSessionService {
 
     return gameResultReport;
   }
-  // FIXME 게임결과 저장 (createGameSession) 리팩터링 이관 (#41)
+
   /*
    * @description 게임세션 저장
    */
@@ -64,19 +65,24 @@ export class GameSessionService {
       command.clientAnswers,
     );
 
-    return this.gameRepository.saveGameSession({
-      categoryId: command.categoryId,
-      difficultyMode: command.difficultyMode,
-      score: serverScore,
-      totalProblemCount: command.clientAnswers.length,
-      correctProblemCount: command.clientAnswers.filter((a) => a.solved).length,
-      logs: command.clientAnswers.map((a) => ({
-        problemId: BigInt(a.problemId),
-        inputs: a.inputs,
-        isSolved: a.solved,
-        tryCount: a.inputs.length,
-      })),
-    });
+    return this.gameRepository.saveGameSession(
+      SaveGameSessionEntity.from({
+        categoryId: command.categoryId,
+        difficultyMode: command.difficultyMode,
+        score: serverScore,
+        userId: command.userId,
+        totalProblemCount: command.clientAnswers.length,
+        correctProblemCount: command.clientAnswers.filter((a) => a.solved).length,
+        logs: command.clientAnswers.map((a) =>
+          SaveGameSessionLog.from({
+            problemId: BigInt(a.problemId),
+            inputs: a.inputs,
+            isSolved: a.solved,
+            tryCount: a.inputs.length,
+          }),
+        ),
+      }),
+    );
   }
 
   /*
