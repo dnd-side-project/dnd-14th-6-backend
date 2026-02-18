@@ -336,6 +336,7 @@ describe('GamesController', () => {
     };
 
     const createMockGameResultReport = (userId: bigint | null): GameResultReport => {
+      const isGuest = userId === null;
       const summary = GameResultSummary.from({
         sessionId: 7n,
         userId,
@@ -355,12 +356,12 @@ describe('GamesController', () => {
             { input: 'git remote', isCorrect: true },
           ],
           answer: 'git remote',
-          isSolved: true,
-          tryCount: 2,
+          isSolved: isGuest ? null : true,
+          tryCount: isGuest ? null : 2,
         }),
       ];
 
-      return GameResultReport.from({ isGuest: userId === null, summary, reports });
+      return GameResultReport.from({ isGuest, summary, reports });
     };
 
     describe('회원용', () => {
@@ -433,6 +434,21 @@ describe('GamesController', () => {
           expect(result).toBeInstanceOf(GetGameResultReportResponseDto);
           expect(result.isGuest).toBe(true);
           expect(result.summary.userId).toBeNull();
+
+          expect(result.reports[0]).toEqual({
+            problemId: '73',
+            subCategory: 'Remote',
+            text: '등록된 원격 저장소의 이름만 확인하는 명령어는?',
+            explanation: '`git remote`는 등록된 원격 저장소의 이름(별칭)만 간단히 나열합니다.',
+            inputs: [
+              { input: 'git branch', isCorrect: false },
+              { input: 'git remote', isCorrect: true },
+            ],
+            answer: 'git remote',
+            isSolved: null,
+            tryCount: null,
+          });
+
           expect(gameSessionService.getGameResultReport).toHaveBeenCalledWith(7n, undefined);
         });
       });

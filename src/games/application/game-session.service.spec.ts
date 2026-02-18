@@ -413,6 +413,8 @@ describe('GameSessionService', () => {
             expect(report.explanation).not.toBeNull();
             expect(report.inputs.length).toBeGreaterThan(0);
             expect(report.answer).not.toBeNull();
+            expect(report.isSolved).toBeNull();
+            expect(report.tryCount).toBeNull();
           }
         });
 
