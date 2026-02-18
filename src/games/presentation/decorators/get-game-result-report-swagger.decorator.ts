@@ -10,6 +10,7 @@ import {
 import { ApiResponseDto } from '@common/dto/api-response.dto';
 import {
   createSwaggerBadRequest,
+  createSwaggerForbidden,
   createSwaggerNotFound,
   createSwaggerServerErrors,
 } from '@common/utils/swagger-error-response.util';
@@ -70,6 +71,12 @@ export function ApiGetGameResultReport() {
       {
         description: 'gameSessionId 형식 오류',
         message: 'gameSessionId(이)가 유효한 숫자 형식이 아닙니다.',
+      },
+    ]),
+    createSwaggerForbidden([
+      {
+        description: '(회원) 다른 회원의 게임결과 리포트 조회 접근제한',
+        message: '해당 게임 결과 리포트에 접근할 수 없습니다.',
       },
     ]),
     createSwaggerNotFound([
