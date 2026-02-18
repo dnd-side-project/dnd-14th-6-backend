@@ -80,5 +80,5 @@ export interface IGameRepository {
   /**
    * @description 게임 결과 리포트 조회
    */
-  findGameResultReport(gameSessionId: bigint, userId?: bigint): Promise<GameResultReport | null>;
+  findGameResultReport(gameSessionId: bigint): Promise<GameResultReport | null>;
 }

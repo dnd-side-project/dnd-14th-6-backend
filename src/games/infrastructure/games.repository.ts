@@ -378,12 +378,9 @@ export class GameRepositoryImpl implements IGameRepository {
   /**
    * @description 게임 결과 리포트 조회
    */
-  async findGameResultReport(
-    gameSessionId: bigint,
-    userId?: bigint,
-  ): Promise<GameResultReport | null> {
+  async findGameResultReport(gameSessionId: bigint): Promise<GameResultReport | null> {
     const session = await this.prisma.gameSession.findUnique({
-      where: { id: gameSessionId, userId: userId ?? null },
+      where: { id: gameSessionId },
       include: {
         gameSessionLogs: {
           include: {
