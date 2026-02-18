@@ -1,4 +1,4 @@
-import { NotFoundException } from '@nestjs/common';
+import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import {
@@ -133,6 +133,18 @@ describe('GameSessionService', () => {
           await expect(service.getGameResultReport(gameSessionId)).rejects.toThrow(
             new NotFoundException('존재하지 않는 게임 세션입니다.'),
           );
+        });
+
+        it('다른 회원의 게임 결과 리포트에 접근하면 ForbiddenException을 던진다.', async () => {
+          const gameSessionId = 7n;
+          const reportOwnerUserId = 1n;
+          const accessRequestUserId = 2n;
+          const mockReport = createMockGameResultReport(reportOwnerUserId);
+          gameRepository.findGameResultReport.mockResolvedValue(mockReport);
+
+          await expect(
+            service.getGameResultReport(gameSessionId, accessRequestUserId),
+          ).rejects.toThrow(new ForbiddenException('해당 게임 결과 리포트에 접근할 수 없습니다.'));
         });
       });
     });
