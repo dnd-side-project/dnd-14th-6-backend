@@ -277,7 +277,10 @@ describe('GamesController', () => {
 
           const result = await controller.saveGameSession(dto, user);
 
-          expect(result).toEqual({ gameSessionId: '100' });
+          expect(result).toEqual({
+            gameSessionId: '100',
+            // FIXME - totalScore:  인자 추가
+          });
           expect(gameSessionService.createGameSession).toHaveBeenCalledWith({
             categoryId: dto.categoryId,
             difficultyMode: dto.difficultyMode,
