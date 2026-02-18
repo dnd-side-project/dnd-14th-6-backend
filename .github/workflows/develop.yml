@@ -2,7 +2,7 @@ name: orvit-server-dev
 
 on:
   push:
-    branches: [develop]
+    branches: [develop, feature/issue-54]
 
 jobs:
   ci:
