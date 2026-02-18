@@ -11,7 +11,7 @@ import { GameDifficultyMode } from '../../domain/game.business-rules';
 
 export function ApiGameStream() {
   return applyDecorators(
-    ApiOperation({ summary: '게임진행 스트림 (SSE)' }),
+    ApiOperation({ summary: '게임진행 스트림 (SSE) - ( Public )' }),
     ApiQuery({
       name: 'categoryId',
       required: true,
