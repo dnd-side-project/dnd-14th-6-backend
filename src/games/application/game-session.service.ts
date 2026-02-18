@@ -35,8 +35,6 @@ export class GameSessionService {
       return gameResultReport.toGuestView(GUEST_MAX_VIEWABLE_PROBLEMS);
     }
 
-    // FIXME: 플레이한 회원만 볼 수 있도록 수정
-    // gameResultReport.summary.userId 와 userId가 다르면 접근제한추가
     if (userId && userId !== gameResultReport.summary.userId) {
       throw new ForbiddenException('해당 게임 결과 리포트에 접근할 수 없습니다.');
     }
