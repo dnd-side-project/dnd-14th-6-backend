@@ -370,7 +370,7 @@ describe('GamesController', () => {
           const mockReport = createMockGameResultReport(1n);
           gameSessionService.getGameResultReport.mockResolvedValue(mockReport);
 
-          const result = await controller.getGameResultReport(param);
+          const result = await controller.getGameResultReport(param, { userId: 1n });
 
           expect(result).toBeInstanceOf(GetGameResultReportResponseDto);
           expect(result.isGuest).toBe(false);
@@ -396,7 +396,7 @@ describe('GamesController', () => {
             isSolved: true,
             tryCount: 2,
           });
-          expect(gameSessionService.getGameResultReport).toHaveBeenCalledWith(7n);
+          expect(gameSessionService.getGameResultReport).toHaveBeenCalledWith(7n, 1n);
         });
       });
 
@@ -433,7 +433,7 @@ describe('GamesController', () => {
           expect(result).toBeInstanceOf(GetGameResultReportResponseDto);
           expect(result.isGuest).toBe(true);
           expect(result.summary.userId).toBeNull();
-          expect(gameSessionService.getGameResultReport).toHaveBeenCalledWith(7n);
+          expect(gameSessionService.getGameResultReport).toHaveBeenCalledWith(7n, undefined);
         });
       });
 
