@@ -13,8 +13,10 @@ import {
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 
+import { AuthenticatedUser } from '@auth/presentation/decorators/authenticated-user.decorator';
 import { CheckOwnership } from '@auth/presentation/decorators/check-ownership.decorator';
 import { JwtAuthGuard } from '@auth/presentation/guards/jwt-auth.guard';
+import { OptionalJwtAuthGuard } from '@auth/presentation/guards/optional-jwt-auth.guard';
 import { UserOwnershipGuard } from '@auth/presentation/guards/user-ownership.guard';
 import { Request, Response } from 'express';
 import { Subject } from 'rxjs';
@@ -113,17 +115,18 @@ export class GamesController {
    * @description 게임 세션 히스토리 조회 (본인만 가능)
    */
   @Post('save')
+  @UseGuards(OptionalJwtAuthGuard)
   @ApiSaveGameSession()
   async saveGameSession(
     @Body() dto: SaveGameSessionRequestDto,
+    @AuthenticatedUser() user?: { userId: bigint },
   ): Promise<SaveGameSessionResponseDto> {
-    // FIXME: 회원용 AuthGuard 붙이기
-    // FIXME: 회원연결시 user_id 매핑
     const gameSessionId = await this.gameService.createGameSession({
       categoryId: dto.categoryId,
       difficultyMode: dto.difficultyMode,
       score: dto.score,
       clientAnswers: dto.clientAnswers,
+      userId: user?.userId,
     });
 
     // FIXME: (회원 한정) 게임세션 저장후
@@ -146,13 +149,16 @@ export class GamesController {
   }
 
   @Get(':gameSessionId/reports')
+  @UseGuards(OptionalJwtAuthGuard)
   @ApiGetGameResultReport()
   async getGameResultReport(
     @Param() param: GetGameResultReportParamDto,
+    @AuthenticatedUser() user?: { userId: bigint },
   ): Promise<GetGameResultReportResponseDto> {
-    // FIXME: 회원용 AuthGuard 붙이기
-    // FIXME: 회원용 userId 파라미터 인자로 붙이기
-    const gameReport = await this.gameSessionService.getGameResultReport(param.gameSessionId);
+    const gameReport = await this.gameSessionService.getGameResultReport(
+      param.gameSessionId,
+      user?.userId,
+    );
 
     return GetGameResultReportResponseDto.from(gameReport);
   }
