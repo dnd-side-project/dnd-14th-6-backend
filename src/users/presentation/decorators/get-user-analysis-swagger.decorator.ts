@@ -14,11 +14,12 @@ import {
   createSwaggerBadRequest,
   createSwaggerServerErrors,
 } from '@common/utils/swagger-error-response.util';
+
 import {
   FrequentWrongCategoryDto,
   FrequentWrongCommandDto,
   GetUserAnalysisResponseDto,
-} from '../get-user-analysis.dto';
+} from '../dto/get-user-analysis.dto';
 
 export function ApiGetUserAnalysis() {
   return applyDecorators(
