@@ -1,6 +1,7 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
+
 import { Profile, Strategy } from 'passport-github2';
 
 @Injectable()
@@ -9,7 +10,7 @@ export class GithubStrategy extends PassportStrategy(Strategy, 'github') {
     super({
       clientID: configService.getOrThrow<string>('GITHUB_CLIENT_ID'),
       clientSecret: configService.getOrThrow<string>('GITHUB_CLIENT_SECRET'),
-      callbackURL: '/api/auth/login/github/callback',
+      callbackURL: `${configService.getOrThrow<string>('SERVER_URL')}/api/auth/login/github/callback`,
       scope: ['user:email'],
     });
   }
