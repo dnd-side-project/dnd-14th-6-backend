@@ -126,6 +126,7 @@ export class SaveGameSessionResponseDto {
   @ApiProperty({
     description: '(회원용) 유저의 전체 스코어',
     example: '9999999',
+    required: false,
   })
   totalScore: string;
 
