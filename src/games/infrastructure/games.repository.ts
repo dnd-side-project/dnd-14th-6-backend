@@ -427,6 +427,9 @@ export class GameRepositoryImpl implements IGameRepository {
     });
   }
 
+  /**
+   * @description JSON -> ClientAnswerInputs 변환 타입가드
+   */
   private parseClientAnswerInputs(json: Prisma.JsonValue): ClientAnswerInput[] {
     if (!Array.isArray(json)) {
       return [];
@@ -451,6 +454,7 @@ export class GameRepositoryImpl implements IGameRepository {
     // 검증된 필드만 추출하여 도메인 타입으로 변환
     return valid.map((item) => ({ input: item.input, isCorrect: item.isCorrect }));
   }
+
   /*
    * @description 게임 세션에 유저 ID 업데이트
    */
