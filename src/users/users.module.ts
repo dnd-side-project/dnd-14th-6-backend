@@ -1,14 +1,16 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
+
+import { AuthModule } from '@auth/auth.module';
+
 import { GamesModule } from '@games/games.module';
 
-import { UsersController } from './presentation/users.controller';
 import { UsersService } from './application/users.service';
-
 import { USER_REPOSITORY } from './domain/users.repository.interface';
 import { UsersRepositoryImpl } from './infrastructure/users.repository';
+import { UsersController } from './presentation/users.controller';
 
 @Module({
-  imports: [GamesModule],
+  imports: [forwardRef(() => AuthModule), GamesModule],
   controllers: [UsersController],
   providers: [
     UsersService,
@@ -17,5 +19,6 @@ import { UsersRepositoryImpl } from './infrastructure/users.repository';
       useClass: UsersRepositoryImpl,
     },
   ],
+  exports: [UsersService],
 })
 export class UsersModule {}

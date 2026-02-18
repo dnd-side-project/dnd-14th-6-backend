@@ -1,22 +1,21 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
+import { Test, TestingModule } from '@nestjs/testing';
 
-import { Tier } from '@tiers/domain/tiers.entity';
 import { GamesService } from '@games/application/games.service';
 import {
-  UserMistakeAnalysis,
-  FrequentWrongCommand,
   FrequentWrongCategory,
+  FrequentWrongCommand,
+  UserMistakeAnalysis,
 } from '@games/domain/user-mistake-analysis.entity';
+import { Tier } from '@tiers/domain/tiers.entity';
 
-import { UsersService } from './users.service';
-
+import { User } from '../domain/users.entity';
 import {
   IUsersRepository,
   ScoreDetailOriginData,
   USER_REPOSITORY,
 } from '../domain/users.repository.interface';
-import { User } from '../domain/users.entity';
+import { UsersService } from './users.service';
 
 function createMockTier(overrides: Partial<Tier> = {}): Tier {
   return Tier.from({
@@ -57,7 +56,11 @@ describe('UsersService', () => {
     mockUsersRepository = {
       findAllOrderByScoreDesc: jest.fn(),
       countAll: jest.fn(),
+      findByEmail: jest.fn(),
+      createSocialUser: jest.fn(),
+      updateRefreshToken: jest.fn(),
       findByIdWithTier: jest.fn(),
+      isExistUser: jest.fn(),
       getAverageScore: jest.fn(),
       getRankingByScore: jest.fn(),
       getScoreDetailByUserId: jest.fn(),

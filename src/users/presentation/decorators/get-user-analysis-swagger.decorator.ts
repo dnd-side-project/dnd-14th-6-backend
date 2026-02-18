@@ -1,5 +1,6 @@
 import { applyDecorators } from '@nestjs/common';
 import {
+  ApiBearerAuth,
   ApiExtraModels,
   ApiOkResponse,
   ApiOperation,
@@ -9,18 +10,20 @@ import {
 
 import { ApiResponseDto } from '@common/dto/api-response.dto';
 import {
+  createSwaggerAuthErrors,
   createSwaggerBadRequest,
-  createSwaggerNotFound,
   createSwaggerServerErrors,
 } from '@common/utils/swagger-error-response.util';
+
 import {
   FrequentWrongCategoryDto,
   FrequentWrongCommandDto,
   GetUserAnalysisResponseDto,
-} from '../get-user-analysis.dto';
+} from '../dto/get-user-analysis.dto';
 
 export function ApiGetUserAnalysis() {
   return applyDecorators(
+    ApiBearerAuth(),
     ApiOperation({ summary: '유저 분석 (많이 틀린 카테고리, 자주 틀린 명령어) 조회' }),
     ApiParam({
       name: 'userId',
@@ -51,12 +54,7 @@ export function ApiGetUserAnalysis() {
         message: 'userId가 유효한 숫자 형식의 문자열이 아닙니다.',
       },
     ]),
-    createSwaggerNotFound([
-      {
-        description: '존재하지 않는 유저',
-        message: '존재하지 않는 유저입니다.',
-      },
-    ]),
+    ...createSwaggerAuthErrors(),
     ...createSwaggerServerErrors(),
   );
 }

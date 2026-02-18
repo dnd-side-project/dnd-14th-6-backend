@@ -15,4 +15,19 @@ export class TiersRepositoryImpl implements ITiersRepository {
 
     return tiers.map((tier) => Tier.from(tier));
   }
+
+  /**
+   * @description 가장 낮은 티어 조회
+   */
+  async findLowestTier(): Promise<Tier | null> {
+    const tier = await this.prisma.tier.findFirst({
+      orderBy: { minScore: 'asc' },
+    });
+
+    if (!tier) {
+      return null;
+    }
+
+    return Tier.from(tier);
+  }
 }

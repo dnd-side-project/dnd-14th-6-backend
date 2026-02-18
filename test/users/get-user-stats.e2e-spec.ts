@@ -1,23 +1,24 @@
-import { INestApplication } from '@nestjs/common';
-import { Test, TestingModule } from '@nestjs/testing';
-import { Reflector } from '@nestjs/core';
-import { PrismaClient } from '@prisma/client';
-
 import { execSync } from 'child_process';
+import { INestApplication } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
+import { Test, TestingModule } from '@nestjs/testing';
+
+import { PrismaClient } from '@prisma/client';
+import { JwtAuthGuard } from '@auth/presentation/guards/jwt-auth.guard';
 import * as request from 'supertest';
 import { App } from 'supertest/types';
 import { GenericContainer, StartedTestContainer } from 'testcontainers';
 
-import { AppModule } from '../../src/app.module';
-
-import { ResponseInterceptor } from '@common/interceptors/response.interceptor';
 import { ApiResponseDto } from '@common/dto/api-response.dto';
+import { ResponseInterceptor } from '@common/interceptors/response.interceptor';
 import { GetUserStatsResponseDto } from '@users/presentation/dto/get-user-stats.dto';
 
 import { seedCategories } from '../../prisma/seeds/category.seed';
-import { seedTiers } from '../../prisma/seeds/tier.seed';
 import { seedSubCategories } from '../../prisma/seeds/subcategory.seed';
+import { seedTiers } from '../../prisma/seeds/tier.seed';
 import { seedUsersAndSessions } from '../../prisma/seeds/user-session.seed';
+import { AppModule } from '../../src/app.module';
+import { createMockAuthGuard } from '../utils/mock-auth.guard';
 
 describe('GET /api/users/:userId/stats (e2e)', () => {
   let app: INestApplication<App>;
@@ -51,7 +52,10 @@ describe('GET /api/users/:userId/stats (e2e)', () => {
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
-    }).compile();
+    })
+      .overrideGuard(JwtAuthGuard)
+      .useValue(createMockAuthGuard())
+      .compile();
 
     app = moduleFixture.createNestApplication();
     app.setGlobalPrefix('api');
@@ -78,10 +82,10 @@ describe('GET /api/users/:userId/stats (e2e)', () => {
 
     const hardMode = body.data.scoreDetail.find((detail) => detail.difficultyMode === 'Hard');
     expect(hardMode).toBeDefined();
-    expect(hardMode?.totalScore).toBe(32460);
+    expect(hardMode?.totalScore).toBe('32460');
 
     const gitCategory = hardMode?.categoryScores.find((cat) => cat.category === 'Git');
     expect(gitCategory).toBeDefined();
-    expect(gitCategory?.score).toBe(17650);
+    expect(gitCategory?.score).toBe('17650');
   });
 });

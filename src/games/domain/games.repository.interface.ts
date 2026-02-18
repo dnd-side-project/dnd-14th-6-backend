@@ -3,8 +3,8 @@ import { ClientAnswerInput } from './game-client-answers.interface';
 import { GameProblem } from './game-problem.entity';
 import { GameSessionHistoryFilterEntity } from './game-session-history-filter.entity';
 import { GameSessionHistoryList } from './game-session-history.entity';
-import { FrequentWrongCommand, FrequentWrongCategory } from './user-mistake-analysis.entity';
 import { GameDifficultyMode } from './game.business-rules';
+import { FrequentWrongCategory, FrequentWrongCommand } from './user-mistake-analysis.entity';
 
 export type NonRandomGameDifficultyMode = Exclude<GameDifficultyMode, GameDifficultyMode.Random>;
 
@@ -76,4 +76,9 @@ export interface IGameRepository {
    * @description 사용자가 자주 틀린 카테고리 조회 (오답 비율 포함)
    */
   getFrequentWrongCategories(userId: bigint): Promise<FrequentWrongCategory[]>;
+
+  /**
+   * @description 게임 세션에 유저 ID 업데이트
+   */
+  updateUserIdToGameSession(sessionId: bigint, userId: bigint): Promise<boolean>;
 }

@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { NotFoundException } from '@nestjs/common';
 
 import { TiersService } from './tiers.service';
 
@@ -12,6 +13,7 @@ describe('TiersService', () => {
   beforeEach(async () => {
     mockTiersRepository = {
       findAll: jest.fn(),
+      findLowestTier: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -67,6 +69,31 @@ describe('TiersService', () => {
 
       expect(result).toEqual([]);
       expect(mockTiersRepository.findAll).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('getLowestTier', () => {
+    it('최저 티어 조회해 반환', async () => {
+      const mockTier = new Tier(
+        1,
+        'Bronze',
+        0,
+        'https://example.com/bronze.png',
+        'https://example.com/bronze-icon.png',
+      );
+      mockTiersRepository.findLowestTier.mockResolvedValue(mockTier);
+
+      const result = await service.getLowestTier();
+
+      expect(result).toEqual(mockTier);
+      expect(mockTiersRepository.findLowestTier).toHaveBeenCalledTimes(1);
+    });
+
+    it('최저 티어가 없으면 NotFoundException 발생', async () => {
+      mockTiersRepository.findLowestTier.mockResolvedValue(null);
+
+      await expect(service.getLowestTier()).rejects.toThrow(NotFoundException);
+      expect(mockTiersRepository.findLowestTier).toHaveBeenCalledTimes(1);
     });
   });
 });
