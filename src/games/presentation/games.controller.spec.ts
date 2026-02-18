@@ -49,7 +49,6 @@ describe('GamesController', () => {
   beforeEach(async () => {
     const mockGameService = {
       getGameOptions: jest.fn(),
-      createGameSession: jest.fn(),
     };
     const mockGameStreamService = {
       validateGameStreamParams: jest.fn(),
@@ -59,6 +58,7 @@ describe('GamesController', () => {
     const mockGameSessionService = {
       getSessionHistories: jest.fn(),
       getGameResultReport: jest.fn(),
+      createGameSession: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -275,12 +275,12 @@ describe('GamesController', () => {
       describe('✅ 성공 케이스', () => {
         it('게임 세션을 정상 저장하고 gameSessionId를 반환한다.', async () => {
           const dto = createDto();
-          gameService.createGameSession.mockResolvedValue(BigInt(100));
+          gameSessionService.createGameSession.mockResolvedValue(BigInt(100));
 
           const result = await controller.saveGameSession(dto);
 
           expect(result).toEqual({ gameSessionId: '100' });
-          expect(gameService.createGameSession).toHaveBeenCalledWith({
+          expect(gameSessionService.createGameSession).toHaveBeenCalledWith({
             categoryId: dto.categoryId,
             difficultyMode: dto.difficultyMode,
             score: dto.score,
@@ -292,7 +292,7 @@ describe('GamesController', () => {
         it('존재하지 않는 카테고리면 NotFoundException을 던진다.', async () => {
           const dto = createDto();
           dto.categoryId = 999;
-          gameService.createGameSession.mockRejectedValue(
+          gameSessionService.createGameSession.mockRejectedValue(
             new NotFoundException('존재하지 않는 카테고리입니다.'),
           );
 
@@ -301,7 +301,7 @@ describe('GamesController', () => {
 
         it('중복된 problemId가 포함되어 있으면 BadRequestException을 던진다.', async () => {
           const dto = createDto();
-          gameService.createGameSession.mockRejectedValue(
+          gameSessionService.createGameSession.mockRejectedValue(
             new BadRequestException('clientAnswers에 중복된 problemId가 포함되어 있습니다.'),
           );
 
@@ -310,7 +310,7 @@ describe('GamesController', () => {
 
         it('존재하지 않는 문제 ID가 포함되어 있으면 NotFoundException을 던진다.', async () => {
           const dto = createDto();
-          gameService.createGameSession.mockRejectedValue(
+          gameSessionService.createGameSession.mockRejectedValue(
             new NotFoundException('존재하지 않는 문제 ID가 포함되어 있습니다. (problemId: 999)'),
           );
 
@@ -319,7 +319,7 @@ describe('GamesController', () => {
 
         it('solved=true인데 정답 처리된 입력이 없으면 BadRequestException을 던진다.', async () => {
           const dto = createDto();
-          gameService.createGameSession.mockRejectedValue(
+          gameSessionService.createGameSession.mockRejectedValue(
             new BadRequestException(
               '데이터 무결성 오류: solved가 true이지만 정답 처리된 입력이 없습니다.',
             ),
