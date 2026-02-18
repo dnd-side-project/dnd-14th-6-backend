@@ -1,9 +1,9 @@
 import { PrismaClient } from '@prisma/client';
 
 const categories = [
-  { name: 'Git', iconUrl: 'https://cdn.orvit.net/categories/git.png' },
-  { name: 'Linux', iconUrl: 'https://cdn.orvit.net/categories/linux.png' },
-  { name: 'Docker', iconUrl: 'https://cdn.orvit.net/categories/docker.png' },
+  { name: 'Git', iconUrl: 'https://cdn.orvit.net/categories/git.webp' },
+  { name: 'Linux', iconUrl: 'https://cdn.orvit.net/categories/linux.webp' },
+  { name: 'Docker', iconUrl: 'https://cdn.orvit.net/categories/docker.webp' },
 ];
 
 export async function seedCategories(prisma: PrismaClient) {
