@@ -174,6 +174,30 @@ describe('GameSessionService', () => {
         );
       });
 
+      it('userId가 전달되면 userId를 포함한 게임 세션을 저장한다.', async () => {
+        gameRepository.categoryExists.mockResolvedValue(true);
+        gameRepository.findProblemsByIds.mockResolvedValue(mockProblems);
+        gameRepository.saveGameSession.mockResolvedValue(BigInt(102));
+
+        const clientAnswers = createClientAnswers({
+          0: { inputs: [{ input: 'git init', isCorrect: true }], solved: true },
+        });
+
+        const userId = 99n;
+        const result = await service.createGameSession({
+          categoryId: 1,
+          difficultyMode: GameDifficultyMode.Easy,
+          score: 10,
+          clientAnswers,
+          userId: userId,
+        });
+
+        expect(result).toBe(BigInt(102));
+        expect(gameRepository.saveGameSession).toHaveBeenCalledWith(
+          expect.objectContaining({ userId: 99n }),
+        );
+      });
+
       it('실제로는 0점인데 클라이언트가 999점으로 점수조작하더라도, 0점으로 계산됨을 성공한다', async () => {
         gameRepository.categoryExists.mockResolvedValue(true);
         gameRepository.findProblemsByIds.mockResolvedValue(mockProblems);
