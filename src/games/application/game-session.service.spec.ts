@@ -115,13 +115,13 @@ describe('GameSessionService', () => {
           const expectedReport = createMockGameResultReport(userId);
           gameRepository.findGameResultReport.mockResolvedValue(expectedReport);
 
-          const result = await service.getGameResultReport(gameSessionId, userId);
+          const result = await service.getGameResultReport(gameSessionId);
 
           expect(result).toEqual(expectedReport);
           expect(result.isGuest).toBe(false);
           expect(result.summary.userId).toBe(1n);
           expect(result.summary.correctRate).toBe(15);
-          expect(gameRepository.findGameResultReport).toHaveBeenCalledWith(gameSessionId, userId);
+          expect(gameRepository.findGameResultReport).toHaveBeenCalledWith(gameSessionId);
         });
       });
 
@@ -152,10 +152,7 @@ describe('GameSessionService', () => {
           expect(result.summary.totalProblemCount).toBeNull();
           expect(result.summary.correctProblemCount).toBeNull();
           expect(result.summary.correctRate).toBeNull();
-          expect(gameRepository.findGameResultReport).toHaveBeenCalledWith(
-            gameSessionId,
-            undefined,
-          );
+          expect(gameRepository.findGameResultReport).toHaveBeenCalledWith(gameSessionId);
         });
 
         it(`비회원은 문제 1~${GUEST_MAX_VIEWABLE_PROBLEMS}만 전체 열람이 가능하다.`, async () => {
