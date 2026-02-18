@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 
 import { Prisma } from '@prisma/client';
 
@@ -8,6 +8,11 @@ import { capitalize } from '@common/utils/string.util';
 import { GameCategory } from '../domain/game-categories.entity';
 import { ClientAnswerInput } from '../domain/game-client-answers.interface';
 import { GameProblem } from '../domain/game-problem.entity';
+import {
+  GameResultProblemReport,
+  GameResultReport,
+  GameResultSummary,
+} from '../domain/game-result-report.entity';
 import { GameSessionHistoryFilterEntity } from '../domain/game-session-history-filter.entity';
 import { GameSessionHistory, GameSessionHistoryList } from '../domain/game-session-history.entity';
 import {
@@ -25,6 +30,8 @@ import { ProblemRawRow } from './types/problem-raw-row';
 
 @Injectable()
 export class GameRepositoryImpl implements IGameRepository {
+  private readonly logger = new Logger(GameRepositoryImpl.name);
+
   constructor(private readonly prisma: PrismaService) {}
 
   /**
@@ -368,7 +375,83 @@ export class GameRepositoryImpl implements IGameRepository {
     );
   }
 
-  /**
+  /*
+   * @description 게임 결과 리포트 조회
+   */
+  async findGameResultReport(gameSessionId: bigint): Promise<GameResultReport | null> {
+    const session = await this.prisma.gameSession.findUnique({
+      where: { id: gameSessionId },
+      include: {
+        gameSessionLogs: {
+          include: {
+            problem: {
+              include: {
+                subCategory: { select: { name: true } },
+              },
+            },
+          },
+          orderBy: { id: 'asc' },
+        },
+      },
+    });
+
+    if (!session) {
+      return null;
+    }
+
+    const summary = GameResultSummary.from({
+      sessionId: session.id,
+      userId: session.userId,
+      score: session.score,
+      totalProblemCount: session.totalProblemCount,
+      correctProblemCount: session.correctProblemCount,
+    });
+
+    const reports = session.gameSessionLogs.map((log) =>
+      GameResultProblemReport.from({
+        problemId: log.problem.id,
+        subCategory: log.problem.subCategory.name,
+        text: log.problem.text,
+        explanation: log.problem.explanation,
+        inputs: this.parseClientAnswerInputs(log.inputs),
+        answer: log.problem.answer,
+        isSolved: log.isSolved,
+        tryCount: log.tryCount,
+      }),
+    );
+
+    return GameResultReport.from({
+      isGuest: session.userId === null,
+      summary,
+      reports,
+    });
+  }
+
+  private parseClientAnswerInputs(json: Prisma.JsonValue): ClientAnswerInput[] {
+    if (!Array.isArray(json)) {
+      return [];
+    }
+
+    // ClientAnswerInput 구조({ input, isCorrect })에 부합하는 항목만 추출
+    const valid = json.filter(
+      (item): item is { input: string; isCorrect: boolean } =>
+        typeof item === 'object' &&
+        item !== null &&
+        typeof (item as Record<string, unknown>).input === 'string' &&
+        typeof (item as Record<string, unknown>).isCorrect === 'boolean',
+    );
+
+    // 유효하지 않은 항목이 존재하면 데이터 손상 가능성 경고
+    if (valid.length < json.length) {
+      this.logger.warn(
+        `Invalid inputs detected in game session log (${json.length - valid.length} items filtered)`,
+      );
+    }
+
+    // 검증된 필드만 추출하여 도메인 타입으로 변환
+    return valid.map((item) => ({ input: item.input, isCorrect: item.isCorrect }));
+  }
+  /*
    * @description 게임 세션에 유저 ID 업데이트
    */
   async updateUserIdToGameSession(sessionId: bigint, userId: bigint): Promise<boolean> {

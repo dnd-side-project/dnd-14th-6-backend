@@ -1,5 +1,11 @@
 import { EventEmitter } from 'events';
-import { BadRequestException, Logger, MessageEvent, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Logger,
+  MessageEvent,
+  NotFoundException,
+} from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { Request, Response } from 'express';
@@ -10,6 +16,11 @@ import { GameStreamService } from '../application/game-stream.service';
 import { GamesService } from '../application/games.service';
 import { GameCategory } from '../domain/game-categories.entity';
 import { GameOptions } from '../domain/game-options.entity';
+import {
+  GameResultProblemReport,
+  GameResultReport,
+  GameResultSummary,
+} from '../domain/game-result-report.entity';
 import { GameSessionHistoryList } from '../domain/game-session-history.entity';
 import {
   DIFFICULTY_MODES,
@@ -22,6 +33,10 @@ import {
   GetGameHistoriesResponseDto,
 } from './dto/get-game-histories.dto';
 import { GetGameOptionsResponseDto } from './dto/get-game-options.dto';
+import {
+  GetGameResultReportParamDto,
+  GetGameResultReportResponseDto,
+} from './dto/get-game-result-report.dto';
 import { ClientAnswerDto, InputDto, SaveGameSessionRequestDto } from './dto/save-game-session.dto';
 import { GamesController } from './games.controller';
 
@@ -43,6 +58,7 @@ describe('GamesController', () => {
 
     const mockGameSessionService = {
       getSessionHistories: jest.fn(),
+      getGameResultReport: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -252,61 +268,184 @@ describe('GamesController', () => {
         clientAnswers: [clientAnswer],
       });
     };
+    describe('회원용', () => {
+      // FIXME 회원용 테스트케이스 추가
+    });
+    describe('비회원용', () => {
+      describe('✅ 성공 케이스', () => {
+        it('게임 세션을 정상 저장하고 gameSessionId를 반환한다.', async () => {
+          const dto = createDto();
+          gameService.createGameSession.mockResolvedValue(BigInt(100));
 
-    describe('✅ 성공 케이스', () => {
-      it('게임 세션을 정상 저장하고 gameSessionId를 반환한다.', async () => {
-        const dto = createDto();
-        gameService.createGameSession.mockResolvedValue(BigInt(100));
+          const result = await controller.saveGameSession(dto);
 
-        const result = await controller.saveGameSession(dto);
+          expect(result).toEqual({ gameSessionId: '100' });
+          expect(gameService.createGameSession).toHaveBeenCalledWith({
+            categoryId: dto.categoryId,
+            difficultyMode: dto.difficultyMode,
+            score: dto.score,
+            clientAnswers: dto.clientAnswers,
+          });
+        });
+      });
+      describe('❌ 실패 케이스', () => {
+        it('존재하지 않는 카테고리면 NotFoundException을 던진다.', async () => {
+          const dto = createDto();
+          dto.categoryId = 999;
+          gameService.createGameSession.mockRejectedValue(
+            new NotFoundException('존재하지 않는 카테고리입니다.'),
+          );
 
-        expect(result).toEqual({ gameSessionId: '100' });
-        expect(gameService.createGameSession).toHaveBeenCalledWith({
-          categoryId: dto.categoryId,
-          difficultyMode: dto.difficultyMode,
-          score: dto.score,
-          clientAnswers: dto.clientAnswers,
+          await expect(controller.saveGameSession(dto)).rejects.toThrow(NotFoundException);
+        });
+
+        it('중복된 problemId가 포함되어 있으면 BadRequestException을 던진다.', async () => {
+          const dto = createDto();
+          gameService.createGameSession.mockRejectedValue(
+            new BadRequestException('clientAnswers에 중복된 problemId가 포함되어 있습니다.'),
+          );
+
+          await expect(controller.saveGameSession(dto)).rejects.toThrow(BadRequestException);
+        });
+
+        it('존재하지 않는 문제 ID가 포함되어 있으면 NotFoundException을 던진다.', async () => {
+          const dto = createDto();
+          gameService.createGameSession.mockRejectedValue(
+            new NotFoundException('존재하지 않는 문제 ID가 포함되어 있습니다. (problemId: 999)'),
+          );
+
+          await expect(controller.saveGameSession(dto)).rejects.toThrow(NotFoundException);
+        });
+
+        it('solved=true인데 정답 처리된 입력이 없으면 BadRequestException을 던진다.', async () => {
+          const dto = createDto();
+          gameService.createGameSession.mockRejectedValue(
+            new BadRequestException(
+              '데이터 무결성 오류: solved가 true이지만 정답 처리된 입력이 없습니다.',
+            ),
+          );
+
+          await expect(controller.saveGameSession(dto)).rejects.toThrow(BadRequestException);
         });
       });
     });
-    describe('❌ 실패 케이스', () => {
-      it('존재하지 않는 카테고리면 NotFoundException을 던진다.', async () => {
-        const dto = createDto();
-        dto.categoryId = 999;
-        gameService.createGameSession.mockRejectedValue(
-          new NotFoundException('존재하지 않는 카테고리입니다.'),
-        );
+  });
+  describe('getGameResultReport', () => {
+    const createParamDto = (gameSessionId: bigint): GetGameResultReportParamDto => {
+      return Object.assign(new GetGameResultReportParamDto(), { gameSessionId });
+    };
 
-        await expect(controller.saveGameSession(dto)).rejects.toThrow(NotFoundException);
+    const createMockGameResultReport = (userId: bigint | null): GameResultReport => {
+      const summary = GameResultSummary.from({
+        sessionId: 7n,
+        userId,
+        score: 30,
+        totalProblemCount: 20,
+        correctProblemCount: 3,
       });
 
-      it('중복된 problemId가 포함되어 있으면 BadRequestException을 던진다.', async () => {
-        const dto = createDto();
-        gameService.createGameSession.mockRejectedValue(
-          new BadRequestException('clientAnswers에 중복된 problemId가 포함되어 있습니다.'),
-        );
+      const reports = [
+        GameResultProblemReport.from({
+          problemId: 73n,
+          subCategory: 'Remote',
+          text: '등록된 원격 저장소의 이름만 확인하는 명령어는?',
+          explanation: '`git remote`는 등록된 원격 저장소의 이름(별칭)만 간단히 나열합니다.',
+          inputs: [
+            { input: 'git branch', isCorrect: false },
+            { input: 'git remote', isCorrect: true },
+          ],
+          answer: 'git remote',
+          isSolved: true,
+          tryCount: 2,
+        }),
+      ];
 
-        await expect(controller.saveGameSession(dto)).rejects.toThrow(BadRequestException);
+      return GameResultReport.from({ isGuest: userId === null, summary, reports });
+    };
+
+    describe('회원용', () => {
+      describe('✅ 성공 케이스', () => {
+        it('회원 게임 결과 리포트를 정상적으로 응답한다.', async () => {
+          const param = createParamDto(7n);
+          const mockReport = createMockGameResultReport(1n);
+          gameSessionService.getGameResultReport.mockResolvedValue(mockReport);
+
+          const result = await controller.getGameResultReport(param);
+
+          expect(result).toBeInstanceOf(GetGameResultReportResponseDto);
+          expect(result.isGuest).toBe(false);
+          expect(result.summary).toEqual({
+            sessionId: '7',
+            userId: '1',
+            score: 30,
+            totalProblemCount: 20,
+            correctProblemCount: 3,
+            correctRate: 15,
+          });
+          expect(result.reports).toHaveLength(1);
+          expect(result.reports[0]).toEqual({
+            problemId: '73',
+            subCategory: 'Remote',
+            text: '등록된 원격 저장소의 이름만 확인하는 명령어는?',
+            explanation: '`git remote`는 등록된 원격 저장소의 이름(별칭)만 간단히 나열합니다.',
+            inputs: [
+              { input: 'git branch', isCorrect: false },
+              { input: 'git remote', isCorrect: true },
+            ],
+            answer: 'git remote',
+            isSolved: true,
+            tryCount: 2,
+          });
+          expect(gameSessionService.getGameResultReport).toHaveBeenCalledWith(7n);
+        });
       });
 
-      it('존재하지 않는 문제 ID가 포함되어 있으면 NotFoundException을 던진다.', async () => {
-        const dto = createDto();
-        gameService.createGameSession.mockRejectedValue(
-          new NotFoundException('존재하지 않는 문제 ID가 포함되어 있습니다. (problemId: 999)'),
-        );
+      describe('❌ 실패 케이스', () => {
+        it('존재하지 않는 게임 세션 ID이면 NotFoundException을 던진다.', async () => {
+          const param = createParamDto(999n);
+          gameSessionService.getGameResultReport.mockRejectedValue(
+            new NotFoundException('존재하지 않는 게임 세션입니다.'),
+          );
 
-        await expect(controller.saveGameSession(dto)).rejects.toThrow(NotFoundException);
+          await expect(controller.getGameResultReport(param)).rejects.toThrow(NotFoundException);
+        });
+
+        it('다른 회원의 게임 결과 리포트에 접근하면 ForbiddenException을 던진다.', async () => {
+          const param = createParamDto(7n);
+          gameSessionService.getGameResultReport.mockRejectedValue(
+            new ForbiddenException('해당 게임 결과 리포트에 접근할 수 없습니다.'),
+          );
+
+          await expect(controller.getGameResultReport(param)).rejects.toThrow(ForbiddenException);
+        });
+      });
+    });
+
+    describe('비회원용', () => {
+      describe('✅ 성공 케이스', () => {
+        it('비회원 게임 결과 리포트를 정상적으로 응답한다.', async () => {
+          const param = createParamDto(7n);
+          const mockReport = createMockGameResultReport(null);
+          gameSessionService.getGameResultReport.mockResolvedValue(mockReport);
+
+          const result = await controller.getGameResultReport(param);
+
+          expect(result).toBeInstanceOf(GetGameResultReportResponseDto);
+          expect(result.isGuest).toBe(true);
+          expect(result.summary.userId).toBeNull();
+          expect(gameSessionService.getGameResultReport).toHaveBeenCalledWith(7n);
+        });
       });
 
-      it('solved=true인데 정답 처리된 입력이 없으면 BadRequestException을 던진다.', async () => {
-        const dto = createDto();
-        gameService.createGameSession.mockRejectedValue(
-          new BadRequestException(
-            '데이터 무결성 오류: solved가 true이지만 정답 처리된 입력이 없습니다.',
-          ),
-        );
+      describe('❌ 실패 케이스', () => {
+        it('존재하지 않는 게임 세션 ID이면 NotFoundException을 던진다.', async () => {
+          const param = createParamDto(999n);
+          gameSessionService.getGameResultReport.mockRejectedValue(
+            new NotFoundException('존재하지 않는 게임 세션입니다.'),
+          );
 
-        await expect(controller.saveGameSession(dto)).rejects.toThrow(BadRequestException);
+          await expect(controller.getGameResultReport(param)).rejects.toThrow(NotFoundException);
+        });
       });
     });
   });

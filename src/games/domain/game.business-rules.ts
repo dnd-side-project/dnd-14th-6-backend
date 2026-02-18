@@ -40,6 +40,9 @@ export const GAME_TIMER_DURATION = 60;
 /** 게임당 최대 출제 문제 수 */
 export const MAX_PROBLEMS_PER_GAME = 20;
 
+/** 비회원 게임 결과 문제 해설(report) 열람 가능 문제 수 */
+export const GUEST_MAX_VIEWABLE_PROBLEMS = 10;
+
 /** 문제 출제 최소 간격 (ms) */
 export const PROBLEM_INTERVAL_MIN = 1000;
 
