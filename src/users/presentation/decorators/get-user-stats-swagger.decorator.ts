@@ -14,9 +14,10 @@ import {
   createSwaggerBadRequest,
   createSwaggerServerErrors,
 } from '@common/utils/swagger-error-response.util';
+
 import {
-  GetUserStatsResponseDto,
   CategoryScoreDto,
+  GetUserStatsResponseDto,
   ScoreDetailDto,
   TierDto,
 } from '../dto/get-user-stats.dto';

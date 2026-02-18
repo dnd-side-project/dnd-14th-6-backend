@@ -24,6 +24,11 @@ export function ApiGithubLoginCallback() {
     ApiResponse({
       status: 302,
       description: '로그인 성공 시 state.redirectUrl로, 실패 시 / 경로로 리다이렉트',
+      headers: {
+        'Set-Cookie': {
+          description: 'accessToken, refreshToken이 Set-Cookie 헤더로 내려감',
+        },
+      },
     }),
     createSwaggerUnauthorized([
       {

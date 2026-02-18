@@ -1,19 +1,21 @@
-import { Controller, Get, Logger, Req, Res, UseGuards } from '@nestjs/common';
+import { Controller, Get, Logger, Post, Req, Res, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { Response } from 'express';
+
+import { Request, Response } from 'express';
 
 import { AuthFacade } from '../application/auth.facade';
-
 import { SocialLoginProvider } from '../domain/auth.business-rule';
-
+import { AuthenticatedUser } from './decorators/authenticated-user.decorator';
 import { ApiGithubLoginCallback } from './decorators/github-login-callback-swagger.decorator';
 import { ApiGoogleLoginCallback } from './decorators/google-login-callback-swagger.decorator';
 import { ApiLoginByGithub } from './decorators/login-by-github-swagger.decorator';
 import { ApiLoginByGoogle } from './decorators/login-by-google-swagger.decorator';
-import { GoogleAuthGuard } from './guards/google-auth.guard';
+import { ApiRefreshTokens } from './decorators/refresh-tokens-swagger.decorator';
 import { GithubAuthGuard } from './guards/github-auth.guard';
-import { decodeOAuthState } from './utils/oauth-state.util';
+import { GoogleAuthGuard } from './guards/google-auth.guard';
+import { JwtRefreshAuthGuard } from './guards/jwt-refresh-auth.guard';
 import { OAuthCallbackRequest } from './types/auth.type';
+import { decodeOAuthState } from './utils/oauth-state.util';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -44,6 +46,21 @@ export class AuthController {
   @UseGuards(GithubAuthGuard)
   async githubAuthCallback(@Req() req: OAuthCallbackRequest, @Res() res: Response): Promise<void> {
     await this.handleOAuthCallback(req, res, 'github');
+  }
+
+  @Post('refresh')
+  @UseGuards(JwtRefreshAuthGuard)
+  @ApiRefreshTokens()
+  async refreshTokens(
+    @Req() req: Request,
+    @Res() res: Response,
+    @AuthenticatedUser() user: { userId: bigint },
+  ): Promise<void> {
+    const { accessToken, refreshToken } = await this.authFacade.processRefreshTokens(user.userId);
+
+    this.setAuthCookies(res, accessToken, refreshToken);
+
+    res.status(200).json({ statusCode: 200, success: true });
   }
 
   private async handleOAuthCallback(
