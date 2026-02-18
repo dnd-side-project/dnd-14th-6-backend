@@ -8,10 +8,7 @@ import {
 } from '@common/utils/swagger-error-response.util';
 
 import { MAX_PROBLEMS_PER_GAME } from '../../domain/game.business-rules';
-import {
-  SaveGameSessionRequestDto,
-  SaveGameSessionResponseDto,
-} from '../dto/save-game-session.dto';
+import { SaveGameSessionRequestDto } from '../dto/save-game-session.dto';
 
 export function ApiSaveGameSession() {
   return applyDecorators(
@@ -116,16 +113,30 @@ export function ApiSaveGameSession() {
       },
     }),
     ApiCreatedResponse({
-      // FIXME: 회원/비회원 응답 데이터 구분 필요
       description: '게임 세션 저장 성공',
-      type: SaveGameSessionResponseDto,
       content: {
         'application/json': {
-          example: {
-            statusCode: 201,
-            success: true,
-            data: {
-              gameSessionId: '1',
+          examples: {
+            비회원: {
+              summary: '비회원 응답',
+              value: {
+                statusCode: 201,
+                success: true,
+                data: {
+                  gameSessionId: '1',
+                },
+              },
+            },
+            회원: {
+              summary: '회원 응답 (totalScore 포함)',
+              value: {
+                statusCode: 201,
+                success: true,
+                data: {
+                  gameSessionId: '1',
+                  totalScore: '9999999',
+                },
+              },
             },
           },
         },
