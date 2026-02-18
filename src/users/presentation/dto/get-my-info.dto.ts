@@ -2,6 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 
 import { plainToInstance } from 'class-transformer';
 
+import { DEFAULT_PROFILE_IMAGE } from '@users/domain/user.business-rule';
 import { User } from '@users/domain/users.entity';
 
 export class GetMyInfoResponseDto {
@@ -13,7 +14,7 @@ export class GetMyInfoResponseDto {
 
   @ApiProperty({
     description: '유저 프로필 사진 (없을 경우 default image)',
-    example: 'https://cdn.orvit.net/users/default_profile.webp',
+    example: DEFAULT_PROFILE_IMAGE,
   })
   profileImage: string;
 

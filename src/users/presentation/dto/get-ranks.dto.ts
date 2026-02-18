@@ -3,6 +3,8 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { plainToInstance, Type } from 'class-transformer';
 import { IsInt, IsOptional, Min } from 'class-validator';
 
+import { DEFAULT_PROFILE_IMAGE } from '@users/domain/user.business-rule';
+
 import { User } from '../../domain/users.entity';
 
 export class GetRanksQueryDto {
@@ -81,7 +83,7 @@ export class RankItemDto {
 
   @ApiProperty({
     description: '프로필 이미지',
-    example: 'https://cdn.orvit.net/users/default_profile.webp',
+    example: DEFAULT_PROFILE_IMAGE,
   })
   profileImage: string;
 
