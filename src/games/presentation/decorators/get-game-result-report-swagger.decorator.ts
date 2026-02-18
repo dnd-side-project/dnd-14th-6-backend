@@ -22,7 +22,11 @@ import {
 
 export function ApiGetGameResultReport() {
   return applyDecorators(
-    ApiOperation({ summary: '게임 결과 리포트 조회' }),
+    ApiOperation({
+      summary: '게임 결과 리포트 조회 ( 회원 / 비회원 공용 )',
+      description:
+        '게임 종료 후 게임결과를 리포트로 나타내줍니다. <br> **(단, 회원/비회원 에 따라 응답데이터가 다릅니다.)**',
+    }),
     ApiParam({
       name: 'gameSessionId',
       required: true,
