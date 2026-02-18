@@ -40,7 +40,7 @@ function createMockUser(overrides: Partial<User> = {}): User {
     createdAt: new Date(),
     updatedAt: new Date(),
     githubUrl: null,
-    profileImage: null,
+    profileImage: 'https://cdn.orvit.net/users/default_profile.webp',
     tierId: null,
     tier: null,
     ...overrides,
