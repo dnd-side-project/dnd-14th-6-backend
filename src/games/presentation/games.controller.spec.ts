@@ -269,7 +269,26 @@ describe('GamesController', () => {
       });
     };
     describe('회원용', () => {
-      // FIXME 회원용 테스트케이스 추가
+      describe('✅ 성공 케이스', () => {
+        it('userId를 전달하면 userId가 포함된 command로 createGameSession을 호출하고 gameSessionId를 반환한다.', async () => {
+          const dto = createDto();
+          const user = { userId: 99n };
+          gameSessionService.createGameSession.mockResolvedValue(BigInt(100));
+
+          const result = await controller.saveGameSession(dto, user);
+
+          expect(result).toEqual({ gameSessionId: '100' });
+          expect(gameSessionService.createGameSession).toHaveBeenCalledWith({
+            categoryId: dto.categoryId,
+            difficultyMode: dto.difficultyMode,
+            score: dto.score,
+            clientAnswers: dto.clientAnswers,
+            userId: 99n,
+          });
+
+          // FIXME: totalScore 점수 계산 나오도록 수정
+        });
+      });
     });
     describe('비회원용', () => {
       describe('✅ 성공 케이스', () => {
