@@ -8,4 +8,5 @@ export const configSchema = Joi.object({
   GITHUB_CLIENT_ID: Joi.string().required(),
   GITHUB_CLIENT_SECRET: Joi.string().required(),
   JWT_TOKEN_SECRET: Joi.string().required(),
+  SERVER_URL: Joi.string().required(),
 });
