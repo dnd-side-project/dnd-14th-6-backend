@@ -26,6 +26,11 @@ jobs:
         run: |
           printf "PORT=%s\n" "${{ secrets.PORT }}" >> .env
           printf "DATABASE_URL=%s\n" "${{ secrets.DATABASE_URL }}" >> .env
+          printf "GOOGLE_CLIENT_ID=%s\n" "${{ secrets.GOOGLE_CLIENT_ID }}" >> .env
+          printf "GOOGLE_CLIENT_SECRET=%s\n" "${{ secrets.GOOGLE_CLIENT_SECRET }}" >> .env
+          printf "GITHUB_CLIENT_ID=%s\n" "${{ secrets.CLIENT_ID_FOR_GITHUB }}" >> .env
+          printf "GITHUB_CLIENT_SECRET=%s\n" "${{ secrets.CLIENT_SECRET_FOR_GITHUB }}" >> .env
+          printf "JWT_TOKEN_SECRET=%s\n" "${{ secrets.JWT_TOKEN_SECRET }}" >> .env
 
       - name: Install & Build
         run: |
@@ -113,6 +118,11 @@ jobs:
             cd /opt/orvit/docker
             echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" | sudo tee .env.dev > /dev/null
             echo "PORT=${{ secrets.PORT }}" | sudo tee -a .env.dev > /dev/null
+            echo "GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}" | sudo tee -a .env.dev > /dev/null
+            echo "GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}" | sudo tee -a .env.dev > /dev/null
+            echo "GITHUB_CLIENT_ID=${{ secrets.CLIENT_ID_FOR_GITHUB }}" | sudo tee -a .env.dev > /dev/null
+            echo "GITHUB_CLIENT_SECRET=${{ secrets.CLIENT_SECRET_FOR_GITHUB }}" | sudo tee -a .env.dev > /dev/null
+            echo "JWT_TOKEN_SECRET=${{ secrets.JWT_TOKEN_SECRET }}" | sudo tee -a .env.dev > /dev/null
             sudo ./deploy.sh
 
       - name: Close Port 22
