@@ -15,8 +15,6 @@ import { ApiTags } from '@nestjs/swagger';
 import { Request, Response } from 'express';
 import { Subject } from 'rxjs';
 
-import { ParseBigIntPipe } from '@common/pipes/parse-bigint.pipe';
-
 import { GameSessionService } from '../application/game-session.service';
 import { GameStreamService } from '../application/game-stream.service';
 import { GamesService } from '../application/games.service';
@@ -31,7 +29,10 @@ import {
   GetGameHistoriesResponseDto,
 } from './dto/get-game-histories.dto';
 import { GetGameOptionsResponseDto } from './dto/get-game-options.dto';
-import { GetGameResultReportResponseDto } from './dto/get-game-result-report.dto';
+import {
+  GetGameResultReportParamDto,
+  GetGameResultReportResponseDto,
+} from './dto/get-game-result-report.dto';
 import { SaveGameSessionRequestDto, SaveGameSessionResponseDto } from './dto/save-game-session.dto';
 
 @ApiTags('Games')
@@ -49,7 +50,6 @@ export class GamesController {
   @Get('options')
   @ApiGetGameOptions()
   async getGameOptions(): Promise<GetGameOptionsResponseDto> {
-    // FIXME: 회원용 AuthGuard 붙이기
     const gameOptions = await this.gameService.getGameOptions();
     return GetGameOptionsResponseDto.from(gameOptions);
   }
@@ -61,7 +61,6 @@ export class GamesController {
     @Req() request: Request,
     @Res() response: Response,
   ): Promise<void> {
-    // FIXME: 회원용 AuthGuard 붙이기
     await this.gameStreamService.validateGameStreamParams(query.categoryId);
 
     response.setHeader('Content-Type', 'text/event-stream');
@@ -140,11 +139,11 @@ export class GamesController {
   @Get(':gameSessionId/reports')
   @ApiGetGameResultReport()
   async getGameResultReport(
-    @Param('gameSessionId', ParseBigIntPipe) gameSessionId: bigint,
+    @Param() param: GetGameResultReportParamDto,
   ): Promise<GetGameResultReportResponseDto> {
     // FIXME: 회원용 AuthGuard 붙이기
     // FIXME: 회원용 userId 파라미터 인자로 붙이기
-    const gameReport = await this.gameSessionService.getGameResultReport(gameSessionId);
+    const gameReport = await this.gameSessionService.getGameResultReport(param.gameSessionId);
 
     return GetGameResultReportResponseDto.from(gameReport);
   }
