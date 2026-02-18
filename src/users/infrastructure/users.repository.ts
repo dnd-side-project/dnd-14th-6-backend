@@ -1,8 +1,9 @@
 import { Injectable } from '@nestjs/common';
+
 import { PrismaService } from '@/prisma/prisma.service';
 
-import { IUsersRepository, ScoreDetailOriginData } from '../domain/users.repository.interface';
 import { User } from '../domain/users.entity';
+import { IUsersRepository, ScoreDetailOriginData } from '../domain/users.repository.interface';
 
 @Injectable()
 export class UsersRepositoryImpl implements IUsersRepository {
@@ -88,6 +89,15 @@ export class UsersRepositoryImpl implements IUsersRepository {
     }
 
     return User.from(user);
+  }
+
+  /**
+   * @description count 활용 존재하는 유저인지 확인
+   */
+  async isExistUser(userId: bigint): Promise<boolean> {
+    const count = await this.prisma.user.count({ where: { id: userId } });
+
+    return count > 0;
   }
 
   /**

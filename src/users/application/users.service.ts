@@ -46,6 +46,15 @@ export class UsersService {
   }
 
   /**
+   * @description userId로 유저 존재 여부 조회
+   */
+  async isExistUser(userId: bigint): Promise<boolean> {
+    const isExist = await this.usersRepository.isExistUser(userId);
+
+    return isExist;
+  }
+
+  /**
    * @description 소셜 정보로 유저 생성
    */
   async createSocialUser(socialUser: {
@@ -83,9 +92,8 @@ export class UsersService {
       this.usersRepository.getScoreDetailByUserId(userId),
     ]);
 
-    // FIXME: auth guard 추가 시 필요 없어짐 (guard에서 리소스 확인)
     if (!user) {
-      throw new NotFoundException(`존재하지 않는 유저입니다.`);
+      throw new NotFoundException(`존재하지 않는 사용자입니다.`);
     }
 
     const ranking = await this.usersRepository.getRankingByScore(user.totalScore);

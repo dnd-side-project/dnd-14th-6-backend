@@ -11,16 +11,12 @@ import { GenericContainer, StartedTestContainer } from 'testcontainers';
 
 import { ApiResponseDto } from '@common/dto/api-response.dto';
 import { ResponseInterceptor } from '@common/interceptors/response.interceptor';
-import { GetUserStatsResponseDto } from '@users/presentation/dto/get-user-stats.dto';
+import { GetMyInfoResponseDto } from '@users/presentation/dto/get-my-info.dto';
 
-import { seedCategories } from '../../prisma/seeds/category.seed';
-import { seedSubCategories } from '../../prisma/seeds/subcategory.seed';
-import { seedTiers } from '../../prisma/seeds/tier.seed';
-import { seedUsersAndSessions } from '../../prisma/seeds/user-session.seed';
 import { AppModule } from '../../src/app.module';
 import { createMockAuthGuard } from '../utils/mock-auth.guard';
 
-describe('GET /api/users/:userId/stats (e2e)', () => {
+describe('GET /api/users/me (e2e)', () => {
   let app: INestApplication<App>;
   let container: StartedTestContainer;
 
@@ -43,10 +39,21 @@ describe('GET /api/users/:userId/stats (e2e)', () => {
 
     const prisma = new PrismaClient({ datasourceUrl: databaseUrl });
 
-    await seedTiers(prisma);
-    await seedCategories(prisma);
-    await seedSubCategories(prisma);
-    await seedUsersAndSessions(prisma);
+    await prisma.user.create({
+      data: {
+        email: 'test@test.com',
+        nickname: 'testUser',
+        provider: 'github',
+        providerId: '12345',
+        totalScore: 0n,
+        refreshToken: 'token',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        githubUrl: null,
+        profileImage: 'https://example.com/profile.png',
+        tierId: null,
+      },
+    });
 
     await prisma.$disconnect();
 
@@ -65,27 +72,18 @@ describe('GET /api/users/:userId/stats (e2e)', () => {
   }, 60000);
 
   afterAll(async () => {
-    await app.close();
-    await container.stop();
+    await app?.close();
+    await container?.stop();
   });
 
-  it('존재하지 않는 유저 id로 요청 시 404 에러를 응답한다.', async () => {
-    await request(app.getHttpServer()).get('/api/users/9999/stats').expect(404);
-  });
+  it('요청한 유저의 id, nickname, profileImage 정보를 응답한다.', async () => {
+    const response = await request(app.getHttpServer()).get('/api/users/me').expect(200);
+    const body = response.body as { data: GetMyInfoResponseDto } & ApiResponseDto;
 
-  it('존재하는 유저로 요청 시 난이도와 카테고리 별로 올바른 정보를 응답한다.', async () => {
-    const response = await request(app.getHttpServer()).get('/api/users/1/stats').expect(200);
-    const body = response.body as { data: GetUserStatsResponseDto } & ApiResponseDto;
-
-    expect(body.data.totalScore).toBe('54610');
-    expect(body.data.ranking).toBe(131);
-
-    const hardMode = body.data.scoreDetail.find((detail) => detail.difficultyMode === 'Hard');
-    expect(hardMode).toBeDefined();
-    expect(hardMode?.totalScore).toBe('32460');
-
-    const gitCategory = hardMode?.categoryScores.find((cat) => cat.category === 'Git');
-    expect(gitCategory).toBeDefined();
-    expect(gitCategory?.score).toBe('17650');
+    expect(body.data).toEqual({
+      id: '1',
+      nickname: 'testUser',
+      profileImage: 'https://example.com/profile.png',
+    });
   });
 });

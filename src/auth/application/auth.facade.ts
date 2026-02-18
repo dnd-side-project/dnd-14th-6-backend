@@ -50,6 +50,13 @@ export class AuthFacade {
     return this.registerNewSocialUser(loginData);
   }
 
+  /**
+   * @description 존재하는 유저인지 조회
+   */
+  async isExistUser(userId: bigint): Promise<boolean> {
+    return this.usersService.isExistUser(userId);
+  }
+
   private async loginExistingUser(userId: bigint): Promise<ProcessSocialLoginFacadeResponseDto> {
     const tokens = this.authService.issueTokens(userId);
 

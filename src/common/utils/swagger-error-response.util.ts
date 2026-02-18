@@ -1,5 +1,6 @@
 import {
   ApiBadRequestResponse,
+  ApiForbiddenResponse,
   ApiNotFoundResponse,
   ApiResponse,
   ApiUnauthorizedResponse,
@@ -83,6 +84,65 @@ export function createSwaggerUnauthorized(examples: ErrorExample[]) {
       },
     },
   });
+}
+
+/**
+ * @description Forbidden(403) Swagger 응답 명세를 생성하는 헬퍼 함수
+ */
+export function createSwaggerForbidden(examples: ErrorExample[]) {
+  const exampleObject = {};
+  examples.forEach((data) => {
+    exampleObject[data.description] = {
+      value: {
+        statusCode: 403,
+        success: false,
+        message: data.message,
+      },
+    };
+  });
+
+  return ApiForbiddenResponse({
+    description: '접근 권한 없음',
+    content: {
+      'application/json': {
+        examples: exampleObject,
+      },
+    },
+  });
+}
+
+/**
+ * @description Auth 인증 관련 전체 에러 명세 생성
+ */
+export function createSwaggerAuthErrors() {
+  return [
+    createSwaggerUnauthorized([
+      {
+        description: '토큰 없음',
+        message: '인증이 필요합니다.',
+      },
+      {
+        description: '토큰 만료',
+        message: '토큰이 만료되었습니다.',
+      },
+      {
+        description: '유효하지 않은 토큰',
+        message: '유효하지 않은 토큰입니다.',
+      },
+    ]),
+    createSwaggerForbidden([
+      {
+        description: '권한 없음',
+        message: '본인의 정보만 조회할 수 있습니다.',
+      },
+    ]),
+    createSwaggerNotFound([
+      {
+        description: '사용자 없음',
+        message: '존재하지 않는 사용자입니다.',
+      },
+    ]),
+  ];
 }
 
 /**
