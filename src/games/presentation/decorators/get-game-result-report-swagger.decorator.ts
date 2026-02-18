@@ -60,8 +60,12 @@ export function ApiGetGameResultReport() {
     }),
     createSwaggerBadRequest([
       {
+        description: 'gameSessionId 필수 누락',
+        message: 'gameSessionId 는 필수값 입니다.',
+      },
+      {
         description: 'gameSessionId 형식 오류',
-        message: 'gameSessionId이(가) 유효한 숫자 형식이 아닙니다.',
+        message: 'gameSessionId(이)가 유효한 숫자 형식이 아닙니다.',
       },
     ]),
     createSwaggerNotFound([
