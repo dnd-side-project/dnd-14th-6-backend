@@ -124,9 +124,9 @@ export class AuthController {
     }
 
     res.cookie('refreshToken', refreshToken, {
-      httpOnly: true,
+      httpOnly: false,
       secure: isProd,
-      sameSite: 'lax',
+      sameSite: 'none', // FIXME: 프론트 개발환경 테스트를 위해 none 세팅
       path: '/',
       maxAge: 14 * 24 * 60 * 60 * 1000,
     });
@@ -140,7 +140,7 @@ export class AuthController {
     res.cookie('accessToken', accessToken, {
       httpOnly: false,
       secure: isProd,
-      sameSite: 'lax',
+      sameSite: 'none', // FIXME: 프론트 개발환경 테스트를 위해 none 세팅
       path: '/',
       maxAge: 1 * 60 * 60 * 1000,
     });
