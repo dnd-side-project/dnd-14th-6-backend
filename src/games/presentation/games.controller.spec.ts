@@ -1,5 +1,11 @@
 import { EventEmitter } from 'events';
-import { BadRequestException, Logger, MessageEvent, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Logger,
+  MessageEvent,
+  NotFoundException,
+} from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { Request, Response } from 'express';
@@ -358,7 +364,6 @@ describe('GamesController', () => {
     };
 
     describe('회원용', () => {
-      // FIXME: AuthGuard 이후 user_id를 매핑받아서 테스트
       describe('✅ 성공 케이스', () => {
         it('회원 게임 결과 리포트를 정상적으로 응답한다.', async () => {
           const param = createParamDto(7n);
@@ -403,6 +408,15 @@ describe('GamesController', () => {
           );
 
           await expect(controller.getGameResultReport(param)).rejects.toThrow(NotFoundException);
+        });
+
+        it('다른 회원의 게임 결과 리포트에 접근하면 ForbiddenException을 던진다.', async () => {
+          const param = createParamDto(7n);
+          gameSessionService.getGameResultReport.mockRejectedValue(
+            new ForbiddenException('해당 게임 결과 리포트에 접근할 수 없습니다.'),
+          );
+
+          await expect(controller.getGameResultReport(param)).rejects.toThrow(ForbiddenException);
         });
       });
     });
