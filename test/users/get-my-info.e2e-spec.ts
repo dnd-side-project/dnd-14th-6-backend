@@ -74,7 +74,7 @@ describe('GET /api/users/me (e2e)', () => {
   afterAll(async () => {
     await app?.close();
     await container?.stop();
-    await prisma.$disconnect();
+    await prisma?.$disconnect();
   });
 
   it('요청한 유저의 id, nickname, profileImage 정보를 응답한다.', async () => {
