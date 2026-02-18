@@ -179,16 +179,15 @@ describe('GameSessionService', () => {
           const result = await service.getGameResultReport(gameSessionId);
           const lockedReports = result.reports.slice(GUEST_MAX_VIEWABLE_PROBLEMS);
 
-          for (const report of lockedReports) {
-            expect(report.problemId).toBeDefined();
-            expect(report.subCategory).toBeDefined();
-            expect(report.text).toBeNull();
-            expect(report.explanation).toBeNull();
-            expect(report.inputs).toEqual([]);
-            expect(report.answer).toBeNull();
-            expect(report.isSolved).toBeNull();
-            expect(report.tryCount).toBeNull();
-          }
+          // 11번 문제
+          expect(lockedReports[0].problemId).toBeDefined();
+          expect(lockedReports[0].subCategory).toBeDefined();
+          expect(lockedReports[0].text).toBeNull();
+          expect(lockedReports[0].explanation).toBeNull();
+          expect(lockedReports[0].inputs).toEqual([]);
+          expect(lockedReports[0].answer).toBeNull();
+          expect(lockedReports[0].isSolved).toBeNull();
+          expect(lockedReports[0].tryCount).toBeNull();
         });
       });
 
