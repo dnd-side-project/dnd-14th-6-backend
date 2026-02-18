@@ -3,8 +3,8 @@ import { ClientAnswerInput } from './game-client-answers.interface';
 import { GameProblem } from './game-problem.entity';
 import { GameSessionHistoryFilterEntity } from './game-session-history-filter.entity';
 import { GameSessionHistoryList } from './game-session-history.entity';
-import { FrequentWrongCommand, FrequentWrongCategory } from './user-mistake-analysis.entity';
 import { GameDifficultyMode } from './game.business-rules';
+import { FrequentWrongCategory, FrequentWrongCommand } from './user-mistake-analysis.entity';
 
 export type NonRandomGameDifficultyMode = Exclude<GameDifficultyMode, GameDifficultyMode.Random>;
 

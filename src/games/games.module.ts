@@ -1,4 +1,5 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
+import { AuthModule } from '@auth/auth.module';
 import { PrismaModule } from '@prisma/prisma.module';
 import { GamesService } from './application/games.service';
 import { GameSessionService } from './application/game-session.service';
@@ -8,7 +9,7 @@ import { GameRepositoryImpl } from './infrastructure/games.repository';
 import { GameStreamService } from './application/game-stream.service';
 
 @Module({
-  imports: [PrismaModule],
+  imports: [forwardRef(() => AuthModule), PrismaModule],
   providers: [
     GamesService,
     GameStreamService,

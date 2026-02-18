@@ -1,6 +1,6 @@
+import { randomBytes } from 'crypto';
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { randomBytes } from 'crypto';
 
 import { ProcessSocialLoginFacadeResponseDto } from './service-dto/process-social-login.service-dto';
 

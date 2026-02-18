@@ -4,12 +4,11 @@ import { GameSessionService } from '@games/application/game-session.service';
 import { TiersService } from '@tiers/application/tiers.service';
 import { UsersService } from '@users/application/users.service';
 
+import { AuthService } from './auth.service';
 import {
   ProcessSocialLoginFacadeRequestDto,
   ProcessSocialLoginFacadeResponseDto,
 } from './service-dto/process-social-login.service-dto';
-
-import { AuthService } from './auth.service';
 
 @Injectable()
 export class AuthFacade {
@@ -33,6 +32,13 @@ export class AuthFacade {
     }
 
     return this.registerNewSocialUser(loginData);
+  }
+
+  /**
+   * @description 존재하는 유저인지 조회
+   */
+  async isExistUser(userId: bigint): Promise<boolean> {
+    return this.usersService.isExistUser(userId);
   }
 
   private async loginExistingUser(userId: bigint): Promise<ProcessSocialLoginFacadeResponseDto> {

@@ -91,6 +91,15 @@ export class UsersRepositoryImpl implements IUsersRepository {
   }
 
   /**
+   * @description count 활용 존재하는 유저인지 확인
+   */
+  async isExistUser(userId: bigint): Promise<boolean> {
+    const count = await this.prisma.user.count({ where: { id: userId } });
+
+    return count > 0;
+  }
+
+  /**
    * @description 전체 유저의 totalScore average 조회, 유저가 없을 경우 0 반환
    */
   async getAverageScore(): Promise<bigint> {

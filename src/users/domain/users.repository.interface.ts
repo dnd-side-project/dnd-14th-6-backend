@@ -22,6 +22,7 @@ export interface IUsersRepository {
   }): Promise<User>;
   updateRefreshToken(userId: bigint, refreshToken: string): Promise<User>;
   findByIdWithTier(userId: bigint): Promise<User | null>;
+  isExistUser(userId: bigint): Promise<boolean>;
   getAverageScore(): Promise<bigint>;
   getRankingByScore(totalScore: bigint): Promise<number>;
   getScoreDetailByUserId(userId: bigint): Promise<ScoreDetailOriginData[]>;

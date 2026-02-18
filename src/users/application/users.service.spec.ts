@@ -61,6 +61,7 @@ describe('UsersService', () => {
       createSocialUser: jest.fn(),
       updateRefreshToken: jest.fn(),
       findByIdWithTier: jest.fn(),
+      isExistUser: jest.fn(),
       getAverageScore: jest.fn(),
       getRankingByScore: jest.fn(),
       getScoreDetailByUserId: jest.fn(),
