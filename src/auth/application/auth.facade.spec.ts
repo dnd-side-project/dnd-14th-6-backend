@@ -5,6 +5,7 @@ import { GameSessionService } from '@games/application/game-session.service';
 import { TiersService } from '@tiers/application/tiers.service';
 import { Tier } from '@tiers/domain/tiers.entity';
 import { UsersService } from '@users/application/users.service';
+import { DEFAULT_PROFILE_IMAGE } from '@users/domain/user.business-rule';
 import { User } from '@users/domain/users.entity';
 
 import { AuthFacade } from './auth.facade';
@@ -22,7 +23,7 @@ function createMockUser(overrides: Partial<User> = {}): User {
     createdAt: new Date(),
     updatedAt: new Date(),
     githubUrl: null,
-    profileImage: null,
+    profileImage: DEFAULT_PROFILE_IMAGE,
     tierId: null,
     tier: null,
     ...overrides,

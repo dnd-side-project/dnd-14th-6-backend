@@ -1,6 +1,9 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsInt, IsOptional, Min } from 'class-validator';
+
 import { plainToInstance, Type } from 'class-transformer';
+import { IsInt, IsOptional, Min } from 'class-validator';
+
+import { DEFAULT_PROFILE_IMAGE } from '@users/domain/user.business-rule';
 
 import { User } from '../../domain/users.entity';
 
@@ -78,8 +81,11 @@ export class RankItemDto {
   @ApiProperty({ description: '총 점수(int size를 넘길 수 있어 string type)', example: '1029342' })
   totalScore: string;
 
-  @ApiProperty({ description: '프로필 이미지', example: 'https://github.com/profile.png' })
-  profileImage: string | null;
+  @ApiProperty({
+    description: '프로필 이미지',
+    example: DEFAULT_PROFILE_IMAGE,
+  })
+  profileImage: string;
 
   @ApiProperty({ description: 'github 링크', example: 'https://github.com/user1' })
   githubUrl: string | null;

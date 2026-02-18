@@ -9,6 +9,7 @@ import { Tier } from '@tiers/domain/tiers.entity';
 
 import { UsersService } from '../application/users.service';
 import { CategoryScore, DifficultyScoreDetail, UserStats } from '../domain/user-stats.entity';
+import { DEFAULT_PROFILE_IMAGE } from '../domain/user.business-rule';
 import { User } from '../domain/users.entity';
 import { UsersController } from './users.controller';
 
@@ -35,7 +36,7 @@ function createMockUser(overrides: Partial<User> = {}): User {
     createdAt: new Date(),
     updatedAt: new Date(),
     githubUrl: null,
-    profileImage: null,
+    profileImage: DEFAULT_PROFILE_IMAGE,
     tierId: null,
     tier: null,
     ...overrides,

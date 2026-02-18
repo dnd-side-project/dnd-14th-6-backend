@@ -1,5 +1,7 @@
 import { Tier } from '@tiers/domain/tiers.entity';
 
+import { DEFAULT_PROFILE_IMAGE } from './user.business-rule';
+
 export class User {
   constructor(
     public readonly id: bigint,
@@ -12,29 +14,12 @@ export class User {
     public readonly createdAt: Date,
     public readonly updatedAt: Date,
     public readonly githubUrl: string | null,
-    public readonly profileImage: string | null,
+    public readonly profileImage: string,
     public readonly tierId: number | null,
     public readonly tier: Tier | null,
   ) {}
 
-  static from(
-    data: Pick<
-      User,
-      | 'id'
-      | 'email'
-      | 'nickname'
-      | 'provider'
-      | 'providerId'
-      | 'totalScore'
-      | 'refreshToken'
-      | 'createdAt'
-      | 'updatedAt'
-      | 'githubUrl'
-      | 'profileImage'
-      | 'tierId'
-      | 'tier'
-    >,
-  ): User {
+  static from(data: Omit<User, 'profileImage'> & { profileImage: string | null }): User {
     return new User(
       data.id,
       data.email,
@@ -46,7 +31,7 @@ export class User {
       data.createdAt,
       data.updatedAt,
       data.githubUrl,
-      data.profileImage,
+      data.profileImage ?? DEFAULT_PROFILE_IMAGE,
       data.tierId,
       data.tier,
     );

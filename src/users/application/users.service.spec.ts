@@ -9,6 +9,7 @@ import {
 } from '@games/domain/user-mistake-analysis.entity';
 import { Tier } from '@tiers/domain/tiers.entity';
 
+import { DEFAULT_PROFILE_IMAGE } from '../domain/user.business-rule';
 import { User } from '../domain/users.entity';
 import {
   IUsersRepository,
@@ -40,7 +41,7 @@ function createMockUser(overrides: Partial<User> = {}): User {
     createdAt: new Date(),
     updatedAt: new Date(),
     githubUrl: null,
-    profileImage: null,
+    profileImage: DEFAULT_PROFILE_IMAGE,
     tierId: null,
     tier: null,
     ...overrides,
