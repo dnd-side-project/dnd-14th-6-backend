@@ -1,8 +1,26 @@
+import { BadRequestException } from '@nestjs/common';
 import { ApiProperty } from '@nestjs/swagger';
 
-import { plainToInstance } from 'class-transformer';
+import { plainToInstance, Transform } from 'class-transformer';
+import { IsNotEmpty } from 'class-validator';
 
 import { GameResultReport } from '../../domain/game-result-report.entity';
+
+export class GetGameResultReportParamDto {
+  @ApiProperty({
+    description: '게임 세션 ID',
+    example: '1',
+  })
+  @IsNotEmpty({ message: 'gameSessionId 는 필수값 입니다.' })
+  @Transform(({ value }) => {
+    try {
+      return BigInt(value as string);
+    } catch {
+      throw new BadRequestException('gameSessionId(이)가 유효한 숫자 형식의 문자열이 아닙니다.');
+    }
+  })
+  gameSessionId: bigint;
+}
 
 class InputDto {
   @ApiProperty({ description: '사용자 입력 답', example: 'git commit -m "init"' })
