@@ -6,4 +6,5 @@ export interface CreateGameSessionServiceRequestDto {
   difficultyMode: GameDifficultyMode;
   score: number;
   clientAnswers: ClientAnswer[];
+  userId?: bigint;
 }
