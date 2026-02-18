@@ -74,17 +74,17 @@ describe('GET /api/games/options (e2e)', () => {
         expect.objectContaining({
           id: 1,
           name: 'Git',
-          iconUrl: 'https://cdn.orvit.net/categories/git.png',
+          iconUrl: 'https://cdn.orvit.net/categories/git.webp',
         }),
         expect.objectContaining({
           id: 2,
           name: 'Linux',
-          iconUrl: 'https://cdn.orvit.net/categories/linux.png',
+          iconUrl: 'https://cdn.orvit.net/categories/linux.webp',
         }),
         expect.objectContaining({
           id: 3,
           name: 'Docker',
-          iconUrl: 'https://cdn.orvit.net/categories/docker.png',
+          iconUrl: 'https://cdn.orvit.net/categories/docker.webp',
         }),
       ]),
     );
