@@ -1,11 +1,10 @@
 import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 
+import { AuthenticatedUser } from '@auth/presentation/decorators/authenticated-user.decorator';
 import { CheckOwnership } from '@auth/presentation/decorators/check-ownership.decorator';
 import { JwtAuthGuard } from '@auth/presentation/guards/jwt-auth.guard';
 import { UserOwnershipGuard } from '@auth/presentation/guards/user-ownership.guard';
-
-import { AuthenticatedUser } from '@/auth/presentation/decorators/authenticated-user.decorator';
 
 import { UsersService } from '../application/users.service';
 import { ApiGetMyInfo } from './decorators/get-my-info.swagger.decorator';
