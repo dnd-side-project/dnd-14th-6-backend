@@ -27,7 +27,10 @@ import {
   GetGameHistoriesResponseDto,
 } from './dto/get-game-histories.dto';
 import { GetGameOptionsResponseDto } from './dto/get-game-options.dto';
-import { GetGameResultReportResponseDto } from './dto/get-game-result-report.dto';
+import {
+  GetGameResultReportParamDto,
+  GetGameResultReportResponseDto,
+} from './dto/get-game-result-report.dto';
 import { ClientAnswerDto, InputDto, SaveGameSessionRequestDto } from './dto/save-game-session.dto';
 import { GamesController } from './games.controller';
 
@@ -322,6 +325,10 @@ describe('GamesController', () => {
     });
   });
   describe('getGameResultReport', () => {
+    const createParamDto = (gameSessionId: bigint): GetGameResultReportParamDto => {
+      return Object.assign(new GetGameResultReportParamDto(), { gameSessionId });
+    };
+
     const createMockGameResultReport = (userId: bigint | null): GameResultReport => {
       const summary = GameResultSummary.from({
         sessionId: 7n,
@@ -354,10 +361,11 @@ describe('GamesController', () => {
       // FIXME: AuthGuard 이후 user_id를 매핑받아서 테스트
       describe('✅ 성공 케이스', () => {
         it('회원 게임 결과 리포트를 정상적으로 응답한다.', async () => {
+          const param = createParamDto(7n);
           const mockReport = createMockGameResultReport(1n);
           gameSessionService.getGameResultReport.mockResolvedValue(mockReport);
 
-          const result = await controller.getGameResultReport(7n);
+          const result = await controller.getGameResultReport(param);
 
           expect(result).toBeInstanceOf(GetGameResultReportResponseDto);
           expect(result.isGuest).toBe(false);
@@ -389,26 +397,26 @@ describe('GamesController', () => {
 
       describe('❌ 실패 케이스', () => {
         it('존재하지 않는 게임 세션 ID이면 NotFoundException을 던진다.', async () => {
+          const param = createParamDto(999n);
           gameSessionService.getGameResultReport.mockRejectedValue(
             new NotFoundException('존재하지 않는 게임 세션입니다.'),
           );
 
-          await expect(controller.getGameResultReport(999n)).rejects.toThrow(NotFoundException);
+          await expect(controller.getGameResultReport(param)).rejects.toThrow(NotFoundException);
         });
       });
     });
 
     describe('비회원용', () => {
-      // FIXME: 비회원용 테스트케이스 작성
       describe('✅ 성공 케이스', () => {
         it('비회원 게임 결과 리포트를 정상적으로 응답한다.', async () => {
+          const param = createParamDto(7n);
           const mockReport = createMockGameResultReport(null);
           gameSessionService.getGameResultReport.mockResolvedValue(mockReport);
 
-          const result = await controller.getGameResultReport(7n);
+          const result = await controller.getGameResultReport(param);
 
           expect(result).toBeInstanceOf(GetGameResultReportResponseDto);
-          // FIXME: 이후에 열람제한되는 데이터 확인하는 테스트코드추가
           expect(result.isGuest).toBe(true);
           expect(result.summary.userId).toBeNull();
           expect(gameSessionService.getGameResultReport).toHaveBeenCalledWith(7n);
@@ -417,11 +425,12 @@ describe('GamesController', () => {
 
       describe('❌ 실패 케이스', () => {
         it('존재하지 않는 게임 세션 ID이면 NotFoundException을 던진다.', async () => {
+          const param = createParamDto(999n);
           gameSessionService.getGameResultReport.mockRejectedValue(
             new NotFoundException('존재하지 않는 게임 세션입니다.'),
           );
 
-          await expect(controller.getGameResultReport(999n)).rejects.toThrow(NotFoundException);
+          await expect(controller.getGameResultReport(param)).rejects.toThrow(NotFoundException);
         });
       });
     });
