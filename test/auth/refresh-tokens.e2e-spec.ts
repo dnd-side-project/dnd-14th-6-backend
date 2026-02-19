@@ -17,6 +17,10 @@ interface RefreshTokensApiResponse {
   statusCode: number;
   success: boolean;
   message?: string;
+  data?: {
+    accessToken: string;
+    refreshToken: string;
+  };
 }
 
 describe('POST /api/auth/refresh (e2e)', () => {
@@ -82,7 +86,7 @@ describe('POST /api/auth/refresh (e2e)', () => {
     await container?.stop();
   });
 
-  it('유효한 refreshToken으로 요청하면 200과 함께 쿠키를 갱신한다', async () => {
+  it('유효한 refreshToken으로 요청하면 200과 함께 새 accessToken과 refreshToken을 반환한다', async () => {
     const response = await request(app.getHttpServer())
       .post('/api/auth/refresh')
       .send({ refreshToken: validRefreshToken })
@@ -91,18 +95,8 @@ describe('POST /api/auth/refresh (e2e)', () => {
     const body = response.body as RefreshTokensApiResponse;
     expect(body.statusCode).toBe(200);
     expect(body.success).toBe(true);
-
-    const setCookieValue = response.headers['set-cookie'];
-    const setCookieHeader = typeof setCookieValue === 'string' ? [setCookieValue] : setCookieValue;
-
-    const hasAccessTokenCookie = setCookieHeader?.some((cookie) =>
-      cookie.startsWith('accessToken='),
-    );
-    const hasRefreshTokenCookie = setCookieHeader?.some((cookie) =>
-      cookie.startsWith('refreshToken='),
-    );
-    expect(hasAccessTokenCookie).toBe(true);
-    expect(hasRefreshTokenCookie).toBe(true);
+    expect(typeof body.data?.accessToken).toBe('string');
+    expect(typeof body.data?.refreshToken).toBe('string');
   });
 
   it('DB에 저장된 토큰과 불일치하면 401을 반환한다', async () => {
