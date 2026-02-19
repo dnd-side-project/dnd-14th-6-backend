@@ -31,6 +31,7 @@ jobs:
           printf "GITHUB_CLIENT_ID=%s\n" "${{ secrets.CLIENT_ID_FOR_GITHUB }}" >> .env
           printf "GITHUB_CLIENT_SECRET=%s\n" "${{ secrets.CLIENT_SECRET_FOR_GITHUB }}" >> .env
           printf "JWT_TOKEN_SECRET=%s\n" "${{ secrets.JWT_TOKEN_SECRET }}" >> .env
+          printf "JWT_AUTH_CODE_SECRET=%s\n" "${{ secrets.JWT_AUTH_CODE_SECRET }}" >> .env
           printf "SERVER_URL=%s\n" "${{ secrets.SERVER_URL }}" >> .env
 
       - name: Install & Build
@@ -124,6 +125,7 @@ jobs:
             echo "GITHUB_CLIENT_ID=${{ secrets.CLIENT_ID_FOR_GITHUB }}" | sudo tee -a .env.dev > /dev/null
             echo "GITHUB_CLIENT_SECRET=${{ secrets.CLIENT_SECRET_FOR_GITHUB }}" | sudo tee -a .env.dev > /dev/null
             echo "JWT_TOKEN_SECRET=${{ secrets.JWT_TOKEN_SECRET }}" | sudo tee -a .env.dev > /dev/null
+            echo "JWT_AUTH_CODE_SECRET=${{ secrets.JWT_AUTH_CODE_SECRET }}" | sudo tee -a .env.dev > /dev/null
             echo "SERVER_URL=${{ secrets.SERVER_URL }}" | sudo tee -a .env.dev > /dev/null
             sudo ./deploy.sh
 
