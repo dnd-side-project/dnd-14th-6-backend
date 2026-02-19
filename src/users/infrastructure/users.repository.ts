@@ -127,6 +127,16 @@ export class UsersRepositoryImpl implements IUsersRepository {
    * @description 유저의 플레이한 난이도, 카테고리 별 그룹화하여 획득한 총 점수(SUM)와 카테고리 정보를 조회
    * FIXME: 해당 로직은 게임 모듈 내로 이동 후 facade pattern 을 사용하는 방향으로 리팩터링 필요
    */
+  /**
+   * @description 유저의 totalScore 업데이트
+   */
+  async updateTotalScore(userId: bigint, totalScore: bigint): Promise<void> {
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { totalScore },
+    });
+  }
+
   async getScoreDetailByUserId(userId: bigint): Promise<ScoreDetailOriginData[]> {
     const results = await this.prisma.$queryRaw<
       { difficulty_mode: string; category: string; total_score: bigint }[]
