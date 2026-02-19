@@ -86,6 +86,13 @@ export class GameSessionService {
   }
 
   /*
+   * @description userId에 해당하는 모든 게임 세션 점수의 합계 조회
+   */
+  async getTotalScoreByUserId(userId: bigint): Promise<bigint> {
+    return await this.gameRepository.getTotalScoreByUserId(userId);
+  }
+
+  /*
    * @description 게임 세션에 유저 ID 연동
    */
   async attachUserToSession(sessionId: bigint, userId: bigint): Promise<void> {
