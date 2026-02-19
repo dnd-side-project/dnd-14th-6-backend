@@ -3,8 +3,8 @@ import { Injectable } from '@nestjs/common';
 import { UsersService } from '@users/application/users.service';
 
 import {
-  CreateGameSessionFacadeRequestDto,
-  CreatGameSessionFacadeResponseDto,
+  SaveGameSessionFacadeRequestDto,
+  SaveGameSessionFacadeResponseDto,
 } from './facade-dto/create-game-session.service-dto';
 import { GameSessionService } from './game-session.service';
 import { GamesService } from './games.service';
@@ -21,8 +21,8 @@ export class GameFacade {
    * @description 게임 세션 저장
    */
   async saveGameSession(
-    facadeDto: CreateGameSessionFacadeRequestDto,
-  ): Promise<CreatGameSessionFacadeResponseDto> {
+    facadeDto: SaveGameSessionFacadeRequestDto,
+  ): Promise<SaveGameSessionFacadeResponseDto> {
     const gameSessionId = await this.gameSessionService.createGameSession({
       categoryId: facadeDto.categoryId,
       difficultyMode: facadeDto.difficultyMode,
