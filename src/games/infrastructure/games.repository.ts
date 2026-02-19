@@ -445,6 +445,18 @@ export class GameRepositoryImpl implements IGameRepository {
     return valid.map((item) => ({ input: item.input, isCorrect: item.isCorrect }));
   }
 
+  /**
+   * @description userId에 해당하는 모든 게임 세션 점수의 합계 조회
+   */
+  async getTotalScoreByUserId(userId: bigint): Promise<bigint> {
+    const result = await this.prisma.gameSession.aggregate({
+      where: { userId },
+      _sum: { score: true },
+    });
+
+    return BigInt(result._sum.score ?? 0);
+  }
+
   /*
    * @description 게임 세션에 유저 ID 업데이트
    */
