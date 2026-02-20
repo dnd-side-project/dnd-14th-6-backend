@@ -1,6 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 
 import { Prisma } from '@prisma/client';
+import { TransactionHost } from '@nestjs-cls/transactional';
+import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
 
 import { PrismaService } from '@/prisma/prisma.service';
 import { capitalize } from '@common/utils/string.util';
@@ -33,7 +35,10 @@ import { ProblemRawRow } from './types/problem-raw-row';
 export class GameRepositoryImpl implements IGameRepository {
   private readonly logger = new Logger(GameRepositoryImpl.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly txHost: TransactionHost<TransactionalAdapterPrisma>,
+  ) {}
 
   /**
    * @description 게임난이도 - Easy / Normal / Hard 선택시
@@ -69,11 +74,11 @@ export class GameRepositoryImpl implements IGameRepository {
       : Prisma.empty;
 
     const problems = await this.prisma.$queryRaw<ProblemRawRow[]>`
-      SELECT 
-        p.id, 
-        p.title, 
-        p.text, 
-        p.answer, 
+      SELECT
+        p.id,
+        p.title,
+        p.text,
+        p.answer,
         p.difficulty,
         sc.name as "subCategoryName"
       FROM problems p
@@ -135,36 +140,34 @@ export class GameRepositoryImpl implements IGameRepository {
 
   /**
    * @description 게임 세션과 세션 로그를 원자적으로 저장
+   * - @Transactional() 컨텍스트 내에서 호출 시 해당 트랜잭션에 참여
+   * - 독립 호출 시 txHost.tx가 일반 PrismaClient로 동작
    */
   async saveGameSession(data: SaveGameSessionEntity): Promise<bigint> {
-    const session = await this.prisma.$transaction(async (tx) => {
-      const gameSession = await tx.gameSession.create({
-        data: {
-          categoryId: data.categoryId,
-          difficultyMode: data.difficultyMode,
-          score: data.score,
-          userId: data.userId ?? null,
-          totalProblemCount: data.totalProblemCount,
-          correctProblemCount: data.correctProblemCount,
-        },
-      });
-
-      if (data.logs.length > 0) {
-        await tx.gameSessionLog.createMany({
-          data: data.logs.map((log) => ({
-            sessionId: gameSession.id,
-            problemId: log.problemId,
-            inputs: log.inputs.map(({ input, isCorrect }) => ({ input, isCorrect })),
-            isSolved: log.isSolved,
-            tryCount: log.tryCount,
-          })),
-        });
-      }
-
-      return gameSession;
+    const gameSession = await this.txHost.tx.gameSession.create({
+      data: {
+        categoryId: data.categoryId,
+        difficultyMode: data.difficultyMode,
+        score: data.score,
+        userId: data.userId ?? null,
+        totalProblemCount: data.totalProblemCount,
+        correctProblemCount: data.correctProblemCount,
+      },
     });
 
-    return session.id;
+    if (data.logs.length > 0) {
+      await this.txHost.tx.gameSessionLog.createMany({
+        data: data.logs.map((log) => ({
+          sessionId: gameSession.id,
+          problemId: log.problemId,
+          inputs: log.inputs.map(({ input, isCorrect }) => ({ input, isCorrect })),
+          isSolved: log.isSolved,
+          tryCount: log.tryCount,
+        })),
+      });
+    }
+
+    return gameSession.id;
   }
 
   /**
@@ -447,9 +450,10 @@ export class GameRepositoryImpl implements IGameRepository {
 
   /**
    * @description userId에 해당하는 모든 게임 세션 점수의 합계 조회
+   * - @Transactional() 컨텍스트 내에서 호출 시 해당 트랜잭션에 참여
    */
   async getTotalScoreByUserId(userId: bigint): Promise<bigint> {
-    const result = await this.prisma.gameSession.aggregate({
+    const result = await this.txHost.tx.gameSession.aggregate({
       where: { userId },
       _sum: { score: true },
     });
