@@ -7,6 +7,11 @@ import { GameSessionService } from './game-session.service';
 import { GameFacade } from './game.facade';
 import { GamesService } from './games.service';
 
+jest.mock('@nestjs-cls/transactional', () => ({
+  Transactional: () => (_target: unknown, _key: string, descriptor: PropertyDescriptor) =>
+    descriptor,
+}));
+
 describe('GameFacade', () => {
   let facade: GameFacade;
   let gameSessionService: jest.Mocked<
@@ -82,6 +87,41 @@ describe('GameFacade', () => {
 
         expect(gameSessionService.getTotalScoreByUserId).not.toHaveBeenCalled();
         expect(usersService.updateTotalScore).not.toHaveBeenCalled();
+      });
+    });
+
+    describe('❌ 실패 케이스 - 트랜잭션 원자성 (에러 전파로 @Transactional 롤백 유도)', () => {
+      const userId = 1n;
+
+      it('createGameSession 실패 시 게임 세션이 저장되지 않고, totalScore 갱신도 수행되지 않는다.', async () => {
+        gameSessionService.createGameSession.mockRejectedValue(new Error('게임 세션 저장 실패'));
+
+        await expect(facade.saveGameSession({ ...baseDto, userId })).rejects.toThrow(
+          '게임 세션 저장 실패',
+        );
+
+        // 게임 세션 저장 자체가 실패했으므로 후속 작업이 실행되지 않아야 한다
+        expect(gameSessionService.getTotalScoreByUserId).not.toHaveBeenCalled();
+        expect(usersService.updateTotalScore).not.toHaveBeenCalled();
+      });
+
+      it('updateTotalScore 실패 시 에러가 전파되어 게임 세션 저장도 롤백되고, user의 totalScore는 변경되지 않는다.', async () => {
+        const previousTotalScore = 100n;
+
+        gameSessionService.createGameSession.mockResolvedValue(100n);
+        gameSessionService.getTotalScoreByUserId.mockResolvedValue(previousTotalScore);
+        usersService.updateTotalScore.mockRejectedValue(new Error('총 점수 업데이트 실패'));
+
+        await expect(facade.saveGameSession({ ...baseDto, userId })).rejects.toThrow(
+          '총 점수 업데이트 실패',
+        );
+
+        // 에러가 전파되어 @Transactional에 의해 트랜잭션 전체가 롤백된다
+        // → createGameSession으로 저장된 게임 세션도 롤백
+        // → updateTotalScore가 실패했으므로 user.totalScore는 이전 값(previousTotalScore) 그대로 유지
+        expect(gameSessionService.createGameSession).toHaveBeenCalled();
+        expect(gameSessionService.getTotalScoreByUserId).toHaveBeenCalledWith(userId);
+        expect(usersService.updateTotalScore).toHaveBeenCalledWith(userId, previousTotalScore);
       });
     });
   });
