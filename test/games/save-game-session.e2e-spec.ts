@@ -1,6 +1,7 @@
 import { execSync } from 'child_process';
 import { INestApplication } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
+import { JwtService } from '@nestjs/jwt';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { PrismaClient } from '@prisma/client';
@@ -14,6 +15,7 @@ import { MAX_PROBLEMS_PER_GAME } from '@games/domain/game.business-rules';
 import { seedCategories } from '../../prisma/seeds/category.seed';
 import { seedGitProblems } from '../../prisma/seeds/seed-problems-git';
 import { seedSubCategories } from '../../prisma/seeds/subcategory.seed';
+import { seedTiers } from '../../prisma/seeds/tier.seed';
 import { AppModule } from '../../src/app.module';
 
 interface SuccessResponse {
@@ -21,6 +23,7 @@ interface SuccessResponse {
   success: boolean;
   data: {
     gameSessionId: string;
+    totalScore?: string;
   };
 }
 
@@ -33,6 +36,7 @@ interface ErrorResponse {
 describe('POST /api/games/save (e2e)', () => {
   let app: INestApplication<App>;
   let container: StartedTestContainer;
+  let accessToken: string;
 
   beforeAll(async () => {
     container = await new GenericContainer('postgres:16-alpine')
@@ -52,9 +56,22 @@ describe('POST /api/games/save (e2e)', () => {
     });
 
     const prisma = new PrismaClient({ datasourceUrl: databaseUrl });
+    await seedTiers(prisma);
     await seedCategories(prisma);
     await seedSubCategories(prisma);
     await seedGitProblems(prisma);
+
+    await prisma.user.create({
+      data: {
+        email: 'test@example.com',
+        nickname: 'tester',
+        provider: 'google',
+        providerId: 'test-provider-id',
+        refreshToken: 'dummy-refresh-token',
+        tierId: 1,
+      },
+    });
+
     await prisma.$disconnect();
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -65,6 +82,9 @@ describe('POST /api/games/save (e2e)', () => {
     app.setGlobalPrefix('api');
     app.useGlobalInterceptors(new ResponseInterceptor(app.get(Reflector)));
     await app.init();
+
+    const jwtService = app.get(JwtService);
+    accessToken = jwtService.sign({ sub: '1' });
   }, 60000);
 
   afterAll(async () => {
@@ -73,108 +93,206 @@ describe('POST /api/games/save (e2e)', () => {
   });
 
   describe('✅ 성공 케이스', () => {
-    it('모든 문제를 풀지 못해 0점인 게임 세션을 저장한다.', async () => {
-      const response = await request(app.getHttpServer())
-        .post('/api/games/save')
-        .send({
-          categoryId: 1,
-          difficultyMode: 'Easy',
-          score: 0,
-          clientAnswers: [
-            { problemId: '103', inputs: [], solved: false },
-            { problemId: '136', inputs: [], solved: false },
-            { problemId: '207', inputs: [], solved: false },
-            { problemId: '273', inputs: [], solved: false },
-            { problemId: '143', inputs: [], solved: false },
-            { problemId: '40', inputs: [], solved: false },
-            { problemId: '176', inputs: [], solved: false },
-            { problemId: '109', inputs: [], solved: false },
-            { problemId: '41', inputs: [], solved: false },
-            { problemId: '265', inputs: [], solved: false },
-            { problemId: '275', inputs: [], solved: false },
-            { problemId: '11', inputs: [], solved: false },
-            { problemId: '168', inputs: [], solved: false },
-            { problemId: '9', inputs: [], solved: false },
-            { problemId: '142', inputs: [], solved: false },
-            { problemId: '242', inputs: [], solved: false },
-            { problemId: '110', inputs: [], solved: false },
-            { problemId: '201', inputs: [], solved: false },
-            { problemId: '42', inputs: [], solved: false },
-            { problemId: '43', inputs: [], solved: false },
-          ],
-        })
-        .expect(201);
+    describe('비회원', () => {
+      it('모든 문제를 풀지 못해 0점인 게임 세션을 저장한다.', async () => {
+        const response = await request(app.getHttpServer())
+          .post('/api/games/save')
+          .send({
+            categoryId: 1,
+            difficultyMode: 'Easy',
+            score: 0,
+            clientAnswers: [
+              { problemId: '103', inputs: [], solved: false },
+              { problemId: '136', inputs: [], solved: false },
+              { problemId: '207', inputs: [], solved: false },
+              { problemId: '273', inputs: [], solved: false },
+              { problemId: '143', inputs: [], solved: false },
+              { problemId: '40', inputs: [], solved: false },
+              { problemId: '176', inputs: [], solved: false },
+              { problemId: '109', inputs: [], solved: false },
+              { problemId: '41', inputs: [], solved: false },
+              { problemId: '265', inputs: [], solved: false },
+              { problemId: '275', inputs: [], solved: false },
+              { problemId: '11', inputs: [], solved: false },
+              { problemId: '168', inputs: [], solved: false },
+              { problemId: '9', inputs: [], solved: false },
+              { problemId: '142', inputs: [], solved: false },
+              { problemId: '242', inputs: [], solved: false },
+              { problemId: '110', inputs: [], solved: false },
+              { problemId: '201', inputs: [], solved: false },
+              { problemId: '42', inputs: [], solved: false },
+              { problemId: '43', inputs: [], solved: false },
+            ],
+          })
+          .expect(201);
 
-      const body = response.body as SuccessResponse;
-      expect(body.success).toBe(true);
-      expect(body.data.gameSessionId).toBeDefined();
+        const body = response.body as SuccessResponse;
+        expect(body.success).toBe(true);
+        expect(body.data.gameSessionId).toBeDefined();
+      });
+
+      it('일부 문제를 맞춘 게임 세션을 저장한다.', async () => {
+        const response = await request(app.getHttpServer())
+          .post('/api/games/save')
+          .send({
+            categoryId: 1,
+            difficultyMode: 'Easy',
+            score: 30,
+            clientAnswers: [
+              {
+                problemId: '73',
+                inputs: [
+                  { input: 'git branch', isCorrect: false },
+                  { input: 'git remote', isCorrect: true },
+                ],
+                solved: true,
+              },
+              {
+                problemId: '103',
+                inputs: [
+                  { input: 'git revert', isCorrect: false },
+                  { input: 'git rolback', isCorrect: false },
+                ],
+                solved: false,
+              },
+              {
+                problemId: '265',
+                inputs: [{ input: 'git tag', isCorrect: true }],
+                solved: true,
+              },
+              {
+                problemId: '134',
+                inputs: [{ input: 'git config --email "john@example.com"', isCorrect: false }],
+                solved: false,
+              },
+              { problemId: '40', inputs: [], solved: false },
+              {
+                problemId: '34',
+                inputs: [{ input: 'git branch', isCorrect: true }],
+                solved: true,
+              },
+              { problemId: '4', inputs: [], solved: false },
+              { problemId: '174', inputs: [], solved: false },
+              { problemId: '306', inputs: [], solved: false },
+              { problemId: '200', inputs: [], solved: false },
+              {
+                problemId: '237',
+                inputs: [{ input: 'git stasy', isCorrect: false }],
+                solved: false,
+              },
+              { problemId: '69', inputs: [], solved: false },
+              { problemId: '11', inputs: [], solved: false },
+              { problemId: '10', inputs: [], solved: false },
+              { problemId: '6', inputs: [], solved: false },
+              { problemId: '307', inputs: [], solved: false },
+              { problemId: '7', inputs: [], solved: false },
+              { problemId: '109', inputs: [], solved: false },
+              { problemId: '241', inputs: [], solved: false },
+              { problemId: '43', inputs: [], solved: false },
+            ],
+          })
+          .expect(201);
+
+        const body = response.body as SuccessResponse;
+        expect(body.success).toBe(true);
+        expect(body.data.gameSessionId).toBeDefined();
+      });
     });
+    describe('회원', () => {
+      it('모든 문제를 풀지 못해 0점인 게임 세션을 저장하고 totalScore를 응답한다.', async () => {
+        const response = await request(app.getHttpServer())
+          .post('/api/games/save')
+          .set('Authorization', `Bearer ${accessToken}`)
+          .send({
+            categoryId: 1,
+            difficultyMode: 'Easy',
+            score: 0,
+            clientAnswers: [
+              { problemId: '2', inputs: [], solved: false },
+              { problemId: '3', inputs: [], solved: false },
+              { problemId: '4', inputs: [], solved: false },
+              { problemId: '5', inputs: [], solved: false },
+              { problemId: '6', inputs: [], solved: false },
+              { problemId: '7', inputs: [], solved: false },
+              { problemId: '8', inputs: [], solved: false },
+              { problemId: '13', inputs: [], solved: false },
+              { problemId: '14', inputs: [], solved: false },
+              { problemId: '15', inputs: [], solved: false },
+              { problemId: '35', inputs: [], solved: false },
+              { problemId: '36', inputs: [], solved: false },
+              { problemId: '37', inputs: [], solved: false },
+              { problemId: '38', inputs: [], solved: false },
+              { problemId: '67', inputs: [], solved: false },
+              { problemId: '68', inputs: [], solved: false },
+              { problemId: '69', inputs: [], solved: false },
+              { problemId: '100', inputs: [], solved: false },
+              { problemId: '101', inputs: [], solved: false },
+              { problemId: '102', inputs: [], solved: false },
+            ],
+          })
+          .expect(201);
 
-    it('일부 문제를 맞춘 게임 세션을 저장한다.', async () => {
-      const response = await request(app.getHttpServer())
-        .post('/api/games/save')
-        .send({
-          categoryId: 1,
-          difficultyMode: 'Easy',
-          score: 30,
-          clientAnswers: [
-            {
-              problemId: '73',
-              inputs: [
-                { input: 'git branch', isCorrect: false },
-                { input: 'git remote', isCorrect: true },
-              ],
-              solved: true,
-            },
-            {
-              problemId: '103',
-              inputs: [
-                { input: 'git revert', isCorrect: false },
-                { input: 'git rolback', isCorrect: false },
-              ],
-              solved: false,
-            },
-            {
-              problemId: '265',
-              inputs: [{ input: 'git tag', isCorrect: true }],
-              solved: true,
-            },
-            {
-              problemId: '134',
-              inputs: [{ input: 'git config --email "john@example.com"', isCorrect: false }],
-              solved: false,
-            },
-            { problemId: '40', inputs: [], solved: false },
-            {
-              problemId: '34',
-              inputs: [{ input: 'git branch', isCorrect: true }],
-              solved: true,
-            },
-            { problemId: '4', inputs: [], solved: false },
-            { problemId: '174', inputs: [], solved: false },
-            { problemId: '306', inputs: [], solved: false },
-            { problemId: '200', inputs: [], solved: false },
-            {
-              problemId: '237',
-              inputs: [{ input: 'git stasy', isCorrect: false }],
-              solved: false,
-            },
-            { problemId: '69', inputs: [], solved: false },
-            { problemId: '11', inputs: [], solved: false },
-            { problemId: '10', inputs: [], solved: false },
-            { problemId: '6', inputs: [], solved: false },
-            { problemId: '307', inputs: [], solved: false },
-            { problemId: '7', inputs: [], solved: false },
-            { problemId: '109', inputs: [], solved: false },
-            { problemId: '241', inputs: [], solved: false },
-            { problemId: '43', inputs: [], solved: false },
-          ],
-        })
-        .expect(201);
+        const body = response.body as SuccessResponse;
+        expect(body.success).toBe(true);
+        expect(body.data.gameSessionId).toBeDefined();
+        expect(body.data.totalScore).toBe('0');
+      });
 
-      const body = response.body as SuccessResponse;
-      expect(body.success).toBe(true);
-      expect(body.data.gameSessionId).toBeDefined();
+      it('일부 문제를 맞춘 게임 세션을 저장하고 누적된 totalScore를 응답한다.', async () => {
+        // 맞춘 문제: ID 1(Easy=10점), ID 12(Normal=30점), ID 23(Hard=50점) → 서버 계산 점수 90점
+        const response = await request(app.getHttpServer())
+          .post('/api/games/save')
+          .set('Authorization', `Bearer ${accessToken}`)
+          .send({
+            categoryId: 1,
+            difficultyMode: 'Random',
+            score: 90,
+            clientAnswers: [
+              {
+                problemId: '1',
+                inputs: [{ input: 'git init', isCorrect: true }],
+                solved: true,
+              },
+              {
+                problemId: '12',
+                inputs: [
+                  { input: 'git commit', isCorrect: false },
+                  { input: 'git commit --amend', isCorrect: true },
+                ],
+                solved: true,
+              },
+              {
+                problemId: '23',
+                inputs: [{ input: 'git rebase -i HEAD~3', isCorrect: true }],
+                solved: true,
+              },
+              { problemId: '34', inputs: [], solved: false },
+              { problemId: '45', inputs: [], solved: false },
+              { problemId: '56', inputs: [], solved: false },
+              { problemId: '70', inputs: [], solved: false },
+              { problemId: '71', inputs: [], solved: false },
+              { problemId: '72', inputs: [], solved: false },
+              { problemId: '73', inputs: [], solved: false },
+              { problemId: '74', inputs: [], solved: false },
+              { problemId: '75', inputs: [], solved: false },
+              { problemId: '76', inputs: [], solved: false },
+              { problemId: '133', inputs: [], solved: false },
+              { problemId: '134', inputs: [], solved: false },
+              { problemId: '166', inputs: [], solved: false },
+              { problemId: '199', inputs: [], solved: false },
+              { problemId: '232', inputs: [], solved: false },
+              { problemId: '265', inputs: [], solved: false },
+              { problemId: '298', inputs: [], solved: false },
+            ],
+          })
+          .expect(201);
+
+        const body = response.body as SuccessResponse;
+        expect(body.success).toBe(true);
+        expect(body.data.gameSessionId).toBeDefined();
+        // 이전 게임(0점) + 현재 게임(90점) = 총 90점
+        expect(body.data.totalScore).toBe('90');
+      });
     });
   });
 
