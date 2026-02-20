@@ -1,5 +1,11 @@
 import { applyDecorators } from '@nestjs/common';
-import { ApiBody, ApiCreatedResponse, ApiOperation, getSchemaPath } from '@nestjs/swagger';
+import {
+  ApiBody,
+  ApiCreatedResponse,
+  ApiExtraModels,
+  ApiOperation,
+  getSchemaPath,
+} from '@nestjs/swagger';
 
 import { ApiResponseDto } from '@common/dto/api-response.dto';
 import {
@@ -16,6 +22,7 @@ import {
 
 export function ApiSaveGameSession() {
   return applyDecorators(
+    ApiExtraModels(ApiResponseDto, SaveGameSessionResponseDto),
     ApiOperation({
       summary: '게임 세션 저장 ( 회원 / 비회원 공용 )',
       description:
