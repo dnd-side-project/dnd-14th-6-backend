@@ -1,5 +1,8 @@
 import { Injectable } from '@nestjs/common';
 
+import { TransactionHost } from '@nestjs-cls/transactional';
+import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
+
 import { PrismaService } from '@/prisma/prisma.service';
 
 import { User } from '../domain/users.entity';
@@ -7,7 +10,10 @@ import { IUsersRepository, ScoreDetailOriginData } from '../domain/users.reposit
 
 @Injectable()
 export class UsersRepositoryImpl implements IUsersRepository {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly txHost: TransactionHost<TransactionalAdapterPrisma>,
+  ) {}
 
   async findAllOrderByScoreDesc(page: number, size: number, tierId?: number): Promise<User[]> {
     const users = await this.prisma.user.findMany({
@@ -127,7 +133,6 @@ export class UsersRepositoryImpl implements IUsersRepository {
    * @description 유저의 플레이한 난이도, 카테고리 별 그룹화하여 획득한 총 점수(SUM)와 카테고리 정보를 조회
    * FIXME: 해당 로직은 게임 모듈 내로 이동 후 facade pattern 을 사용하는 방향으로 리팩터링 필요
    */
-
   async getScoreDetailByUserId(userId: bigint): Promise<ScoreDetailOriginData[]> {
     const results = await this.prisma.$queryRaw<
       { difficulty_mode: string; category: string; total_score: bigint }[]
@@ -152,9 +157,10 @@ export class UsersRepositoryImpl implements IUsersRepository {
 
   /*
    * @description 유저의 totalScore 업데이트
+   * - @Transactional() 컨텍스트 내에서 호출 시 해당 트랜잭션에 참여
    */
   async updateTotalScore(userId: bigint, totalScore: bigint): Promise<void> {
-    await this.prisma.user.update({
+    await this.txHost.tx.user.update({
       where: { id: userId },
       data: { totalScore },
     });
