@@ -7,12 +7,10 @@ import {
   SaveGameSessionFacadeResponseDto,
 } from './facade-dto/create-game-session.service-dto';
 import { GameSessionService } from './game-session.service';
-import { GamesService } from './games.service';
 
 @Injectable()
 export class GameFacade {
   constructor(
-    private readonly gameService: GamesService,
     private readonly gameSessionService: GameSessionService,
     private readonly userService: UsersService,
   ) {}
