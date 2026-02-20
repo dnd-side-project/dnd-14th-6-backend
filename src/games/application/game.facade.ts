@@ -1,5 +1,7 @@
 import { Injectable } from '@nestjs/common';
 
+import { Transactional } from '@nestjs-cls/transactional';
+
 import { UsersService } from '@users/application/users.service';
 
 import {
@@ -18,6 +20,7 @@ export class GameFacade {
   /*
    * @description 게임 세션 저장
    */
+  @Transactional()
   async saveGameSession(
     facadeDto: SaveGameSessionFacadeRequestDto,
   ): Promise<SaveGameSessionFacadeResponseDto> {
