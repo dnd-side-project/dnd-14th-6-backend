@@ -13,6 +13,5 @@ export interface ProcessSocialLoginFacadeRequestDto {
 }
 
 export interface ProcessSocialLoginFacadeResponseDto {
-  accessToken: string;
-  refreshToken: string;
+  userId: bigint;
 }

@@ -20,6 +20,24 @@ export class AuthFacade {
   ) {}
 
   /**
+   * @description 토큰 발급 인증용 임시 코드 발급
+   */
+  generateTemporalAuthorizationCode(userId: bigint): string {
+    return this.authService.createTemporalAuthorizationCode(userId);
+  }
+
+  /**
+   * @description 인증용 임시 코드 검증 후 access, refresh token 발급
+   */
+  async exchangeAuthorizationCode(
+    code: string,
+  ): Promise<{ accessToken: string; refreshToken: string }> {
+    const userId = this.authService.verifyAuthorizationCode(code);
+
+    return this.loginExistingUser(userId);
+  }
+
+  /**
    * @description 유효한 refreshToken인지 검증
    */
   async verifyRefreshToken(userId: bigint, refreshToken: string): Promise<void> {
@@ -31,7 +49,9 @@ export class AuthFacade {
   /**
    * @description 기존 유저 로그인 플로우를 통한 토큰 갱신
    */
-  async processRefreshTokens(userId: bigint): Promise<ProcessSocialLoginFacadeResponseDto> {
+  async processRefreshTokens(
+    userId: bigint,
+  ): Promise<{ accessToken: string; refreshToken: string }> {
     return this.loginExistingUser(userId);
   }
 
@@ -44,7 +64,7 @@ export class AuthFacade {
     const existingUser = await this.usersService.findByEmail(loginData.socialUser.email);
 
     if (existingUser) {
-      return this.loginExistingUser(existingUser.id);
+      return { userId: existingUser.id };
     }
 
     return this.registerNewSocialUser(loginData);
@@ -57,7 +77,12 @@ export class AuthFacade {
     return this.usersService.isExistUser(userId);
   }
 
-  private async loginExistingUser(userId: bigint): Promise<ProcessSocialLoginFacadeResponseDto> {
+  /**
+   * @description 기존 유저 로그인 처리 (신규 토큰 발급 및 업데이트)
+   */
+  private async loginExistingUser(
+    userId: bigint,
+  ): Promise<{ accessToken: string; refreshToken: string }> {
     const tokens = this.authService.issueTokens(userId);
 
     await this.usersService.updateRefreshToken(userId, tokens.refreshToken);
@@ -88,12 +113,7 @@ export class AuthFacade {
 
     await this.attachGameSessionIfExists(loginData.gameSessionId, createdUser.id);
 
-    const tokens = this.authService.issueTokens(createdUser.id);
-    await this.usersService.updateRefreshToken(createdUser.id, tokens.refreshToken);
-
-    return {
-      ...tokens,
-    };
+    return { userId: createdUser.id };
   }
 
   /**

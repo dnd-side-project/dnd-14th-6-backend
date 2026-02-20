@@ -1,16 +1,29 @@
-import { Controller, Get, Logger, Post, Req, Res, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  HttpCode,
+  Logger,
+  Post,
+  Query,
+  Req,
+  Res,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 
-import { Request, Response } from 'express';
+import { Response } from 'express';
 
 import { AuthFacade } from '../application/auth.facade';
 import { SocialLoginProvider } from '../domain/auth.business-rule';
 import { AuthenticatedUser } from './decorators/authenticated-user.decorator';
+import { ApiGetTokens } from './decorators/get-tokens-swagger.decorator';
 import { ApiGithubLoginCallback } from './decorators/github-login-callback-swagger.decorator';
 import { ApiGoogleLoginCallback } from './decorators/google-login-callback-swagger.decorator';
 import { ApiLoginByGithub } from './decorators/login-by-github-swagger.decorator';
 import { ApiLoginByGoogle } from './decorators/login-by-google-swagger.decorator';
 import { ApiRefreshTokens } from './decorators/refresh-tokens-swagger.decorator';
+import { GetTokensQueryDto, GetTokensResponseDto } from './dto/get-tokens.dto';
+import { RefreshTokensResponseDto } from './dto/refresh-tokens.dto';
 import { GithubAuthGuard } from './guards/github-auth.guard';
 import { GoogleAuthGuard } from './guards/google-auth.guard';
 import { JwtRefreshAuthGuard } from './guards/jwt-refresh-auth.guard';
@@ -49,20 +62,30 @@ export class AuthController {
   }
 
   @Post('refresh')
+  @HttpCode(200)
   @UseGuards(JwtRefreshAuthGuard)
   @ApiRefreshTokens()
   async refreshTokens(
-    @Req() req: Request,
-    @Res() res: Response,
     @AuthenticatedUser() user: { userId: bigint },
-  ): Promise<void> {
-    const { accessToken, refreshToken } = await this.authFacade.processRefreshTokens(user.userId);
+  ): Promise<RefreshTokensResponseDto> {
+    const tokens = await this.authFacade.processRefreshTokens(user.userId);
 
-    this.setAuthCookies(res, accessToken, refreshToken);
-
-    res.status(200).json({ statusCode: 200, success: true });
+    return RefreshTokensResponseDto.from(tokens);
   }
 
+  @Get('token')
+  @ApiGetTokens()
+  async getTokens(@Query() query: GetTokensQueryDto): Promise<GetTokensResponseDto> {
+    const tokens = await this.authFacade.exchangeAuthorizationCode(query.code);
+
+    return GetTokensResponseDto.from(tokens);
+  }
+
+  /**
+   * @description oauth callback 처리 핸들러
+   * - 실제 유저 로그인, 회원 가입 진행
+   * - 토큰 발급을 위한 임시 인증 코드 생성 후 redirect 처리
+   */
   private async handleOAuthCallback(
     req: OAuthCallbackRequest,
     res: Response,
@@ -71,21 +94,25 @@ export class AuthController {
     try {
       const { redirectUrl, gameSessionId } = this.parseOAuthCallbackState(req.query.state);
 
-      const { accessToken, refreshToken } = await this.authFacade.processSocialLogin({
+      const { userId } = await this.authFacade.processSocialLogin({
         provider,
         socialUser: req.user,
         gameSessionId,
       });
 
-      this.setAuthCookies(res, accessToken, refreshToken);
+      const code = this.authFacade.generateTemporalAuthorizationCode(userId);
+      const redirectUrlWithCode = this.buildRedirectUrlWithCode(redirectUrl, code);
 
-      res.redirect(redirectUrl);
+      res.redirect(redirectUrlWithCode);
     } catch {
       this.logger.warn(`[${provider}] 로그인 처리 실패, 기본 경로로 리다이렉트`);
       res.redirect('/');
     }
   }
 
+  /**
+   * @description OAuth callback state 객체 decode
+   */
   private parseOAuthCallbackState(stateEncoded?: string): {
     redirectUrl: string;
     gameSessionId: bigint | undefined;
@@ -111,38 +138,19 @@ export class AuthController {
     };
   }
 
-  private setAuthCookies(res: Response, accessToken: string, refreshToken: string): void {
-    const isProd = process.env.NODE_ENV === 'production';
+  /**
+   * @description 로그인 redirectUrl에 code 쿼리 스트링 연결
+   */
+  private buildRedirectUrlWithCode(redirectUrl: string, code: string): string {
+    try {
+      const url = new URL(redirectUrl);
+      url.searchParams.set('code', code);
 
-    this.setRefreshTokenCookie(res, refreshToken, isProd);
-    this.setAccessTokenCookie(res, accessToken, isProd);
-  }
+      return url.toString();
+    } catch {
+      const separator = redirectUrl.includes('?') ? '&' : '?';
 
-  private setRefreshTokenCookie(res: Response, refreshToken: string, isProd: boolean): void {
-    if (!refreshToken) {
-      return;
+      return `${redirectUrl}${separator}code=${code}`;
     }
-
-    res.cookie('refreshToken', refreshToken, {
-      httpOnly: true,
-      secure: isProd,
-      sameSite: 'lax',
-      path: '/',
-      maxAge: 14 * 24 * 60 * 60 * 1000,
-    });
-  }
-
-  private setAccessTokenCookie(res: Response, accessToken: string, isProd: boolean): void {
-    if (!accessToken) {
-      return;
-    }
-
-    res.cookie('accessToken', accessToken, {
-      httpOnly: false,
-      secure: isProd,
-      sameSite: 'lax',
-      path: '/',
-      maxAge: 1 * 60 * 60 * 1000,
-    });
   }
 }
