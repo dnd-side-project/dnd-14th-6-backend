@@ -293,6 +293,89 @@ describe('POST /api/games/save (e2e)', () => {
         // 이전 게임(0점) + 현재 게임(90점) = 총 90점
         expect(body.data.totalScore).toBe('90');
       });
+
+      it('첫 게임 플레이 후 DB의 user.totalScore가 게임 점수로 업데이트된다.', async () => {
+        const dbUrl = `postgresql://test:test@${container.getHost()}:${container.getMappedPort(5432)}/test`;
+        const prisma = new PrismaClient({ datasourceUrl: dbUrl });
+
+        try {
+          // 테스트 전용 유저 생성 (초기 totalScore = 0)
+          const user = await prisma.user.create({
+            data: {
+              email: 'score-update-test@example.com',
+              nickname: 'score-tester',
+              provider: 'google',
+              providerId: 'score-update-test',
+              refreshToken: 'dummy-refresh-token',
+              tierId: 1,
+            },
+          });
+          expect(user.totalScore).toBe(0n);
+
+          const jwtService = app.get(JwtService);
+          const token = jwtService.sign({ sub: String(user.id) });
+
+          // 맞춘 문제: ID 1(Easy=10점), ID 12(Normal=30점), ID 23(Hard=50점) → 서버 계산 점수 90점
+          const response = await request(app.getHttpServer())
+            .post('/api/games/save')
+            .set('Authorization', `Bearer ${token}`)
+            .send({
+              categoryId: 1,
+              difficultyMode: 'Random',
+              score: 90,
+              clientAnswers: [
+                {
+                  problemId: '1',
+                  inputs: [{ input: 'git init', isCorrect: true }],
+                  solved: true,
+                },
+                {
+                  problemId: '12',
+                  inputs: [
+                    { input: 'git commit', isCorrect: false },
+                    { input: 'git commit --amend', isCorrect: true },
+                  ],
+                  solved: true,
+                },
+                {
+                  problemId: '23',
+                  inputs: [{ input: 'git rebase -i HEAD~3', isCorrect: true }],
+                  solved: true,
+                },
+                { problemId: '34', inputs: [], solved: false },
+                { problemId: '45', inputs: [], solved: false },
+                { problemId: '56', inputs: [], solved: false },
+                { problemId: '70', inputs: [], solved: false },
+                { problemId: '71', inputs: [], solved: false },
+                { problemId: '72', inputs: [], solved: false },
+                { problemId: '73', inputs: [], solved: false },
+                { problemId: '74', inputs: [], solved: false },
+                { problemId: '75', inputs: [], solved: false },
+                { problemId: '76', inputs: [], solved: false },
+                { problemId: '133', inputs: [], solved: false },
+                { problemId: '134', inputs: [], solved: false },
+                { problemId: '166', inputs: [], solved: false },
+                { problemId: '199', inputs: [], solved: false },
+                { problemId: '232', inputs: [], solved: false },
+                { problemId: '265', inputs: [], solved: false },
+                { problemId: '298', inputs: [], solved: false },
+              ],
+            })
+            .expect(201);
+
+          const body = response.body as SuccessResponse;
+          expect(body.success).toBe(true);
+          expect(body.data.totalScore).toBe('90');
+
+          // DB에서 직접 조회하여 user.totalScore가 실제로 업데이트되었는지 확인
+          const updatedUser = await prisma.user.findUnique({
+            where: { id: user.id },
+          });
+          expect(updatedUser!.totalScore).toBe(90n);
+        } finally {
+          await prisma.$disconnect();
+        }
+      });
     });
   });
 
