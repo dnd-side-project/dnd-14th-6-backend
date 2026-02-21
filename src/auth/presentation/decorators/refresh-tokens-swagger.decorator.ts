@@ -1,10 +1,19 @@
 import { applyDecorators } from '@nestjs/common';
-import { ApiBody, ApiOkResponse, ApiOperation } from '@nestjs/swagger';
+import {
+  ApiBody,
+  ApiExtraModels,
+  ApiOkResponse,
+  ApiOperation,
+  getSchemaPath,
+} from '@nestjs/swagger';
 
+import { ApiResponseDto } from '@common/dto/api-response.dto';
 import {
   createSwaggerServerErrors,
   createSwaggerUnauthorized,
 } from '@common/utils/swagger-error-response.util';
+
+import { RefreshTokensResponseDto } from '../dto/refresh-tokens.dto';
 
 export function ApiRefreshTokens() {
   return applyDecorators(
@@ -23,19 +32,14 @@ export function ApiRefreshTokens() {
         required: ['refreshToken'],
       },
     }),
+    ApiExtraModels(ApiResponseDto, RefreshTokensResponseDto),
     ApiOkResponse({
       description: '리프레시 토큰 갱신 성공',
-      headers: {
-        'Set-Cookie': {
-          description: 'accessToken, refreshToken이 Set-Cookie 헤더로 내려감',
-        },
-      },
-      content: {
-        'application/json': {
-          example: {
-            statusCode: 200,
-            success: true,
-          },
+      schema: {
+        type: 'object',
+        $ref: getSchemaPath(ApiResponseDto),
+        properties: {
+          data: { $ref: getSchemaPath(RefreshTokensResponseDto) },
         },
       },
     }),

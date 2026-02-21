@@ -5,6 +5,7 @@ import { GameSessionService } from '@games/application/game-session.service';
 import { TiersService } from '@tiers/application/tiers.service';
 import { Tier } from '@tiers/domain/tiers.entity';
 import { UsersService } from '@users/application/users.service';
+import { DEFAULT_PROFILE_IMAGE } from '@users/domain/user.business-rule';
 import { User } from '@users/domain/users.entity';
 
 import { AuthFacade } from './auth.facade';
@@ -22,7 +23,7 @@ function createMockUser(overrides: Partial<User> = {}): User {
     createdAt: new Date(),
     updatedAt: new Date(),
     githubUrl: null,
-    profileImage: null,
+    profileImage: DEFAULT_PROFILE_IMAGE,
     tierId: null,
     tier: null,
     ...overrides,
@@ -53,6 +54,8 @@ describe('AuthFacade', () => {
           useValue: {
             issueTokens: jest.fn(),
             verifyRefreshTokenWithSavedToken: jest.fn(),
+            createTemporalAuthorizationCode: jest.fn(),
+            verifyAuthorizationCode: jest.fn(),
           },
         },
         {
@@ -88,104 +91,87 @@ describe('AuthFacade', () => {
     tiersService.getLowestTier.mockResolvedValue(lowestTier);
   });
 
-  it('기존 유저면 refreshToken을 갱신하고 토큰을 반환한다', async () => {
-    const existingUser = createMockUser({ id: 10n, email: 'hello@test.com' });
-    usersService.findByEmail.mockResolvedValue(existingUser);
-    authService.issueTokens.mockReturnValue({
-      accessToken: 'access-token',
-      refreshToken: 'refresh-token',
-    });
-    usersService.updateRefreshToken.mockResolvedValue(existingUser);
+  describe('processSocialLogin', () => {
+    it('기존 유저는 새로 생성하지 않고 userId를 반환한다', async () => {
+      const existingUser = createMockUser({ id: 10n, email: 'hello@test.com' });
+      usersService.findByEmail.mockResolvedValue(existingUser);
 
-    const result = await facade.processSocialLogin({
-      provider: 'github',
-      socialUser: {
-        id: 'provider-1',
-        email: existingUser.email,
-        nickname: 'nickname',
-      },
-    });
+      const result = await facade.processSocialLogin({
+        provider: 'github',
+        socialUser: {
+          id: 'provider-1',
+          email: existingUser.email,
+          nickname: 'nickname',
+        },
+      });
 
-    expect(authService.issueTokens).toHaveBeenCalledWith(10n);
-    expect(tiersService.getLowestTier).not.toHaveBeenCalled();
-    expect(usersService.updateRefreshToken).toHaveBeenCalledWith(10n, 'refresh-token');
-    expect(usersService.createSocialUser).not.toHaveBeenCalled();
-    expect(gameSessionService.attachUserToSession).not.toHaveBeenCalled();
-    expect(result).toEqual({
-      accessToken: 'access-token',
-      refreshToken: 'refresh-token',
-    });
-  });
-
-  it('신규 유저 + gameSessionId이면 유저 생성 후 세션을 연결한다', async () => {
-    usersService.findByEmail.mockResolvedValue(null);
-    authService.issueTokens.mockReturnValue({
-      accessToken: 'new-access-token',
-      refreshToken: 'new-refresh-token',
+      expect(result).toEqual({ userId: 10n });
+      expect(usersService.createSocialUser).not.toHaveBeenCalled();
     });
 
-    const createdUser = createMockUser({
-      id: 99n,
-      email: 'new@test.com',
-      nickname: 'newbie',
-      refreshToken: '',
-    });
-    usersService.createSocialUser.mockResolvedValue(createdUser);
-    const result = await facade.processSocialLogin({
-      provider: 'github',
-      socialUser: {
-        id: 'github-user-id',
+    it('신규 유저 + gameSessionId이면 유저 생성 후 세션을 연결하고 userId를 반환한다', async () => {
+      usersService.findByEmail.mockResolvedValue(null);
+
+      const createdUser = createMockUser({
+        id: 99n,
         email: 'new@test.com',
         nickname: 'newbie',
+        refreshToken: '',
+      });
+      usersService.createSocialUser.mockResolvedValue(createdUser);
+      const result = await facade.processSocialLogin({
+        provider: 'github',
+        socialUser: {
+          id: 'github-user-id',
+          email: 'new@test.com',
+          nickname: 'newbie',
+          profileImage: 'https://example.com/profile.png',
+          githubUrl: 'https://github.com/newbie',
+        },
+        gameSessionId: 777n,
+      });
+
+      expect(usersService.createSocialUser).toHaveBeenCalledWith({
+        email: 'new@test.com',
+        nickname: 'newbie',
+        provider: 'github',
+        providerId: 'github-user-id',
         profileImage: 'https://example.com/profile.png',
         githubUrl: 'https://github.com/newbie',
-      },
-      gameSessionId: 777n,
+        refreshToken: '',
+        tierId: 1,
+      });
+      expect(gameSessionService.attachUserToSession).toHaveBeenCalledWith(777n, 99n);
+      expect(authService.issueTokens).not.toHaveBeenCalled();
+      expect(result).toEqual({ userId: 99n });
     });
 
-    expect(usersService.createSocialUser).toHaveBeenCalledWith({
-      email: 'new@test.com',
-      nickname: 'newbie',
-      provider: 'github',
-      providerId: 'github-user-id',
-      profileImage: 'https://example.com/profile.png',
-      githubUrl: 'https://github.com/newbie',
-      refreshToken: '',
-      tierId: 1,
-    });
-    expect(gameSessionService.attachUserToSession).toHaveBeenCalledWith(777n, 99n);
-    expect(authService.issueTokens).toHaveBeenCalledWith(99n);
-    expect(result).toEqual({
-      accessToken: 'new-access-token',
-      refreshToken: 'new-refresh-token',
-    });
-  });
+    it('신규 유저 + gameSessionId 없음이면 세션 연결을 생략한다', async () => {
+      usersService.findByEmail.mockResolvedValue(null);
+      authService.issueTokens.mockReturnValue({
+        accessToken: 'access-token',
+        refreshToken: 'refresh-token',
+      });
 
-  it('신규 유저 + gameSessionId 없음이면 세션 연결을 생략한다', async () => {
-    usersService.findByEmail.mockResolvedValue(null);
-    authService.issueTokens.mockReturnValue({
-      accessToken: 'access-token',
-      refreshToken: 'refresh-token',
-    });
-
-    const createdUser = createMockUser({
-      id: 55n,
-      email: 'new2@test.com',
-      nickname: 'new2',
-      refreshToken: '',
-    });
-    usersService.createSocialUser.mockResolvedValue(createdUser);
-
-    await facade.processSocialLogin({
-      provider: 'google',
-      socialUser: {
-        id: 'google-user-id',
+      const createdUser = createMockUser({
+        id: 55n,
         email: 'new2@test.com',
         nickname: 'new2',
-      },
-    });
+        refreshToken: '',
+      });
+      usersService.createSocialUser.mockResolvedValue(createdUser);
 
-    expect(gameSessionService.attachUserToSession).not.toHaveBeenCalled();
+      await facade.processSocialLogin({
+        provider: 'google',
+        socialUser: {
+          id: 'google-user-id',
+          email: 'new2@test.com',
+          nickname: 'new2',
+        },
+      });
+
+      expect(gameSessionService.attachUserToSession).not.toHaveBeenCalled();
+    });
   });
 
   describe('processRefreshTokens', () => {
@@ -215,6 +201,47 @@ describe('AuthFacade', () => {
       await expect(facade.processRefreshTokens(userId)).rejects.toThrow(error);
 
       expect(usersService.updateRefreshToken).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('generateTemporalAuthorizationCode', () => {
+    it('인증 코드 발급 서비스 함수에 userId를 전달하고 발급한 토큰을 반환한다', () => {
+      const userId = 42n;
+      authService.createTemporalAuthorizationCode.mockReturnValue('auth.code.jwt');
+
+      const result = facade.generateTemporalAuthorizationCode(userId);
+
+      expect(authService.createTemporalAuthorizationCode).toHaveBeenCalledWith(userId);
+      expect(result).toBe('auth.code.jwt');
+    });
+  });
+
+  describe('exchangeAuthorizationCode', () => {
+    it('유효한 코드를 검증한 후 토큰을 발급하고 갱신 토큰을 저장한다', async () => {
+      const userId = 10n;
+      const tokens = { accessToken: 'access-token', refreshToken: 'refresh-token' };
+
+      authService.verifyAuthorizationCode.mockReturnValue(userId);
+      authService.issueTokens.mockReturnValue(tokens);
+      usersService.updateRefreshToken.mockResolvedValue(createMockUser({ id: userId }));
+
+      const result = await facade.exchangeAuthorizationCode('valid.code');
+
+      expect(authService.verifyAuthorizationCode).toHaveBeenCalledWith('valid.code');
+      expect(authService.issueTokens).toHaveBeenCalledWith(userId);
+      expect(usersService.updateRefreshToken).toHaveBeenCalledWith(userId, tokens.refreshToken);
+      expect(result).toEqual(tokens);
+    });
+
+    it('코드 검증이 실패하면 예외를 전파하고 토큰 발급은 하지 않는다', async () => {
+      const error = new UnauthorizedException('유효하지 않은 인가 코드입니다.');
+      authService.verifyAuthorizationCode.mockImplementation(() => {
+        throw error;
+      });
+
+      await expect(facade.exchangeAuthorizationCode('invalid.code')).rejects.toThrow(error);
+
+      expect(authService.issueTokens).not.toHaveBeenCalled();
     });
   });
 

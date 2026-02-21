@@ -11,6 +11,7 @@ import { GenericContainer, StartedTestContainer } from 'testcontainers';
 
 import { ApiResponseDto } from '@common/dto/api-response.dto';
 import { ResponseInterceptor } from '@common/interceptors/response.interceptor';
+import { DEFAULT_PROFILE_IMAGE } from '@users/domain/user.business-rule';
 import { GetMyInfoResponseDto } from '@users/presentation/dto/get-my-info.dto';
 
 import { AppModule } from '../../src/app.module';
@@ -19,6 +20,7 @@ import { createMockAuthGuard } from '../utils/mock-auth.guard';
 describe('GET /api/users/me (e2e)', () => {
   let app: INestApplication<App>;
   let container: StartedTestContainer;
+  let prisma: PrismaClient;
 
   beforeAll(async () => {
     container = await new GenericContainer('postgres:18-alpine')
@@ -37,7 +39,7 @@ describe('GET /api/users/me (e2e)', () => {
       env: { ...process.env, DATABASE_URL: databaseUrl },
     });
 
-    const prisma = new PrismaClient({ datasourceUrl: databaseUrl });
+    prisma = new PrismaClient({ datasourceUrl: databaseUrl });
 
     await prisma.user.create({
       data: {
@@ -54,8 +56,6 @@ describe('GET /api/users/me (e2e)', () => {
         tierId: null,
       },
     });
-
-    await prisma.$disconnect();
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
@@ -74,6 +74,7 @@ describe('GET /api/users/me (e2e)', () => {
   afterAll(async () => {
     await app?.close();
     await container?.stop();
+    await prisma?.$disconnect();
   });
 
   it('요청한 유저의 id, nickname, profileImage 정보를 응답한다.', async () => {
@@ -84,6 +85,19 @@ describe('GET /api/users/me (e2e)', () => {
       id: '1',
       nickname: 'testUser',
       profileImage: 'https://example.com/profile.png',
+    });
+  });
+
+  it('profileImage가 없는 유저는 default image로 응답한다.', async () => {
+    await prisma.user.update({ where: { id: 1n }, data: { profileImage: null } });
+
+    const response = await request(app.getHttpServer()).get('/api/users/me').expect(200);
+    const body = response.body as { data: GetMyInfoResponseDto } & ApiResponseDto;
+
+    expect(body.data).toEqual({
+      id: '1',
+      nickname: 'testUser',
+      profileImage: DEFAULT_PROFILE_IMAGE,
     });
   });
 });

@@ -9,6 +9,7 @@ import { Tier } from '@tiers/domain/tiers.entity';
 
 import { UsersService } from '../application/users.service';
 import { CategoryScore, DifficultyScoreDetail, UserStats } from '../domain/user-stats.entity';
+import { DEFAULT_PROFILE_IMAGE, RankScope } from '../domain/user.business-rule';
 import { User } from '../domain/users.entity';
 import { UsersController } from './users.controller';
 
@@ -35,7 +36,7 @@ function createMockUser(overrides: Partial<User> = {}): User {
     createdAt: new Date(),
     updatedAt: new Date(),
     githubUrl: null,
-    profileImage: null,
+    profileImage: DEFAULT_PROFILE_IMAGE,
     tierId: null,
     tier: null,
     ...overrides,
@@ -101,30 +102,49 @@ describe('UsersController', () => {
   describe('getRanks', () => {
     const mockTier = createMockTier({ name: 'gold' });
     let mockUsers: User[];
-    let query: { page: number; size: number; tierId?: number };
 
     beforeEach(() => {
       mockUsers = [
         createMockUser({ nickname: 'user1', totalScore: 100n, tier: mockTier }),
         createMockUser({ nickname: 'user2', totalScore: 90n, tier: mockTier }),
       ];
-      query = { page: 1, size: 20 };
 
       mockUsersService.getRanksByPageAndSize.mockResolvedValue([mockUsers, mockUsers.length]);
     });
 
-    it('서비스를 호출하여 랭킹 데이터를 조회하는지 확인', async () => {
-      await controller.getRanks(query);
+    it('scope와 userId를 서비스에 전달하는지 확인', async () => {
+      const query = { page: 1, size: 20, scope: RankScope.All };
+      const user = { userId: undefined };
+
+      await controller.getRanks(query, user);
 
       expect(mockUsersService.getRanksByPageAndSize).toHaveBeenCalledWith(
-        query.page,
-        query.size,
+        1,
+        20,
+        RankScope.All,
         undefined,
       );
     });
 
+    it('로그인 유저의 userId를 서비스에 전달하는지 확인', async () => {
+      const query = { page: 1, size: 20, scope: RankScope.Tier };
+      const user = { userId: 1n };
+
+      await controller.getRanks(query, user);
+
+      expect(mockUsersService.getRanksByPageAndSize).toHaveBeenCalledWith(
+        1,
+        20,
+        RankScope.Tier,
+        1n,
+      );
+    });
+
     it('유저 목록에 랭킹 정보가 같이 반환되는지 확인', async () => {
-      const result = await controller.getRanks(query);
+      const result = await controller.getRanks(
+        { page: 1, size: 20, scope: RankScope.All },
+        { userId: undefined },
+      );
 
       expect(result.ranks).toHaveLength(2);
       expect(result.ranks[0].ranking).toBe(1);
@@ -134,7 +154,10 @@ describe('UsersController', () => {
     });
 
     it('페이지네이션 메타데이터 정보가 반환되는지 확인', async () => {
-      const result = await controller.getRanks(query);
+      const result = await controller.getRanks(
+        { page: 1, size: 20, scope: RankScope.All },
+        { userId: undefined },
+      );
 
       expect(result.metadata).toEqual({
         page: 1,
@@ -142,18 +165,6 @@ describe('UsersController', () => {
         totalItems: 2,
         totalPage: 1,
       });
-    });
-
-    it('tierId가 있으면 서비스에 전달한다', async () => {
-      query.tierId = 3;
-
-      await controller.getRanks(query);
-
-      expect(mockUsersService.getRanksByPageAndSize).toHaveBeenCalledWith(
-        query.page,
-        query.size,
-        3,
-      );
     });
   });
 

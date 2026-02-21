@@ -1,9 +1,8 @@
 import { UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
+import { AuthFacade } from '@auth/application/auth.facade';
 import { Request } from 'express';
-
-import { AuthFacade } from '@/auth/application/auth.facade';
 
 import { JwtRefreshStrategy } from './jwt-refresh.strategy';
 

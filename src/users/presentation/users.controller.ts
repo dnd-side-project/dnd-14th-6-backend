@@ -4,6 +4,7 @@ import { ApiTags } from '@nestjs/swagger';
 import { AuthenticatedUser } from '@auth/presentation/decorators/authenticated-user.decorator';
 import { CheckOwnership } from '@auth/presentation/decorators/check-ownership.decorator';
 import { JwtAuthGuard } from '@auth/presentation/guards/jwt-auth.guard';
+import { OptionalJwtAuthGuard } from '@auth/presentation/guards/optional-jwt-auth.guard';
 import { UserOwnershipGuard } from '@auth/presentation/guards/user-ownership.guard';
 
 import { UsersService } from '../application/users.service';
@@ -30,12 +31,25 @@ export class UsersController {
     return GetMyInfoResponseDto.from(userInfo);
   }
 
+  /**
+   * @description 전체 유저, 티어별 랭킹 조회
+   * - 티어별 랭킹 조회는 회원만 가능
+   */
   @Get('/ranks')
+  @UseGuards(OptionalJwtAuthGuard)
   @ApiGetRanks()
-  async getRanks(@Query() query: GetRanksQueryDto): Promise<GetRanksResponseDto> {
-    const { page, size, tierId } = query;
+  async getRanks(
+    @Query() query: GetRanksQueryDto,
+    @AuthenticatedUser() user: { userId?: bigint },
+  ): Promise<GetRanksResponseDto> {
+    const { page, size, scope } = query;
 
-    const [users, totalItems] = await this.usersService.getRanksByPageAndSize(page, size, tierId);
+    const [users, totalItems] = await this.usersService.getRanksByPageAndSize(
+      page,
+      size,
+      scope,
+      user?.userId,
+    );
 
     return GetRanksResponseDto.from(users, totalItems, page, size);
   }

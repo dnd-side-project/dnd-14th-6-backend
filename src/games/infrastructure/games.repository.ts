@@ -4,8 +4,8 @@ import { Prisma } from '@prisma/client';
 import { TransactionHost } from '@nestjs-cls/transactional';
 import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
 
-import { PrismaService } from '@/prisma/prisma.service';
 import { capitalize } from '@common/utils/string.util';
+import { PrismaService } from '@prisma/prisma.service';
 
 import { GameCategory } from '../domain/game-categories.entity';
 import { ClientAnswerInput } from '../domain/game-client-answers.interface';

@@ -5,6 +5,7 @@ import { JwtService } from '@nestjs/jwt';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { PrismaClient } from '@prisma/client';
+import { AuthService } from '@auth/application/auth.service';
 import * as request from 'supertest';
 import { App } from 'supertest/types';
 import { GenericContainer, StartedTestContainer } from 'testcontainers';
@@ -13,7 +14,7 @@ import { ResponseInterceptor } from '@common/interceptors/response.interceptor';
 
 import { AppModule } from '../../src/app.module';
 
-interface RefreshTokensApiResponse {
+interface GetTokensApiResponse {
   statusCode: number;
   success: boolean;
   message?: string;
@@ -23,13 +24,14 @@ interface RefreshTokensApiResponse {
   };
 }
 
-describe('POST /api/auth/refresh (e2e)', () => {
+describe('GET /api/auth/token (e2e)', () => {
   let app: INestApplication<App>;
   let container: StartedTestContainer;
+  let authService: AuthService;
   let jwtService: JwtService;
-  let validRefreshToken: string;
+  let validAuthCode: string;
 
-  const TEST_USER_EMAIL = 'refresh-e2e-user@example.com';
+  const TEST_USER_EMAIL = 'get-tokens-e2e-user@example.com';
 
   beforeAll(async () => {
     container = await new GenericContainer('postgres:18-alpine')
@@ -53,9 +55,9 @@ describe('POST /api/auth/refresh (e2e)', () => {
     const user = await prisma.user.create({
       data: {
         email: TEST_USER_EMAIL,
-        nickname: 'Refresh E2E User',
+        nickname: 'Get Tokens E2E User',
         provider: 'local',
-        providerId: 'refresh-e2e-user',
+        providerId: 'get-tokens-e2e-user',
         profileImage: null,
         githubUrl: null,
         refreshToken: '',
@@ -70,13 +72,9 @@ describe('POST /api/auth/refresh (e2e)', () => {
     app.setGlobalPrefix('api');
     app.useGlobalInterceptors(new ResponseInterceptor(app.get(Reflector)));
 
+    authService = app.get(AuthService);
     jwtService = app.get(JwtService);
-    validRefreshToken = jwtService.sign({ sub: user.id.toString() }, { expiresIn: '14d' });
-
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { refreshToken: validRefreshToken },
-    });
+    validAuthCode = authService.createTemporalAuthorizationCode(user.id);
 
     await app.init();
   }, 60000);
@@ -86,28 +84,48 @@ describe('POST /api/auth/refresh (e2e)', () => {
     await container?.stop();
   });
 
-  it('유효한 refreshToken으로 요청하면 200과 함께 새 accessToken과 refreshToken을 반환한다', async () => {
+  it('유효한 인증 코드로 요청하면 200과 함께 accessToken과 refreshToken을 반환한다', async () => {
     const response = await request(app.getHttpServer())
-      .post('/api/auth/refresh')
-      .send({ refreshToken: validRefreshToken })
+      .get('/api/auth/token')
+      .query({ code: validAuthCode })
       .expect(200);
 
-    const body = response.body as RefreshTokensApiResponse;
+    const body = response.body as GetTokensApiResponse;
     expect(body.statusCode).toBe(200);
     expect(body.success).toBe(true);
     expect(typeof body.data?.accessToken).toBe('string');
     expect(typeof body.data?.refreshToken).toBe('string');
   });
 
-  it('DB에 저장된 토큰과 불일치하면 401을 반환한다', async () => {
+  it('잘못된 시크릿으로 서명된 코드로 요청하면 401을 반환한다', async () => {
+    const codeWithWrongSecret = jwtService.sign(
+      { sub: '1', type: 'auth_code' },
+      { expiresIn: '1m', secret: 'wrong-secret' },
+    );
+
     const response = await request(app.getHttpServer())
-      .post('/api/auth/refresh')
-      .send({ refreshToken: 'invalid-token' })
+      .get('/api/auth/token')
+      .query({ code: codeWithWrongSecret })
       .expect(401);
 
-    const body = response.body as RefreshTokensApiResponse;
-
+    const body = response.body as GetTokensApiResponse;
     expect(body.success).toBe(false);
-    expect(body.message).toBe('유효하지 않은 토큰입니다.');
+  });
+
+  it('JWT 형식이 아닌 code로 요청하면 400을 반환한다', async () => {
+    const response = await request(app.getHttpServer())
+      .get('/api/auth/token')
+      .query({ code: 'not-a-jwt-string' })
+      .expect(400);
+
+    const body = response.body as GetTokensApiResponse;
+    expect(body.success).toBe(false);
+  });
+
+  it('code 파라미터 없이 요청하면 400을 반환한다', async () => {
+    const response = await request(app.getHttpServer()).get('/api/auth/token').expect(400);
+
+    const body = response.body as GetTokensApiResponse;
+    expect(body.success).toBe(false);
   });
 });

@@ -20,7 +20,7 @@ export class CategoryDto {
 
   @ApiProperty({
     description: '카테고리 icon Url',
-    example: 'https://cdn.orvit.net/categories/git.png',
+    example: 'https://cdn.orvit.net/categories/git.webp',
   })
   iconUrl: string;
 }
@@ -30,9 +30,9 @@ export class GetGameOptionsResponseDto {
     description: '게임 카테고리 목록',
     type: [CategoryDto],
     example: [
-      { id: 1, name: 'Git', iconUrl: 'https://cdn.orvit.net/categories/git.png' },
-      { id: 2, name: 'Linux', iconUrl: 'https://cdn.orvit.net/categories/linux.png' },
-      { id: 3, name: 'Docker', iconUrl: 'https://cdn.orvit.net/categories/docker.png' },
+      { id: 1, name: 'Git', iconUrl: 'https://cdn.orvit.net/categories/git.webp' },
+      { id: 2, name: 'Linux', iconUrl: 'https://cdn.orvit.net/categories/linux.webp' },
+      { id: 3, name: 'Docker', iconUrl: 'https://cdn.orvit.net/categories/docker.webp' },
     ],
   })
   categories: CategoryDto[];
