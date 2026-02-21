@@ -1,10 +1,11 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 
 import { GamesService } from '@games/application/games.service';
 import { UserMistakeAnalysis } from '@games/domain/user-mistake-analysis.entity';
 
 import { UserStats } from '../domain/user-stats.entity';
 import { UserStatsMapper } from '../domain/user-stats.mapper';
+import { RankScope } from '../domain/user.business-rule';
 import { User } from '../domain/users.entity';
 import { IUsersRepository, USER_REPOSITORY } from '../domain/users.repository.interface';
 
@@ -30,8 +31,18 @@ export class UsersService {
   async getRanksByPageAndSize(
     page: number,
     size: number,
-    tierId?: number,
+    scope: RankScope,
+    userId?: bigint,
   ): Promise<[User[], number]> {
+    if (scope === RankScope.Tier && !userId) {
+      throw new ForbiddenException('티어 랭킹 조회는 회원만 가능합니다');
+    }
+
+    const tierId =
+      scope === RankScope.Tier && userId
+        ? ((await this.findById(userId)).tierId ?? undefined)
+        : undefined;
+
     return Promise.all([
       this.usersRepository.findAllOrderByScoreDesc(page, size, tierId),
       this.usersRepository.countAll(tierId),
