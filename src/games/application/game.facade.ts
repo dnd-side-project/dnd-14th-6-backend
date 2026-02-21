@@ -7,7 +7,7 @@ import { UsersService } from '@users/application/users.service';
 import {
   SaveGameSessionFacadeRequestDto,
   SaveGameSessionFacadeResponseDto,
-} from './facade-dto/create-game-session.facade-dto';
+} from './facade-dto/save-game-session.facade-dto';
 import { GameSessionService } from './game-session.service';
 
 @Injectable()
