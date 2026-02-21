@@ -59,21 +59,16 @@ export class GameSessionService {
   /*
    * @description 게임세션 저장
    */
-  async createGameSession(command: CreateGameSessionServiceRequestDto): Promise<bigint> {
-    const serverScore = await this.validateAndCalculateScore(
-      command.categoryId,
-      command.clientAnswers,
-    );
-
+  async createGameSession(serviceDto: CreateGameSessionServiceRequestDto): Promise<bigint> {
     return this.gameRepository.saveGameSession(
       SaveGameSessionEntity.from({
-        categoryId: command.categoryId,
-        difficultyMode: command.difficultyMode,
-        score: serverScore,
-        userId: command.userId,
-        totalProblemCount: command.clientAnswers.length,
-        correctProblemCount: command.clientAnswers.filter((a) => a.solved).length,
-        logs: command.clientAnswers.map((a) =>
+        categoryId: serviceDto.categoryId,
+        difficultyMode: serviceDto.difficultyMode,
+        score: serviceDto.score,
+        userId: serviceDto.userId,
+        totalProblemCount: serviceDto.clientAnswers.length,
+        correctProblemCount: serviceDto.clientAnswers.filter((a) => a.solved).length,
+        logs: serviceDto.clientAnswers.map((a) =>
           SaveGameSessionLog.from({
             problemId: BigInt(a.problemId),
             inputs: a.inputs,
@@ -83,13 +78,6 @@ export class GameSessionService {
         ),
       }),
     );
-  }
-
-  /*
-   * @description userId에 해당하는 모든 게임 세션 점수의 합계 조회
-   */
-  async getTotalScoreByUserId(userId: bigint): Promise<bigint> {
-    return await this.gameRepository.getTotalScoreByUserId(userId);
   }
 
   /*
@@ -106,7 +94,7 @@ export class GameSessionService {
   /**
    * @description 클라이언트 게임 데이터 검증 후 서버 점수 계산
    */
-  private async validateAndCalculateScore(
+  async validateAndCalculateScore(
     categoryId: number,
     clientAnswers: ClientAnswer[],
   ): Promise<number> {
