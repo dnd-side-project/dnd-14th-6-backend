@@ -1,4 +1,4 @@
-import { NotFoundException } from '@nestjs/common';
+import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { GamesService } from '@games/application/games.service';
@@ -9,7 +9,7 @@ import {
 } from '@games/domain/user-mistake-analysis.entity';
 import { Tier } from '@tiers/domain/tiers.entity';
 
-import { DEFAULT_PROFILE_IMAGE } from '../domain/user.business-rule';
+import { DEFAULT_PROFILE_IMAGE, RankScope } from '../domain/user.business-rule';
 import { User } from '../domain/users.entity';
 import {
   IUsersRepository,
@@ -105,35 +105,38 @@ describe('UsersService', () => {
       mockUsersRepository.countAll.mockResolvedValue(mockUsers.length);
     });
 
-    it('파라미터 정보로 유저 목록 조회하는지 확인', async () => {
+    it('scope가 all이면 tierId 없이 유저 목록을 조회하는지 확인', async () => {
       const page = 2;
       const size = 10;
 
-      await service.getRanksByPageAndSize(page, size);
+      await service.getRanksByPageAndSize(page, size, RankScope.All);
 
       expect(mockUsersRepository.findAllOrderByScoreDesc).toHaveBeenCalledWith(
         page,
         size,
         undefined,
       );
+      expect(mockUsersRepository.countAll).toHaveBeenCalledWith(undefined);
     });
 
-    it('파라미터 정보로 전체 개수 조회하는지 확인', async () => {
-      const page = 2;
-      const size = 10;
-      const tierId = 1;
+    it('scope가 tier이고 userId가 없으면 ForbiddenException을 던지는지 확인', async () => {
+      await expect(service.getRanksByPageAndSize(1, 10, RankScope.Tier)).rejects.toThrow(
+        ForbiddenException,
+      );
+    });
 
-      await service.getRanksByPageAndSize(page, size, tierId);
+    it('scope가 tier이면 유저의 tierId로 목록을 조회하는지 확인', async () => {
+      const tierId = 3;
+      mockUsersRepository.findByIdWithTier.mockResolvedValue(createMockUser({ tierId }));
 
+      await service.getRanksByPageAndSize(1, 10, RankScope.Tier, 1n);
+
+      expect(mockUsersRepository.findAllOrderByScoreDesc).toHaveBeenCalledWith(1, 10, tierId);
       expect(mockUsersRepository.countAll).toHaveBeenCalledWith(tierId);
     });
 
     it('유저 목록과 개수 정보를 튜플로 반환하는지 확인', async () => {
-      const page = 2;
-      const size = 10;
-      const tierId = 1;
-
-      const ret = await service.getRanksByPageAndSize(page, size, tierId);
+      const ret = await service.getRanksByPageAndSize(1, 10, RankScope.All);
 
       expect(ret).toEqual([mockUsers, mockUsers.length]);
     });
