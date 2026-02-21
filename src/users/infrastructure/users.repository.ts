@@ -156,13 +156,15 @@ export class UsersRepositoryImpl implements IUsersRepository {
   }
 
   /*
-   * @description 유저의 totalScore 업데이트
+   * @description 유저의 totalScore 증분 업데이트
    * - @Transactional() 컨텍스트 내에서 호출 시 해당 트랜잭션에 참여
    */
-  async updateTotalScore(userId: bigint, totalScore: bigint): Promise<void> {
-    await this.txHost.tx.user.update({
+  async incrementTotalScore(userId: bigint, scoreToAdd: bigint): Promise<bigint> {
+    const user = await this.txHost.tx.user.update({
       where: { id: userId },
-      data: { totalScore },
+      data: { totalScore: { increment: scoreToAdd } },
+      select: { totalScore: true },
     });
+    return user.totalScore;
   }
 }

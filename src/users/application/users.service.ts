@@ -94,10 +94,10 @@ export class UsersService {
   }
 
   /**
-   * @description 유저의 totalScore 업데이트
+   * @description 유저의 totalScore 증분 업데이트
    */
-  async updateTotalScore(userId: bigint, totalScore: bigint): Promise<void> {
-    await this.usersRepository.updateTotalScore(userId, totalScore);
+  async incrementTotalScore(userId: bigint, scoreToAdd: bigint): Promise<bigint> {
+    return await this.usersRepository.incrementTotalScore(userId, scoreToAdd);
   }
 
   /**
