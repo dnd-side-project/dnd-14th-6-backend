@@ -1,9 +1,9 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
 
 import { plainToInstance, Type } from 'class-transformer';
-import { IsInt, IsOptional, Min } from 'class-validator';
+import { IsEnum, IsInt, Min } from 'class-validator';
 
-import { DEFAULT_PROFILE_IMAGE } from '@users/domain/user.business-rule';
+import { DEFAULT_PROFILE_IMAGE, RankScope } from '@users/domain/user.business-rule';
 
 import { User } from '../../domain/users.entity';
 
@@ -14,8 +14,8 @@ export class GetRanksQueryDto {
     default: 1,
     required: true,
   })
-  @IsInt()
-  @Min(1)
+  @IsInt({ message: 'page가 정수가 아닙니다.' })
+  @Min(1, { message: 'page의 최솟값은 1입니다.' })
   @Type(() => Number)
   page: number = 1;
 
@@ -25,19 +25,19 @@ export class GetRanksQueryDto {
     default: 20,
     required: true,
   })
-  @IsInt()
-  @Min(1)
+  @IsInt({ message: 'size가 정수가 아닙니다.' })
+  @Min(1, { message: 'size의 최솟값은 1입니다.' })
   @Type(() => Number)
   size: number = 20;
 
-  @ApiPropertyOptional({
-    description: '특정 티어 ID 필터링 (없으면 전체 조회)',
-    example: 3,
+  @ApiProperty({
+    description: '랭킹 필터링 범위 (기본 전체 조회)',
+    example: 'tier',
+    default: 'all',
+    required: false,
   })
-  @IsOptional()
-  @IsInt()
-  @Type(() => Number)
-  tierId?: number;
+  @IsEnum(RankScope, { message: '랭킹 scope는 tier, all 중 하나여야 합니다.' })
+  scope: RankScope = RankScope.All;
 }
 
 export class PaginationMetadataDto {
