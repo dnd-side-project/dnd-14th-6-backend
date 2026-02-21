@@ -83,6 +83,13 @@ export class UsersService {
   }
 
   /**
+   * @description 유저의 totalScore 업데이트
+   */
+  async updateTotalScore(userId: bigint, totalScore: bigint): Promise<void> {
+    await this.usersRepository.updateTotalScore(userId, totalScore);
+  }
+
+  /**
    * @description 유저의 랭킹, 티어, 총 점수, 카테고리 별 누적점수를 조회
    */
   async getUserStats(userId: bigint): Promise<UserStats> {
