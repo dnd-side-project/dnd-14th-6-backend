@@ -35,7 +35,7 @@ export class UsersService {
     userId?: bigint,
   ): Promise<[User[], number]> {
     if (scope === RankScope.Tier && !userId) {
-      throw new ForbiddenException('티어 랭킹 조회는 회원만 가능합니다');
+      throw new ForbiddenException('티어 랭킹 조회는 회원만 가능합니다.');
     }
 
     const tierId =
