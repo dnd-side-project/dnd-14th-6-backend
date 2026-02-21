@@ -38,6 +38,23 @@ export class GameResultProblemReport {
   }
 
   /**
+   * @description 비회원 열람 가능 문제 리포트 생성
+   * - text, explanation, inputs, answer는 노출하되 isSolved, tryCount는 잠금 처리
+   */
+  toGuestViewable(): GameResultProblemReport {
+    return new GameResultProblemReport(
+      this.problemId,
+      this.subCategory,
+      this.text,
+      this.explanation,
+      this.inputs,
+      this.answer,
+      null,
+      null,
+    );
+  }
+
+  /**
    * @description 비회원 열람 제한 문제 리포트 생성
    * - problemId, subCategory만 노출하고 나머지 필드는 잠금 처리
    */
@@ -120,7 +137,7 @@ export class GameResultReport {
   toGuestView(maxViewableProblems: number): GameResultReport {
     const guestSummary = this.summary.toGuestView();
     const guestReports = this.reports.map((report, index) =>
-      index < maxViewableProblems ? report : report.toLocked(),
+      index < maxViewableProblems ? report.toGuestViewable() : report.toLocked(),
     );
 
     return new GameResultReport(this.isGuest, guestSummary, guestReports);

@@ -13,14 +13,17 @@ import {
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 
+import { AuthenticatedUser } from '@auth/presentation/decorators/authenticated-user.decorator';
 import { CheckOwnership } from '@auth/presentation/decorators/check-ownership.decorator';
 import { JwtAuthGuard } from '@auth/presentation/guards/jwt-auth.guard';
+import { OptionalJwtAuthGuard } from '@auth/presentation/guards/optional-jwt-auth.guard';
 import { UserOwnershipGuard } from '@auth/presentation/guards/user-ownership.guard';
 import { Request, Response } from 'express';
 import { Subject } from 'rxjs';
 
 import { GameSessionService } from '../application/game-session.service';
 import { GameStreamService } from '../application/game-stream.service';
+import { GameFacade } from '../application/game.facade';
 import { GamesService } from '../application/games.service';
 import { ApiGameStream } from './decorators/game-stream-swagger.decorator';
 import { ApiGetGameHistories } from './decorators/get-game-histories-swagger.decorator';
@@ -45,12 +48,16 @@ export class GamesController {
   private readonly logger = new Logger(GamesController.name);
 
   constructor(
+    private readonly gameFacade: GameFacade,
     private readonly gameService: GamesService,
 
     private readonly gameStreamService: GameStreamService,
     private readonly gameSessionService: GameSessionService,
   ) {}
 
+  /**
+   * @description 게임 옵션 선택 (Public)
+   */
   @Get('options')
   @ApiGetGameOptions()
   async getGameOptions(): Promise<GetGameOptionsResponseDto> {
@@ -58,6 +65,9 @@ export class GamesController {
     return GetGameOptionsResponseDto.from(gameOptions);
   }
 
+  /**
+   * @description 게임 진행 스트림 (Public)
+   */
   @Get('stream')
   @ApiGameStream()
   async gameStream(
@@ -110,29 +120,36 @@ export class GamesController {
   }
 
   /**
-   * @description 게임 세션 히스토리 조회 (본인만 가능)
+   * @description 게임 세션 저장
+   *
+   * 회원/비회원 따라 응답 결과가 다름.
+   * - Public(비회원): gameSessionId 만 응답
+   * - Private(회원): gameSessionId 와 totalScore 응답
    */
   @Post('save')
+  @UseGuards(OptionalJwtAuthGuard)
   @ApiSaveGameSession()
   async saveGameSession(
     @Body() dto: SaveGameSessionRequestDto,
+    @AuthenticatedUser() user?: { userId: bigint },
   ): Promise<SaveGameSessionResponseDto> {
-    // FIXME: 회원용 AuthGuard 붙이기
-    // FIXME: 회원연결시 user_id 매핑
-    const gameSessionId = await this.gameService.createGameSession({
+    const gameSessionResult = await this.gameFacade.saveGameSession({
       categoryId: dto.categoryId,
       difficultyMode: dto.difficultyMode,
       score: dto.score,
       clientAnswers: dto.clientAnswers,
+      userId: user?.userId,
     });
 
-    // FIXME: (회원 한정) 게임세션 저장후
-    // user 도메인이 연관되므로 Facade application 계층 추가
-    // user_id에 매핑된 게임세션들의 score들을 합산하여 User.totalScore 업데이트 (#32)
-    // 회원인경우에는 totalScore도 같이 리스폰스하도록 응답DTO(SaveGameSessionResponseDto) 업데이트
-    return SaveGameSessionResponseDto.from(gameSessionId);
+    return SaveGameSessionResponseDto.from(
+      gameSessionResult.gameSessionId,
+      gameSessionResult.totalScore,
+    );
   }
 
+  /**
+   * @description 게임 세션 히스토리 조회 (본인만 가능)
+   */
   @Get('sessions')
   @UseGuards(JwtAuthGuard, UserOwnershipGuard)
   @CheckOwnership('userId')
@@ -145,14 +162,24 @@ export class GamesController {
     return GetGameHistoriesResponseDto.from(gameHistories, query.page, query.size);
   }
 
+  /**
+   * @description 게임 결과 리포트 조회 (Public/Private)
+   *
+   * 회원/비회원 따라 응답 결과가 다름.
+   * - Public(비회원): 일부데이터 열람 제한
+   * - Private(회원): 전체 데이터 열람 가능
+   */
   @Get(':gameSessionId/reports')
+  @UseGuards(OptionalJwtAuthGuard)
   @ApiGetGameResultReport()
   async getGameResultReport(
     @Param() param: GetGameResultReportParamDto,
+    @AuthenticatedUser() user?: { userId: bigint },
   ): Promise<GetGameResultReportResponseDto> {
-    // FIXME: 회원용 AuthGuard 붙이기
-    // FIXME: 회원용 userId 파라미터 인자로 붙이기
-    const gameReport = await this.gameSessionService.getGameResultReport(param.gameSessionId);
+    const gameReport = await this.gameSessionService.getGameResultReport(
+      param.gameSessionId,
+      user?.userId,
+    );
 
     return GetGameResultReportResponseDto.from(gameReport);
   }

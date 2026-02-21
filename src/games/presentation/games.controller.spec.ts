@@ -13,6 +13,7 @@ import { Observable, of, Subject, takeUntil } from 'rxjs';
 
 import { GameSessionService } from '../application/game-session.service';
 import { GameStreamService } from '../application/game-stream.service';
+import { GameFacade } from '../application/game.facade';
 import { GamesService } from '../application/games.service';
 import { GameCategory } from '../domain/game-categories.entity';
 import { GameOptions } from '../domain/game-options.entity';
@@ -45,20 +46,22 @@ describe('GamesController', () => {
   let gameService: jest.Mocked<GamesService>;
   let gameStreamService: jest.Mocked<GameStreamService>;
   let gameSessionService: jest.Mocked<GameSessionService>;
+  let gameFacade: jest.Mocked<Pick<GameFacade, 'saveGameSession'>>;
 
   beforeEach(async () => {
     const mockGameService = {
       getGameOptions: jest.fn(),
-      createGameSession: jest.fn(),
     };
     const mockGameStreamService = {
       validateGameStreamParams: jest.fn(),
       createGameStream: jest.fn(),
     };
-
     const mockGameSessionService = {
       getSessionHistories: jest.fn(),
       getGameResultReport: jest.fn(),
+    };
+    const mockGameFacade = {
+      saveGameSession: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -76,6 +79,10 @@ describe('GamesController', () => {
           provide: GameSessionService,
           useValue: mockGameSessionService,
         },
+        {
+          provide: GameFacade,
+          useValue: mockGameFacade,
+        },
       ],
     }).compile();
 
@@ -83,6 +90,7 @@ describe('GamesController', () => {
     gameService = module.get(GamesService);
     gameStreamService = module.get(GameStreamService);
     gameSessionService = module.get(GameSessionService);
+    gameFacade = module.get(GameFacade);
   });
 
   describe('getGameOptions', () => {
@@ -268,31 +276,61 @@ describe('GamesController', () => {
         clientAnswers: [clientAnswer],
       });
     };
+
     describe('회원용', () => {
-      // FIXME 회원용 테스트케이스 추가
-    });
-    describe('비회원용', () => {
       describe('✅ 성공 케이스', () => {
-        it('게임 세션을 정상 저장하고 gameSessionId를 반환한다.', async () => {
+        it('userId를 전달하면 facade에 userId가 포함된 커맨드를 전달하고 gameSessionId와 totalScore를 반환한다.', async () => {
           const dto = createDto();
-          gameService.createGameSession.mockResolvedValue(BigInt(100));
+          const user = { userId: 99n };
+          gameFacade.saveGameSession.mockResolvedValue({
+            gameSessionId: 100n,
+            totalScore: 150n,
+          });
 
-          const result = await controller.saveGameSession(dto);
+          const result = await controller.saveGameSession(dto, user);
 
-          expect(result).toEqual({ gameSessionId: '100' });
-          expect(gameService.createGameSession).toHaveBeenCalledWith({
+          expect(result).toEqual({
+            gameSessionId: '100',
+            totalScore: '150',
+          });
+          expect(gameFacade.saveGameSession).toHaveBeenCalledWith({
             categoryId: dto.categoryId,
             difficultyMode: dto.difficultyMode,
             score: dto.score,
             clientAnswers: dto.clientAnswers,
+            userId: 99n,
           });
         });
       });
+    });
+
+    describe('비회원용', () => {
+      describe('✅ 성공 케이스', () => {
+        it('userId 없이 요청하면 facade에 userId 없이 전달하고 gameSessionId만 반환한다.', async () => {
+          const dto = createDto();
+          gameFacade.saveGameSession.mockResolvedValue({
+            gameSessionId: 100n,
+            totalScore: undefined,
+          });
+
+          const result = await controller.saveGameSession(dto);
+
+          expect(result).toEqual({ gameSessionId: '100' });
+          expect(gameFacade.saveGameSession).toHaveBeenCalledWith({
+            categoryId: dto.categoryId,
+            difficultyMode: dto.difficultyMode,
+            score: dto.score,
+            clientAnswers: dto.clientAnswers,
+            userId: undefined,
+          });
+        });
+      });
+
       describe('❌ 실패 케이스', () => {
         it('존재하지 않는 카테고리면 NotFoundException을 던진다.', async () => {
           const dto = createDto();
           dto.categoryId = 999;
-          gameService.createGameSession.mockRejectedValue(
+          gameFacade.saveGameSession.mockRejectedValue(
             new NotFoundException('존재하지 않는 카테고리입니다.'),
           );
 
@@ -301,7 +339,7 @@ describe('GamesController', () => {
 
         it('중복된 problemId가 포함되어 있으면 BadRequestException을 던진다.', async () => {
           const dto = createDto();
-          gameService.createGameSession.mockRejectedValue(
+          gameFacade.saveGameSession.mockRejectedValue(
             new BadRequestException('clientAnswers에 중복된 problemId가 포함되어 있습니다.'),
           );
 
@@ -310,7 +348,7 @@ describe('GamesController', () => {
 
         it('존재하지 않는 문제 ID가 포함되어 있으면 NotFoundException을 던진다.', async () => {
           const dto = createDto();
-          gameService.createGameSession.mockRejectedValue(
+          gameFacade.saveGameSession.mockRejectedValue(
             new NotFoundException('존재하지 않는 문제 ID가 포함되어 있습니다. (problemId: 999)'),
           );
 
@@ -319,7 +357,7 @@ describe('GamesController', () => {
 
         it('solved=true인데 정답 처리된 입력이 없으면 BadRequestException을 던진다.', async () => {
           const dto = createDto();
-          gameService.createGameSession.mockRejectedValue(
+          gameFacade.saveGameSession.mockRejectedValue(
             new BadRequestException(
               '데이터 무결성 오류: solved가 true이지만 정답 처리된 입력이 없습니다.',
             ),
@@ -336,6 +374,7 @@ describe('GamesController', () => {
     };
 
     const createMockGameResultReport = (userId: bigint | null): GameResultReport => {
+      const isGuest = userId === null;
       const summary = GameResultSummary.from({
         sessionId: 7n,
         userId,
@@ -355,12 +394,12 @@ describe('GamesController', () => {
             { input: 'git remote', isCorrect: true },
           ],
           answer: 'git remote',
-          isSolved: true,
-          tryCount: 2,
+          isSolved: isGuest ? null : true,
+          tryCount: isGuest ? null : 2,
         }),
       ];
 
-      return GameResultReport.from({ isGuest: userId === null, summary, reports });
+      return GameResultReport.from({ isGuest, summary, reports });
     };
 
     describe('회원용', () => {
@@ -370,7 +409,7 @@ describe('GamesController', () => {
           const mockReport = createMockGameResultReport(1n);
           gameSessionService.getGameResultReport.mockResolvedValue(mockReport);
 
-          const result = await controller.getGameResultReport(param);
+          const result = await controller.getGameResultReport(param, { userId: 1n });
 
           expect(result).toBeInstanceOf(GetGameResultReportResponseDto);
           expect(result.isGuest).toBe(false);
@@ -396,7 +435,7 @@ describe('GamesController', () => {
             isSolved: true,
             tryCount: 2,
           });
-          expect(gameSessionService.getGameResultReport).toHaveBeenCalledWith(7n);
+          expect(gameSessionService.getGameResultReport).toHaveBeenCalledWith(7n, 1n);
         });
       });
 
@@ -433,7 +472,22 @@ describe('GamesController', () => {
           expect(result).toBeInstanceOf(GetGameResultReportResponseDto);
           expect(result.isGuest).toBe(true);
           expect(result.summary.userId).toBeNull();
-          expect(gameSessionService.getGameResultReport).toHaveBeenCalledWith(7n);
+
+          expect(result.reports[0]).toEqual({
+            problemId: '73',
+            subCategory: 'Remote',
+            text: '등록된 원격 저장소의 이름만 확인하는 명령어는?',
+            explanation: '`git remote`는 등록된 원격 저장소의 이름(별칭)만 간단히 나열합니다.',
+            inputs: [
+              { input: 'git branch', isCorrect: false },
+              { input: 'git remote', isCorrect: true },
+            ],
+            answer: 'git remote',
+            isSolved: null,
+            tryCount: null,
+          });
+
+          expect(gameSessionService.getGameResultReport).toHaveBeenCalledWith(7n, undefined);
         });
       });
 

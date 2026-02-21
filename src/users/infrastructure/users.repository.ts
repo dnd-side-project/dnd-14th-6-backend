@@ -1,5 +1,8 @@
 import { Injectable } from '@nestjs/common';
 
+import { TransactionHost } from '@nestjs-cls/transactional';
+import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-prisma';
+
 import { PrismaService } from '@prisma/prisma.service';
 
 import { User } from '../domain/users.entity';
@@ -7,7 +10,10 @@ import { IUsersRepository, ScoreDetailOriginData } from '../domain/users.reposit
 
 @Injectable()
 export class UsersRepositoryImpl implements IUsersRepository {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly txHost: TransactionHost<TransactionalAdapterPrisma>,
+  ) {}
 
   async findAllOrderByScoreDesc(page: number, size: number, tierId?: number): Promise<User[]> {
     const users = await this.prisma.user.findMany({
@@ -147,5 +153,16 @@ export class UsersRepositoryImpl implements IUsersRepository {
       category: row.category,
       totalScore: row.total_score,
     }));
+  }
+
+  /*
+   * @description 유저의 totalScore 업데이트
+   * - @Transactional() 컨텍스트 내에서 호출 시 해당 트랜잭션에 참여
+   */
+  async updateTotalScore(userId: bigint, totalScore: bigint): Promise<void> {
+    await this.txHost.tx.user.update({
+      where: { id: userId },
+      data: { totalScore },
+    });
   }
 }

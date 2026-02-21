@@ -8,7 +8,7 @@ import { CategoryDto, GetGameOptionsResponseDto } from '../dto/get-game-options.
 
 export function ApiGetGameOptions() {
   return applyDecorators(
-    ApiOperation({ summary: '게임 옵션 조회 (카테고리, 난이도)' }),
+    ApiOperation({ summary: '게임 옵션 조회 (카테고리, 난이도) - ( Public )' }),
     ApiExtraModels(ApiResponseDto, GetGameOptionsResponseDto, CategoryDto),
     ApiOkResponse({
       description: '게임 옵션 조회 성공',

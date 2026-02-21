@@ -1,6 +1,7 @@
 import { execSync } from 'child_process';
 import { INestApplication } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
+import { JwtService } from '@nestjs/jwt';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { PrismaClient } from '@prisma/client';
@@ -121,6 +122,8 @@ describe('GET /api/games/:gameSessionId/reports (e2e)', () => {
   let app: INestApplication<App>;
   let container: StartedTestContainer;
   let savedGameSessionId: string;
+  let memberAccessToken: string;
+  let savedMemberGameSessionId: string;
 
   beforeAll(async () => {
     container = await new GenericContainer('postgres:16-alpine')
@@ -162,6 +165,34 @@ describe('GET /api/games/:gameSessionId/reports (e2e)', () => {
 
     const saveBody = saveResponse.body as SaveSuccessResponse;
     savedGameSessionId = saveBody.data.gameSessionId;
+
+    // 회원 생성 및 회원용 게임 세션 저장
+    const memberPrisma = new PrismaClient({ datasourceUrl: databaseUrl });
+    const memberUser = await memberPrisma.user.create({
+      data: {
+        email: 'member-report-e2e@example.com',
+        nickname: 'MemberReportUser',
+        provider: 'github',
+        providerId: 'member-report-e2e-user',
+        totalScore: 0n,
+        refreshToken: '',
+        profileImage: null,
+        githubUrl: null,
+      },
+    });
+    await memberPrisma.$disconnect();
+
+    const jwtService = app.get(JwtService);
+    memberAccessToken = jwtService.sign({ sub: memberUser.id.toString() });
+
+    const memberSaveResponse = await request(app.getHttpServer())
+      .post('/api/games/save')
+      .set('Authorization', `Bearer ${memberAccessToken}`)
+      .send(SAVE_REQUEST_BODY)
+      .expect(201);
+
+    const memberSaveBody = memberSaveResponse.body as SaveSuccessResponse;
+    savedMemberGameSessionId = memberSaveBody.data.gameSessionId;
   }, 60000);
 
   afterAll(async () => {
@@ -212,34 +243,36 @@ describe('GET /api/games/:gameSessionId/reports (e2e)', () => {
         const { reports } = (response.body as ReportSuccessResponse).data;
         const viewableReports = reports.slice(0, 10);
 
-        const firstReport = viewableReports[0];
-        expect(firstReport.problemId).toBeDefined();
-        expect(firstReport.subCategory).toBeDefined();
-        expect(firstReport.text).not.toBeNull();
-        expect(firstReport.explanation).not.toBeNull();
-        expect(firstReport.answer).not.toBeNull();
-        expect(firstReport.isSolved).not.toBeNull();
-        expect(firstReport.tryCount).not.toBeNull();
+        // 문제 1~10 공통 검증: text, explanation, answer 열람 가능 / isSolved, tryCount는 null
+        for (const report of viewableReports) {
+          expect(report.problemId).toBeDefined();
+          expect(report.subCategory).toBeDefined();
+          expect(report.text).not.toBeNull();
+          expect(report.explanation).not.toBeNull();
+          expect(report.answer).not.toBeNull();
+          expect(report.isSolved).toBeNull();
+          expect(report.tryCount).toBeNull();
+        }
 
-        // 정답 문제 검증 (problemId: 73 - solved)
-        const solvedReport = viewableReports.find((r) => r.problemId === '73');
-        expect(solvedReport).toBeDefined();
-        expect(solvedReport!.isSolved).toBe(true);
-        expect(solvedReport!.tryCount).toBe(2);
-        expect(solvedReport!.inputs).toHaveLength(2);
+        // 시도한 문제 검증 (problemId: 73 - 2번 시도)
+        const triedReport = viewableReports.find((r) => r.problemId === '73');
+        expect(triedReport).toBeDefined();
+        expect(triedReport!.isSolved).toBeNull();
+        expect(triedReport!.tryCount).toBeNull();
+        expect(triedReport!.inputs).toHaveLength(2);
 
-        // 오답 문제 검증 (problemId: 103 - not solved, 시도함)
-        const failedReport = viewableReports.find((r) => r.problemId === '103');
-        expect(failedReport).toBeDefined();
-        expect(failedReport!.isSolved).toBe(false);
-        expect(failedReport!.tryCount).toBe(2);
-        expect(failedReport!.inputs).toHaveLength(2);
+        // 시도한 문제 검증 (problemId: 103 - 2번 시도)
+        const anotherTriedReport = viewableReports.find((r) => r.problemId === '103');
+        expect(anotherTriedReport).toBeDefined();
+        expect(anotherTriedReport!.isSolved).toBeNull();
+        expect(anotherTriedReport!.tryCount).toBeNull();
+        expect(anotherTriedReport!.inputs).toHaveLength(2);
 
-        // 놓친 문제 검증 (problemId: 40 - not solved, 시도 안함)
+        // 시도하지 않은 문제 검증 (problemId: 40 - 시도 안함)
         const skippedReport = viewableReports.find((r) => r.problemId === '40');
         expect(skippedReport).toBeDefined();
-        expect(skippedReport!.isSolved).toBe(false);
-        expect(skippedReport!.tryCount).toBe(0);
+        expect(skippedReport!.isSolved).toBeNull();
+        expect(skippedReport!.tryCount).toBeNull();
         expect(skippedReport!.inputs).toHaveLength(0);
       });
 
@@ -266,7 +299,74 @@ describe('GET /api/games/:gameSessionId/reports (e2e)', () => {
     });
 
     describe('회원', () => {
-      // FIXME: AuthGuard 셋팅후 진행예정
+      it('회원 게임 결과 리포트를 정상적으로 조회한다.', async () => {
+        const response = await request(app.getHttpServer())
+          .get(`/api/games/${savedMemberGameSessionId}/reports`)
+          .set('Authorization', `Bearer ${memberAccessToken}`)
+          .expect(200);
+
+        const body = response.body as ReportSuccessResponse;
+        expect(body.success).toBe(true);
+        expect(body.data.isGuest).toBe(false);
+      });
+
+      it('회원 summary는 전체 데이터가 노출된다.', async () => {
+        const response = await request(app.getHttpServer())
+          .get(`/api/games/${savedMemberGameSessionId}/reports`)
+          .set('Authorization', `Bearer ${memberAccessToken}`)
+          .expect(200);
+
+        const { summary } = (response.body as ReportSuccessResponse).data;
+        expect(summary.sessionId).toBe(savedMemberGameSessionId);
+        expect(summary.userId).not.toBeNull();
+        expect(summary.score).not.toBeNull();
+        expect(summary.totalProblemCount).toBe(20);
+        expect(summary.correctProblemCount).not.toBeNull();
+        expect(summary.correctRate).not.toBeNull();
+      });
+
+      it('회원 reports는 총 20개가 반환된다.', async () => {
+        const response = await request(app.getHttpServer())
+          .get(`/api/games/${savedMemberGameSessionId}/reports`)
+          .set('Authorization', `Bearer ${memberAccessToken}`)
+          .expect(200);
+
+        const { reports } = (response.body as ReportSuccessResponse).data;
+        expect(reports).toHaveLength(20);
+      });
+
+      it('회원 reports는 isSolved, tryCount가 포함된 전체 데이터가 반환된다.', async () => {
+        const response = await request(app.getHttpServer())
+          .get(`/api/games/${savedMemberGameSessionId}/reports`)
+          .set('Authorization', `Bearer ${memberAccessToken}`)
+          .expect(200);
+
+        const { reports } = (response.body as ReportSuccessResponse).data;
+
+        // 정답 문제 검증 (problemId: 73 - solved, 2번 시도)
+        const solvedReport = reports.find((r) => r.problemId === '73');
+        expect(solvedReport).toBeDefined();
+        expect(solvedReport!.text).not.toBeNull();
+        expect(solvedReport!.explanation).not.toBeNull();
+        expect(solvedReport!.answer).not.toBeNull();
+        expect(solvedReport!.isSolved).toBe(true);
+        expect(solvedReport!.tryCount).toBe(2);
+        expect(solvedReport!.inputs).toHaveLength(2);
+
+        // 오답 문제 검증 (problemId: 103 - not solved, 2번 시도)
+        const failedReport = reports.find((r) => r.problemId === '103');
+        expect(failedReport).toBeDefined();
+        expect(failedReport!.isSolved).toBe(false);
+        expect(failedReport!.tryCount).toBe(2);
+        expect(failedReport!.inputs).toHaveLength(2);
+
+        // 시도하지 않은 문제 검증 (problemId: 40 - 시도 안함)
+        const skippedReport = reports.find((r) => r.problemId === '40');
+        expect(skippedReport).toBeDefined();
+        expect(skippedReport!.isSolved).toBe(false);
+        expect(skippedReport!.tryCount).toBe(0);
+        expect(skippedReport!.inputs).toHaveLength(0);
+      });
     });
   });
 
@@ -308,6 +408,34 @@ describe('GET /api/games/:gameSessionId/reports (e2e)', () => {
       expect(body.success).toBe(false);
       expect(body.message).toBe('존재하지 않는 게임 세션입니다.');
     });
-    // FIXME: (회원용) 다른회원의 게임결과리포트를 조회시 403 에러를 응답
+
+    it('다른 회원의 게임 결과 리포트를 조회하면 403 에러를 응답한다.', async () => {
+      const prisma = new PrismaClient({ datasourceUrl: process.env.DATABASE_URL });
+      const anotherUser = await prisma.user.create({
+        data: {
+          email: 'another-member-e2e@example.com',
+          nickname: 'AnotherMemberUser',
+          provider: 'github',
+          providerId: 'another-member-e2e-user',
+          totalScore: 0n,
+          refreshToken: '',
+          profileImage: null,
+          githubUrl: null,
+        },
+      });
+      await prisma.$disconnect();
+
+      const jwtService = app.get(JwtService);
+      const anotherAccessToken = jwtService.sign({ sub: anotherUser.id.toString() });
+
+      const response = await request(app.getHttpServer())
+        .get(`/api/games/${savedMemberGameSessionId}/reports`)
+        .set('Authorization', `Bearer ${anotherAccessToken}`)
+        .expect(403);
+
+      const body = response.body as ErrorResponse;
+      expect(body.success).toBe(false);
+      expect(body.message).toBe('해당 게임 결과 리포트에 접근할 수 없습니다.');
+    });
   });
 });
