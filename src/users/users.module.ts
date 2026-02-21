@@ -10,7 +10,7 @@ import { UsersRepositoryImpl } from './infrastructure/users.repository';
 import { UsersController } from './presentation/users.controller';
 
 @Module({
-  imports: [forwardRef(() => AuthModule), GamesModule],
+  imports: [forwardRef(() => AuthModule), forwardRef(() => GamesModule)],
   controllers: [UsersController],
   providers: [
     UsersService,

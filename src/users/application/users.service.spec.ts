@@ -64,6 +64,7 @@ describe('UsersService', () => {
       getAverageScore: jest.fn(),
       getRankingByScore: jest.fn(),
       getScoreDetailByUserId: jest.fn(),
+      updateTotalScore: jest.fn(),
     };
 
     mockGamesService = {

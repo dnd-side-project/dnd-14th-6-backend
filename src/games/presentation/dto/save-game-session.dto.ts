@@ -123,9 +123,17 @@ export class SaveGameSessionResponseDto {
   })
   gameSessionId: string;
 
-  static from(gameSessionId: bigint): SaveGameSessionResponseDto {
+  @ApiProperty({
+    description: '(회원용) 유저의 전체 스코어',
+    example: '9999999',
+    required: false,
+  })
+  totalScore: string;
+
+  static from(gameSessionId: bigint, totalScore?: bigint): SaveGameSessionResponseDto {
     return plainToInstance(SaveGameSessionResponseDto, {
       gameSessionId: String(gameSessionId),
+      totalScore: totalScore !== undefined ? String(totalScore) : undefined,
     });
   }
 }

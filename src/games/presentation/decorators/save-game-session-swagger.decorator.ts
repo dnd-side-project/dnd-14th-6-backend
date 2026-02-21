@@ -1,6 +1,13 @@
 import { applyDecorators } from '@nestjs/common';
-import { ApiBody, ApiCreatedResponse, ApiOperation } from '@nestjs/swagger';
+import {
+  ApiBody,
+  ApiCreatedResponse,
+  ApiExtraModels,
+  ApiOperation,
+  getSchemaPath,
+} from '@nestjs/swagger';
 
+import { ApiResponseDto } from '@common/dto/api-response.dto';
 import {
   createSwaggerBadRequest,
   createSwaggerNotFound,
@@ -15,6 +22,7 @@ import {
 
 export function ApiSaveGameSession() {
   return applyDecorators(
+    ApiExtraModels(ApiResponseDto, SaveGameSessionResponseDto),
     ApiOperation({
       summary: '게임 세션 저장 ( 회원 / 비회원 공용 )',
       description:
@@ -116,16 +124,41 @@ export function ApiSaveGameSession() {
       },
     }),
     ApiCreatedResponse({
-      // FIXME: 회원/비회원 응답 데이터 구분 필요
       description: '게임 세션 저장 성공',
-      type: SaveGameSessionResponseDto,
       content: {
         'application/json': {
-          example: {
-            statusCode: 201,
-            success: true,
-            data: {
-              gameSessionId: '1',
+          schema: {
+            allOf: [
+              { $ref: getSchemaPath(ApiResponseDto) },
+              {
+                type: 'object',
+                properties: {
+                  data: { $ref: getSchemaPath(SaveGameSessionResponseDto) },
+                },
+              },
+            ],
+          },
+          examples: {
+            비회원: {
+              summary: '비회원 응답',
+              value: {
+                statusCode: 201,
+                success: true,
+                data: {
+                  gameSessionId: '1',
+                },
+              },
+            },
+            회원: {
+              summary: '회원 응답 (totalScore 포함)',
+              value: {
+                statusCode: 201,
+                success: true,
+                data: {
+                  gameSessionId: '1',
+                  totalScore: '9999999',
+                },
+              },
             },
           },
         },

@@ -1,10 +1,10 @@
 import { GameCategory } from './game-categories.entity';
-import { ClientAnswerInput } from './game-client-answers.interface';
 import { GameProblem } from './game-problem.entity';
 import { GameResultReport } from './game-result-report.entity';
 import { GameSessionHistoryFilterEntity } from './game-session-history-filter.entity';
 import { GameSessionHistoryList } from './game-session-history.entity';
 import { GameDifficultyMode } from './game.business-rules';
+import { SaveGameSessionEntity } from './save-game-session.entity';
 import { FrequentWrongCategory, FrequentWrongCommand } from './user-mistake-analysis.entity';
 
 export type NonRandomGameDifficultyMode = Exclude<GameDifficultyMode, GameDifficultyMode.Random>;
@@ -47,19 +47,7 @@ export interface IGameRepository {
    * @description 게임 세션과 세션 로그를 원자적으로 저장
    * @returns 생성된 GameSession ID
    */
-  saveGameSession(data: {
-    categoryId: number;
-    difficultyMode: GameDifficultyMode;
-    score: number;
-    totalProblemCount: number;
-    correctProblemCount: number;
-    logs: {
-      problemId: bigint;
-      inputs: ClientAnswerInput[];
-      isSolved: boolean;
-      tryCount: number;
-    }[];
-  }): Promise<bigint>;
+  saveGameSession(data: SaveGameSessionEntity): Promise<bigint>;
 
   /**
    * @description 필터 기반 사용자 게임 세션 히스토리 목록 조회
@@ -77,7 +65,7 @@ export interface IGameRepository {
    * @description 사용자가 자주 틀린 카테고리 조회 (오답 비율 포함)
    */
   getFrequentWrongCategories(userId: bigint): Promise<FrequentWrongCategory[]>;
-  
+
   /**
    * @description 게임 결과 리포트 조회
    */
@@ -87,4 +75,9 @@ export interface IGameRepository {
    * @description 게임 세션에 유저 ID 업데이트
    */
   updateUserIdToGameSession(sessionId: bigint, userId: bigint): Promise<boolean>;
+
+  /**
+   * @description userId에 해당하는 모든 게임 세션 점수의 합계 조회
+   */
+  getTotalScoreByUserId(userId: bigint): Promise<bigint>;
 }
