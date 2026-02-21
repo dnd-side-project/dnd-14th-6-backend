@@ -1,3 +1,4 @@
+import { NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { UsersService } from '@users/application/users.service';
@@ -15,20 +16,20 @@ jest.mock('@nestjs-cls/transactional', () => ({
 describe('GameFacade', () => {
   let facade: GameFacade;
   let gameSessionService: jest.Mocked<
-    Pick<GameSessionService, 'createGameSession' | 'getTotalScoreByUserId'>
+    Pick<GameSessionService, 'createGameSession' | 'validateAndCalculateScore'>
   >;
-  let usersService: jest.Mocked<Pick<UsersService, 'updateTotalScore'>>;
+  let usersService: jest.Mocked<Pick<UsersService, 'incrementTotalScore'>>;
 
   beforeEach(async () => {
     const mockGamesService = {};
 
     const mockGameSessionService = {
       createGameSession: jest.fn(),
-      getTotalScoreByUserId: jest.fn(),
+      validateAndCalculateScore: jest.fn(),
     };
 
     const mockUsersService = {
-      updateTotalScore: jest.fn(),
+      incrementTotalScore: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -54,30 +55,36 @@ describe('GameFacade', () => {
     };
 
     describe('✅ 성공 케이스', () => {
-      it('회원인 경우 게임 세션 저장 후 totalScore를 갱신하고 gameSessionId와 totalScore를 반환한다.', async () => {
+      it('회원인 경우 게임 세션 저장 후 totalScore를 증분 갱신하고 gameSessionId와 totalScore를 반환한다.', async () => {
         const userId = 1n;
         const gameSessionId = 100n;
-        const totalScore = 150n;
+        const serverScore = 10;
+        const updatedTotalScore = 150n;
 
+        gameSessionService.validateAndCalculateScore.mockResolvedValue(serverScore);
         gameSessionService.createGameSession.mockResolvedValue(gameSessionId);
-        gameSessionService.getTotalScoreByUserId.mockResolvedValue(totalScore);
-        usersService.updateTotalScore.mockResolvedValue(undefined);
+        usersService.incrementTotalScore.mockResolvedValue(updatedTotalScore);
 
         const result = await facade.saveGameSession({ ...baseDto, userId });
 
         expect(result.gameSessionId).toBe(gameSessionId);
-        expect(result.totalScore).toBe(totalScore);
+        expect(result.totalScore).toBe(updatedTotalScore);
 
-        expect(gameSessionService.createGameSession).toHaveBeenCalledWith(
-          expect.objectContaining({ userId }),
+        expect(gameSessionService.validateAndCalculateScore).toHaveBeenCalledWith(
+          baseDto.categoryId,
+          baseDto.clientAnswers,
         );
-        expect(gameSessionService.getTotalScoreByUserId).toHaveBeenCalledWith(userId);
-        expect(usersService.updateTotalScore).toHaveBeenCalledWith(userId, totalScore);
+        expect(gameSessionService.createGameSession).toHaveBeenCalledWith(
+          expect.objectContaining({ userId, score: serverScore }),
+        );
+        expect(usersService.incrementTotalScore).toHaveBeenCalledWith(userId, BigInt(serverScore));
       });
 
       it('비회원인 경우 게임 세션만 저장하고 totalScore 관련 로직을 수행하지 않으며 totalScore는 undefined로 반환한다.', async () => {
         const gameSessionId = 200n;
+        const serverScore = 10;
 
+        gameSessionService.validateAndCalculateScore.mockResolvedValue(serverScore);
         gameSessionService.createGameSession.mockResolvedValue(gameSessionId);
 
         const result = await facade.saveGameSession(baseDto);
@@ -85,32 +92,43 @@ describe('GameFacade', () => {
         expect(result.gameSessionId).toBe(gameSessionId);
         expect(result.totalScore).toBeUndefined();
 
-        expect(gameSessionService.getTotalScoreByUserId).not.toHaveBeenCalled();
-        expect(usersService.updateTotalScore).not.toHaveBeenCalled();
+        expect(usersService.incrementTotalScore).not.toHaveBeenCalled();
       });
     });
 
     describe('❌ 실패 케이스 - 트랜잭션 원자성 (에러 전파로 @Transactional 롤백 유도)', () => {
       const userId = 1n;
 
+      it('validateAndCalculateScore 실패 시 게임 세션이 저장되지 않고, totalScore 갱신도 수행되지 않는다.', async () => {
+        gameSessionService.validateAndCalculateScore.mockRejectedValue(
+          new NotFoundException('존재하지 않는 카테고리입니다.'),
+        );
+
+        await expect(facade.saveGameSession({ ...baseDto, userId })).rejects.toThrow(
+          '존재하지 않는 카테고리입니다.',
+        );
+
+        expect(gameSessionService.createGameSession).not.toHaveBeenCalled();
+        expect(usersService.incrementTotalScore).not.toHaveBeenCalled();
+      });
+
       it('createGameSession 실패 시 게임 세션이 저장되지 않고, totalScore 갱신도 수행되지 않는다.', async () => {
+        gameSessionService.validateAndCalculateScore.mockResolvedValue(10);
         gameSessionService.createGameSession.mockRejectedValue(new Error('게임 세션 저장 실패'));
 
         await expect(facade.saveGameSession({ ...baseDto, userId })).rejects.toThrow(
           '게임 세션 저장 실패',
         );
 
-        // 게임 세션 저장 자체가 실패했으므로 후속 작업이 실행되지 않아야 한다
-        expect(gameSessionService.getTotalScoreByUserId).not.toHaveBeenCalled();
-        expect(usersService.updateTotalScore).not.toHaveBeenCalled();
+        expect(usersService.incrementTotalScore).not.toHaveBeenCalled();
       });
 
-      it('updateTotalScore 실패 시 에러가 전파되어 게임 세션 저장도 롤백되고, user의 totalScore는 변경되지 않는다.', async () => {
-        const previousTotalScore = 100n;
+      it('incrementTotalScore 실패 시 에러가 전파되어 게임 세션 저장도 롤백되고, user의 totalScore는 변경되지 않는다.', async () => {
+        const serverScore = 10;
 
+        gameSessionService.validateAndCalculateScore.mockResolvedValue(serverScore);
         gameSessionService.createGameSession.mockResolvedValue(100n);
-        gameSessionService.getTotalScoreByUserId.mockResolvedValue(previousTotalScore);
-        usersService.updateTotalScore.mockRejectedValue(new Error('총 점수 업데이트 실패'));
+        usersService.incrementTotalScore.mockRejectedValue(new Error('총 점수 업데이트 실패'));
 
         await expect(facade.saveGameSession({ ...baseDto, userId })).rejects.toThrow(
           '총 점수 업데이트 실패',
@@ -118,10 +136,9 @@ describe('GameFacade', () => {
 
         // 에러가 전파되어 @Transactional에 의해 트랜잭션 전체가 롤백된다
         // → createGameSession으로 저장된 게임 세션도 롤백
-        // → updateTotalScore가 실패했으므로 user.totalScore는 이전 값(previousTotalScore) 그대로 유지
+        // → incrementTotalScore가 실패했으므로 user.totalScore는 이전 값 그대로 유지
         expect(gameSessionService.createGameSession).toHaveBeenCalled();
-        expect(gameSessionService.getTotalScoreByUserId).toHaveBeenCalledWith(userId);
-        expect(usersService.updateTotalScore).toHaveBeenCalledWith(userId, previousTotalScore);
+        expect(usersService.incrementTotalScore).toHaveBeenCalledWith(userId, BigInt(serverScore));
       });
     });
   });
