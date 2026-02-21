@@ -1,12 +1,12 @@
 import { applyDecorators } from '@nestjs/common';
 import { ApiExtraModels, ApiOkResponse, ApiOperation, getSchemaPath } from '@nestjs/swagger';
 
+import { ApiResponseDto } from '@common/dto/api-response.dto';
 import {
   createSwaggerBadRequest,
   createSwaggerForbidden,
   createSwaggerServerErrors,
-} from '@/common/utils/swagger-error-response.util';
-import { ApiResponseDto } from '@common/dto/api-response.dto';
+} from '@common/utils/swagger-error-response.util';
 
 import { GetRanksResponseDto } from '../dto/get-ranks.dto';
 

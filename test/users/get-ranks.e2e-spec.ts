@@ -4,21 +4,21 @@ import { Reflector } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { PrismaClient } from '@prisma/client';
+import { AuthService } from '@auth/application/auth.service';
 import * as request from 'supertest';
 import { App } from 'supertest/types';
 import { GenericContainer, StartedTestContainer } from 'testcontainers';
 
-import { AppModule } from '@/app.module';
-import { AuthService } from '@/auth/application/auth.service';
-import { ApiResponseDto } from '@/common/dto/api-response.dto';
-import { ResponseInterceptor } from '@/common/interceptors/response.interceptor';
-import { ExceptionResponse } from '@/common/interfaces/exception-response.interface';
-import { GetRanksResponseDto, RankItemDto } from '@/users/presentation/dto/get-ranks.dto';
+import { ApiResponseDto } from '@common/dto/api-response.dto';
+import { ResponseInterceptor } from '@common/interceptors/response.interceptor';
+import { ExceptionResponse } from '@common/interfaces/exception-response.interface';
+import { GetRanksResponseDto, RankItemDto } from '@users/presentation/dto/get-ranks.dto';
 
 import { seedCategories } from '../../prisma/seeds/category.seed';
 import { seedSubCategories } from '../../prisma/seeds/subcategory.seed';
 import { seedTiers } from '../../prisma/seeds/tier.seed';
 import { seedUsersAndSessions } from '../../prisma/seeds/user-session.seed';
+import { AppModule } from '../../src/app.module';
 
 describe('GET /api/users/ranks (e2e)', () => {
   let app: INestApplication<App>;

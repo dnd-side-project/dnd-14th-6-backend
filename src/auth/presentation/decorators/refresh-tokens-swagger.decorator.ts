@@ -7,7 +7,7 @@ import {
   getSchemaPath,
 } from '@nestjs/swagger';
 
-import { ApiResponseDto } from '@/common/dto/api-response.dto';
+import { ApiResponseDto } from '@common/dto/api-response.dto';
 import {
   createSwaggerServerErrors,
   createSwaggerUnauthorized,
