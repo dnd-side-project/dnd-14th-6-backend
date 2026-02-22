@@ -25,6 +25,7 @@ import {
 } from '../domain/game.business-rules';
 import { IGameRepository, NonRandomGameDifficultyMode } from '../domain/games.repository.interface';
 import { SaveGameSessionEntity } from '../domain/save-game-session.entity';
+import { DifficultyScoreDetail, ScoreDetailMapper } from '../domain/score-detail.entity';
 import {
   FrequentWrongCategory,
   FrequentWrongCommand,
@@ -446,6 +447,33 @@ export class GameRepositoryImpl implements IGameRepository {
 
     // 검증된 필드만 추출하여 도메인 타입으로 변환
     return valid.map((item) => ({ input: item.input, isCorrect: item.isCorrect }));
+  }
+
+  /**
+   * @description 유저의 플레이한 난이도, 카테고리 별 그룹화하여 획득한 총 점수(SUM)와 카테고리 정보를 조회
+   */
+  async getScoreDetailByUserId(userId: bigint): Promise<DifficultyScoreDetail[]> {
+    const results = await this.prisma.$queryRaw<
+      { difficulty_mode: string; category: string; total_score: bigint }[]
+    >`
+      SELECT
+        gs.difficulty_mode,
+        c.name as category,
+        SUM(gs.score) as total_score
+      FROM game_sessions gs
+      JOIN categories c ON gs.category_id = c.id
+      WHERE gs.user_id = ${userId}
+      GROUP BY gs.difficulty_mode, c.name
+      ORDER BY gs.difficulty_mode, total_score DESC
+    `;
+
+    return ScoreDetailMapper.groupAndSortScoreDetail(
+      results.map((row) => ({
+        difficultyMode: row.difficulty_mode,
+        category: row.category,
+        totalScore: row.total_score,
+      })),
+    );
   }
 
   /*

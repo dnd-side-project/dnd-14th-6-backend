@@ -5,6 +5,7 @@ import { GameSessionHistoryFilterEntity } from './game-session-history-filter.en
 import { GameSessionHistoryList } from './game-session-history.entity';
 import { GameDifficultyMode } from './game.business-rules';
 import { SaveGameSessionEntity } from './save-game-session.entity';
+import { DifficultyScoreDetail } from './score-detail.entity';
 import { FrequentWrongCategory, FrequentWrongCommand } from './user-mistake-analysis.entity';
 
 export type NonRandomGameDifficultyMode = Exclude<GameDifficultyMode, GameDifficultyMode.Random>;
@@ -75,4 +76,9 @@ export interface IGameRepository {
    * @description 게임 세션에 유저 ID 업데이트
    */
   updateUserIdToGameSession(sessionId: bigint, userId: bigint): Promise<boolean>;
+
+  /**
+   * @description 유저의 난이도/카테고리별 점수 상세 조회
+   */
+  getScoreDetailByUserId(userId: bigint): Promise<DifficultyScoreDetail[]>;
 }
