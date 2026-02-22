@@ -1,8 +1,5 @@
 import { ForbiddenException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 
-import { GamesService } from '@games/application/games.service';
-import { UserMistakeAnalysis } from '@games/domain/user-mistake-analysis.entity';
-
 import { IncrementTotalScoreMapper } from '../domain/increment-total-score.mapper';
 import { UserStats } from '../domain/user-stats.entity';
 import { UserStatsMapper } from '../domain/user-stats.mapper';
@@ -12,10 +9,7 @@ import { IUsersRepository, USER_REPOSITORY } from '../domain/users.repository.in
 
 @Injectable()
 export class UsersService {
-  constructor(
-    @Inject(USER_REPOSITORY) private readonly usersRepository: IUsersRepository,
-    private readonly gamesService: GamesService,
-  ) {}
+  constructor(@Inject(USER_REPOSITORY) private readonly usersRepository: IUsersRepository) {}
 
   /**
    * @description id로 유저 정보 조회
@@ -87,11 +81,6 @@ export class UsersService {
    */
   async updateRefreshToken(userId: bigint, refreshToken: string): Promise<User> {
     return this.usersRepository.updateRefreshToken(userId, refreshToken);
-  }
-
-  // FIXME: user facade 도입을 통해 도메인 결합 분리되도록 리팩터링 필요
-  async getUserAnalysis(userId: bigint): Promise<UserMistakeAnalysis> {
-    return this.gamesService.getUserMistakeAnalysis(userId);
   }
 
   /**
