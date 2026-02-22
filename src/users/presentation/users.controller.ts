@@ -81,7 +81,7 @@ export class UsersController {
   @CheckOwnership('userId')
   @ApiGetUserStats()
   async getUserStats(@Param() param: GetUserStatsParamDto): Promise<GetUserStatsResponseDto> {
-    const userStats = await this.usersService.getUserStats(param.userId);
+    const userStats = await this.usersFacade.getUserStats(param.userId);
 
     return GetUserStatsResponseDto.from(userStats);
   }
