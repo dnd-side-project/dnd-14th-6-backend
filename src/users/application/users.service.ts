@@ -3,6 +3,7 @@ import { ForbiddenException, Inject, Injectable, NotFoundException } from '@nest
 import { GamesService } from '@games/application/games.service';
 import { UserMistakeAnalysis } from '@games/domain/user-mistake-analysis.entity';
 
+import { IncrementTotalScoreMapper } from '../domain/increment-total-score.mapper';
 import { UserStats } from '../domain/user-stats.entity';
 import { UserStatsMapper } from '../domain/user-stats.mapper';
 import { RankScope } from '../domain/user.business-rule';
@@ -94,10 +95,20 @@ export class UsersService {
   }
 
   /**
-   * @description 유저의 totalScore 업데이트
+   * @description 유저의 totalScore 증분 업데이트
    */
-  async updateTotalScore(userId: bigint, totalScore: bigint): Promise<void> {
-    await this.usersRepository.updateTotalScore(userId, totalScore);
+  async incrementTotalScore(
+    userId: bigint,
+    scoreToAdd: bigint,
+  ): Promise<IncrementTotalScoreMapper> {
+    return await this.usersRepository.incrementTotalScore(userId, scoreToAdd);
+  }
+
+  /**
+   * @description 유저의 tierId 업데이트
+   */
+  async updateTierId(userId: bigint, tierId: number): Promise<void> {
+    await this.usersRepository.updateTierId(userId, tierId);
   }
 
   /**

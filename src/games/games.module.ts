@@ -3,6 +3,7 @@ import { forwardRef, Module } from '@nestjs/common';
 import { AuthModule } from '@auth/auth.module';
 
 import { PrismaModule } from '@prisma/prisma.module';
+import { TiersModule } from '@tiers/tiers.module';
 import { UsersModule } from '@users/users.module';
 
 import { GameSessionService } from './application/game-session.service';
@@ -14,7 +15,7 @@ import { GameRepositoryImpl } from './infrastructure/games.repository';
 import { GamesController } from './presentation/games.controller';
 
 @Module({
-  imports: [forwardRef(() => AuthModule), PrismaModule, forwardRef(() => UsersModule)],
+  imports: [forwardRef(() => AuthModule), PrismaModule, forwardRef(() => UsersModule), TiersModule],
   providers: [
     GameFacade,
     GamesService,

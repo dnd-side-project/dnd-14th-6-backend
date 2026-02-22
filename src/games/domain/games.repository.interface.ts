@@ -75,9 +75,4 @@ export interface IGameRepository {
    * @description 게임 세션에 유저 ID 업데이트
    */
   updateUserIdToGameSession(sessionId: bigint, userId: bigint): Promise<boolean>;
-
-  /**
-   * @description userId에 해당하는 모든 게임 세션 점수의 합계 조회
-   */
-  getTotalScoreByUserId(userId: bigint): Promise<bigint>;
 }

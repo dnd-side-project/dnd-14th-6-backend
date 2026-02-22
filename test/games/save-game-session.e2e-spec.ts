@@ -294,12 +294,12 @@ describe('POST /api/games/save (e2e)', () => {
         expect(body.data.totalScore).toBe('90');
       });
 
-      it('첫 게임 플레이 후 DB의 user.totalScore가 게임 점수로 업데이트된다.', async () => {
+      it('게임 플레이 후 DB의 user.totalScore가 업데이트되지만, 티어 승급 조건에 미달하면 티어등급은 그대로 유지된다.', async () => {
         const dbUrl = `postgresql://test:test@${container.getHost()}:${container.getMappedPort(5432)}/test`;
         const prisma = new PrismaClient({ datasourceUrl: dbUrl });
 
         try {
-          // 테스트 전용 유저 생성 (초기 totalScore = 0)
+          // 테스트 전용 유저 생성 (초기 totalScore = 0, Bronze 티어)
           const user = await prisma.user.create({
             data: {
               email: 'score-update-test@example.com',
@@ -307,10 +307,99 @@ describe('POST /api/games/save (e2e)', () => {
               provider: 'google',
               providerId: 'score-update-test',
               refreshToken: 'dummy-refresh-token',
-              tierId: 1,
+              tierId: 1, // Bronze
             },
           });
           expect(user.totalScore).toBe(0n);
+          expect(user.tierId).toBe(1);
+
+          const jwtService = app.get(JwtService);
+          const token = jwtService.sign({ sub: String(user.id) });
+
+          // 맞춘 문제: ID 1(Easy=10점), ID 12(Normal=30점), ID 23(Hard=50점) → 서버 계산 점수 90점
+          // 90점은 Silver 승급 조건(5000점) 미달이므로 Bronze 유지
+          const response = await request(app.getHttpServer())
+            .post('/api/games/save')
+            .set('Authorization', `Bearer ${token}`)
+            .send({
+              categoryId: 1,
+              difficultyMode: 'Random',
+              score: 90,
+              clientAnswers: [
+                {
+                  problemId: '1',
+                  inputs: [{ input: 'git init', isCorrect: true }],
+                  solved: true,
+                },
+                {
+                  problemId: '12',
+                  inputs: [
+                    { input: 'git commit', isCorrect: false },
+                    { input: 'git commit --amend', isCorrect: true },
+                  ],
+                  solved: true,
+                },
+                {
+                  problemId: '23',
+                  inputs: [{ input: 'git rebase -i HEAD~3', isCorrect: true }],
+                  solved: true,
+                },
+                { problemId: '34', inputs: [], solved: false },
+                { problemId: '45', inputs: [], solved: false },
+                { problemId: '56', inputs: [], solved: false },
+                { problemId: '70', inputs: [], solved: false },
+                { problemId: '71', inputs: [], solved: false },
+                { problemId: '72', inputs: [], solved: false },
+                { problemId: '73', inputs: [], solved: false },
+                { problemId: '74', inputs: [], solved: false },
+                { problemId: '75', inputs: [], solved: false },
+                { problemId: '76', inputs: [], solved: false },
+                { problemId: '133', inputs: [], solved: false },
+                { problemId: '134', inputs: [], solved: false },
+                { problemId: '166', inputs: [], solved: false },
+                { problemId: '199', inputs: [], solved: false },
+                { problemId: '232', inputs: [], solved: false },
+                { problemId: '265', inputs: [], solved: false },
+                { problemId: '298', inputs: [], solved: false },
+              ],
+            })
+            .expect(201);
+
+          const body = response.body as SuccessResponse;
+          expect(body.success).toBe(true);
+          expect(body.data.totalScore).toBe('90');
+
+          // DB에서 직접 조회하여 totalScore 업데이트 및 티어 유지 확인
+          const updatedUser = await prisma.user.findUnique({
+            where: { id: user.id },
+          });
+          expect(updatedUser!.totalScore).toBe(90n);
+          expect(updatedUser!.tierId).toBe(1); // Bronze 유지
+        } finally {
+          await prisma.$disconnect();
+        }
+      });
+
+      it('게임 플레이 이후 user.totalScore 업데이트로 인해서, 게임 티어등급이 승급된다.', async () => {
+        const dbUrl = `postgresql://test:test@${container.getHost()}:${container.getMappedPort(5432)}/test`;
+        const prisma = new PrismaClient({ datasourceUrl: dbUrl });
+
+        try {
+          // Bronze → Silver 승급 테스트 (Silver minScore = 5000)
+          // 초기 totalScore = 4910, 게임 점수 90점 → 총 5000점으로 Silver 달성
+          const user = await prisma.user.create({
+            data: {
+              email: 'tier-promotion-test@example.com',
+              nickname: 'tier-promotion-tester',
+              provider: 'google',
+              providerId: 'tier-promotion-test',
+              refreshToken: 'dummy-refresh-token',
+              tierId: 1, // Bronze
+              totalScore: 4910,
+            },
+          });
+          expect(user.tierId).toBe(1);
+          expect(user.totalScore).toBe(4910n);
 
           const jwtService = app.get(JwtService);
           const token = jwtService.sign({ sub: String(user.id) });
@@ -365,13 +454,14 @@ describe('POST /api/games/save (e2e)', () => {
 
           const body = response.body as SuccessResponse;
           expect(body.success).toBe(true);
-          expect(body.data.totalScore).toBe('90');
+          expect(body.data.totalScore).toBe('5000');
 
-          // DB에서 직접 조회하여 user.totalScore가 실제로 업데이트되었는지 확인
+          // DB에서 직접 조회하여 totalScore 업데이트 및 tierId 승급 확인
           const updatedUser = await prisma.user.findUnique({
             where: { id: user.id },
           });
-          expect(updatedUser!.totalScore).toBe(90n);
+          expect(updatedUser!.totalScore).toBe(5000n);
+          expect(updatedUser!.tierId).toBe(2); // Silver로 승급
         } finally {
           await prisma.$disconnect();
         }
