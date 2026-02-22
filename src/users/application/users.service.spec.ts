@@ -66,6 +66,7 @@ describe('UsersService', () => {
       getRankingByScore: jest.fn(),
       getScoreDetailByUserId: jest.fn(),
       incrementTotalScore: jest.fn(),
+      updateTierId: jest.fn(),
     };
 
     mockGamesService = {
@@ -195,6 +196,17 @@ describe('UsersService', () => {
 
       expect(result.frequentWrongCategories[0].iconUrl).toBe('https://example.com/git.png');
       expect(result.frequentWrongCategories[1].iconUrl).toBe('https://example.com/docker.png');
+    });
+  });
+
+  describe('updateTierId', () => {
+    it('repository의 updateTierId를 호출하는지 확인', async () => {
+      const userId = 1n;
+      const tierId = 3;
+
+      await service.updateTierId(userId, tierId);
+
+      expect(mockUsersRepository.updateTierId).toHaveBeenCalledWith(userId, tierId);
     });
   });
 
