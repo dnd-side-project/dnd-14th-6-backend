@@ -62,11 +62,13 @@ export class GameFacade {
     userId: bigint,
     serverScore: number,
   ): Promise<bigint> {
-    const totalScore = await this.userService.incrementTotalScore(userId, BigInt(serverScore));
+    const { totalScore, tierId: currentTierId } = await this.userService.incrementTotalScore(
+      userId,
+      BigInt(serverScore),
+    );
 
-    const currentUser = await this.userService.findById(userId);
     const newTier = await this.tiersService.findTierByUserTotalScore(totalScore);
-    if (currentUser.tierId !== newTier.id) {
+    if (currentTierId !== newTier.id) {
       await this.userService.updateTierId(userId, newTier.id);
     }
 
