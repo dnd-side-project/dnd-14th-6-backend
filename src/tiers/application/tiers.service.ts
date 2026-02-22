@@ -1,7 +1,7 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 
-import { ITiersRepository, TIER_REPOSITORY } from '../domain/tiers.repository.interface';
 import { Tier } from '../domain/tiers.entity';
+import { ITiersRepository, TIER_REPOSITORY } from '../domain/tiers.repository.interface';
 
 @Injectable()
 export class TiersService {
@@ -24,5 +24,17 @@ export class TiersService {
     }
 
     return lowestTier;
+  }
+
+  /**
+   * @description 유저의 totalScore 점수에 해당하는 가장 높은 티어 조회
+   */
+  async findTierByUserTotalScore(score: bigint): Promise<Tier> {
+    const tier = await this.tiersRepository.findTierByUserTotalScore(score);
+    if (!tier) {
+      throw new NotFoundException('티어 정보를 찾을 수 없습니다.');
+    }
+
+    return tier;
   }
 }
