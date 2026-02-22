@@ -4,6 +4,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { TiersService } from '@tiers/application/tiers.service';
 import { Tier } from '@tiers/domain/tiers.entity';
 import { UsersService } from '@users/application/users.service';
+import { IncrementTotalScoreMapper } from '@users/domain/increment-total-score.mapper';
 
 import { GameDifficultyMode } from '../domain/game.business-rules';
 import { GameSessionService } from './game-session.service';
@@ -20,9 +21,7 @@ describe('GameFacade', () => {
   let gameSessionService: jest.Mocked<
     Pick<GameSessionService, 'createGameSession' | 'validateAndCalculateScore'>
   >;
-  let usersService: jest.Mocked<
-    Pick<UsersService, 'incrementTotalScore' | 'updateTierId' | 'findById'>
-  >;
+  let usersService: jest.Mocked<Pick<UsersService, 'incrementTotalScore' | 'updateTierId'>>;
   let tiersService: jest.Mocked<Pick<TiersService, 'findTierByUserTotalScore'>>;
 
   beforeEach(async () => {
@@ -36,7 +35,6 @@ describe('GameFacade', () => {
     const mockUsersService = {
       incrementTotalScore: jest.fn(),
       updateTierId: jest.fn(),
-      findById: jest.fn(),
     };
 
     const mockTiersService = {
@@ -84,9 +82,10 @@ describe('GameFacade', () => {
 
         gameSessionService.validateAndCalculateScore.mockResolvedValue(serverScore);
         gameSessionService.createGameSession.mockResolvedValue(gameSessionId);
-        usersService.incrementTotalScore.mockResolvedValue(updatedTotalScore);
+        usersService.incrementTotalScore.mockResolvedValue(
+          IncrementTotalScoreMapper.from({ totalScore: updatedTotalScore, tierId: currentTierId }),
+        );
         tiersService.findTierByUserTotalScore.mockResolvedValue(newTier);
-        usersService.findById.mockResolvedValue({ tierId: currentTierId } as any);
 
         const result = await facade.saveGameSession({ ...baseDto, userId });
 
@@ -102,7 +101,6 @@ describe('GameFacade', () => {
         );
         expect(usersService.incrementTotalScore).toHaveBeenCalledWith(userId, BigInt(serverScore));
         expect(tiersService.findTierByUserTotalScore).toHaveBeenCalledWith(updatedTotalScore);
-        expect(usersService.findById).toHaveBeenCalledWith(userId);
         expect(usersService.updateTierId).toHaveBeenCalledWith(userId, newTier.id);
       });
 
@@ -121,9 +119,10 @@ describe('GameFacade', () => {
 
         gameSessionService.validateAndCalculateScore.mockResolvedValue(serverScore);
         gameSessionService.createGameSession.mockResolvedValue(gameSessionId);
-        usersService.incrementTotalScore.mockResolvedValue(updatedTotalScore);
+        usersService.incrementTotalScore.mockResolvedValue(
+          IncrementTotalScoreMapper.from({ totalScore: updatedTotalScore, tierId: sameTier.id }),
+        );
         tiersService.findTierByUserTotalScore.mockResolvedValue(sameTier);
-        usersService.findById.mockResolvedValue({ tierId: sameTier.id } as any);
 
         const result = await facade.saveGameSession({ ...baseDto, userId });
 
@@ -131,7 +130,6 @@ describe('GameFacade', () => {
         expect(result.totalScore).toBe(updatedTotalScore);
 
         expect(tiersService.findTierByUserTotalScore).toHaveBeenCalledWith(updatedTotalScore);
-        expect(usersService.findById).toHaveBeenCalledWith(userId);
         expect(usersService.updateTierId).not.toHaveBeenCalled();
       });
 
@@ -186,7 +184,9 @@ describe('GameFacade', () => {
 
         gameSessionService.validateAndCalculateScore.mockResolvedValue(serverScore);
         gameSessionService.createGameSession.mockResolvedValue(100n);
-        usersService.incrementTotalScore.mockResolvedValue(updatedTotalScore);
+        usersService.incrementTotalScore.mockResolvedValue(
+          IncrementTotalScoreMapper.from({ totalScore: updatedTotalScore, tierId: 1 }),
+        );
         tiersService.findTierByUserTotalScore.mockRejectedValue(
           new NotFoundException('티어 정보를 찾을 수 없습니다.'),
         );
