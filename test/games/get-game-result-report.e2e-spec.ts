@@ -412,6 +412,16 @@ describe('GET /api/games/:gameSessionId/reports (e2e)', () => {
       expect(body.message).toBe('존재하지 않는 게임 세션입니다.');
     });
 
+    it('비회원이 회원의 게임 결과 리포트를 조회하면 403 에러를 응답한다.', async () => {
+      const response = await request(app.getHttpServer())
+        .get(`/api/games/${savedMemberGameSessionId}/reports`)
+        .expect(403);
+
+      const body = response.body as ErrorResponse;
+      expect(body.success).toBe(false);
+      expect(body.message).toBe('해당 게임 결과 리포트에 접근할 수 없습니다.');
+    });
+
     it('다른 회원의 게임 결과 리포트를 조회하면 403 에러를 응답한다.', async () => {
       const prisma = new PrismaClient({ datasourceUrl: process.env.DATABASE_URL });
       const anotherUser = await prisma.user.create({
