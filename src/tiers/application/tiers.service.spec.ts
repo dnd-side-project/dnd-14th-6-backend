@@ -1,10 +1,9 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
+import { Test, TestingModule } from '@nestjs/testing';
 
-import { TiersService } from './tiers.service';
-
-import { ITiersRepository, TIER_REPOSITORY } from '../domain/tiers.repository.interface';
 import { Tier } from '../domain/tiers.entity';
+import { ITiersRepository, TIER_REPOSITORY } from '../domain/tiers.repository.interface';
+import { TiersService } from './tiers.service';
 
 describe('TiersService', () => {
   let service: TiersService;
@@ -14,6 +13,7 @@ describe('TiersService', () => {
     mockTiersRepository = {
       findAll: jest.fn(),
       findLowestTier: jest.fn(),
+      findTierByUserTotalScore: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -94,6 +94,31 @@ describe('TiersService', () => {
 
       await expect(service.getLowestTier()).rejects.toThrow(NotFoundException);
       expect(mockTiersRepository.findLowestTier).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('findTierByUserTotalScore', () => {
+    it('점수에 해당하는 티어를 반환한다.', async () => {
+      const mockTier = new Tier(
+        2,
+        'Silver',
+        100,
+        'https://example.com/silver.png',
+        'https://example.com/silver-icon.png',
+      );
+      mockTiersRepository.findTierByUserTotalScore.mockResolvedValue(mockTier);
+
+      const result = await service.findTierByUserTotalScore(150n);
+
+      expect(result).toEqual(mockTier);
+      expect(mockTiersRepository.findTierByUserTotalScore).toHaveBeenCalledWith(150n);
+    });
+
+    it('점수에 해당하는 티어가 없으면 NotFoundException 발생', async () => {
+      mockTiersRepository.findTierByUserTotalScore.mockResolvedValue(null);
+
+      await expect(service.findTierByUserTotalScore(150n)).rejects.toThrow(NotFoundException);
+      expect(mockTiersRepository.findTierByUserTotalScore).toHaveBeenCalledWith(150n);
     });
   });
 });
