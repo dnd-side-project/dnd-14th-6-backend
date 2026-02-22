@@ -1,6 +1,8 @@
 import { NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 
+import { TiersService } from '@tiers/application/tiers.service';
+import { Tier } from '@tiers/domain/tiers.entity';
 import { UsersService } from '@users/application/users.service';
 
 import { GameDifficultyMode } from '../domain/game.business-rules';
@@ -18,7 +20,10 @@ describe('GameFacade', () => {
   let gameSessionService: jest.Mocked<
     Pick<GameSessionService, 'createGameSession' | 'validateAndCalculateScore'>
   >;
-  let usersService: jest.Mocked<Pick<UsersService, 'incrementTotalScore'>>;
+  let usersService: jest.Mocked<
+    Pick<UsersService, 'incrementTotalScore' | 'updateTierId' | 'findById'>
+  >;
+  let tiersService: jest.Mocked<Pick<TiersService, 'findTierByUserTotalScore'>>;
 
   beforeEach(async () => {
     const mockGamesService = {};
@@ -30,6 +35,12 @@ describe('GameFacade', () => {
 
     const mockUsersService = {
       incrementTotalScore: jest.fn(),
+      updateTierId: jest.fn(),
+      findById: jest.fn(),
+    };
+
+    const mockTiersService = {
+      findTierByUserTotalScore: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -38,12 +49,14 @@ describe('GameFacade', () => {
         { provide: GamesService, useValue: mockGamesService },
         { provide: GameSessionService, useValue: mockGameSessionService },
         { provide: UsersService, useValue: mockUsersService },
+        { provide: TiersService, useValue: mockTiersService },
       ],
     }).compile();
 
     facade = module.get<GameFacade>(GameFacade);
     gameSessionService = module.get(GameSessionService);
     usersService = module.get(UsersService);
+    tiersService = module.get(TiersService);
   });
 
   describe('saveGameSession', () => {
@@ -55,15 +68,25 @@ describe('GameFacade', () => {
     };
 
     describe('✅ 성공 케이스', () => {
-      it('회원인 경우 게임 세션 저장 후 totalScore를 증분 갱신하고 gameSessionId와 totalScore를 반환한다.', async () => {
+      it('회원인 경우 기존 티어와 다르면 티어를 승급시킨다.', async () => {
         const userId = 1n;
         const gameSessionId = 100n;
         const serverScore = 10;
         const updatedTotalScore = 150n;
+        const currentTierId = 1;
+        const newTier = Tier.from({
+          id: 2,
+          name: 'silver',
+          minScore: 100,
+          imageUrl: null,
+          iconUrl: null,
+        });
 
         gameSessionService.validateAndCalculateScore.mockResolvedValue(serverScore);
         gameSessionService.createGameSession.mockResolvedValue(gameSessionId);
         usersService.incrementTotalScore.mockResolvedValue(updatedTotalScore);
+        tiersService.findTierByUserTotalScore.mockResolvedValue(newTier);
+        usersService.findById.mockResolvedValue({ tierId: currentTierId } as any);
 
         const result = await facade.saveGameSession({ ...baseDto, userId });
 
@@ -78,9 +101,41 @@ describe('GameFacade', () => {
           expect.objectContaining({ userId, score: serverScore }),
         );
         expect(usersService.incrementTotalScore).toHaveBeenCalledWith(userId, BigInt(serverScore));
+        expect(tiersService.findTierByUserTotalScore).toHaveBeenCalledWith(updatedTotalScore);
+        expect(usersService.findById).toHaveBeenCalledWith(userId);
+        expect(usersService.updateTierId).toHaveBeenCalledWith(userId, newTier.id);
       });
 
-      it('비회원인 경우 게임 세션만 저장하고 totalScore 관련 로직을 수행하지 않으며 totalScore는 undefined로 반환한다.', async () => {
+      it('회원인 경우 기존 티어와 동일하면 updateTierId를 호출하지 않는다.', async () => {
+        const userId = 1n;
+        const gameSessionId = 100n;
+        const serverScore = 10;
+        const updatedTotalScore = 150n;
+        const sameTier = Tier.from({
+          id: 2,
+          name: 'silver',
+          minScore: 100,
+          imageUrl: null,
+          iconUrl: null,
+        });
+
+        gameSessionService.validateAndCalculateScore.mockResolvedValue(serverScore);
+        gameSessionService.createGameSession.mockResolvedValue(gameSessionId);
+        usersService.incrementTotalScore.mockResolvedValue(updatedTotalScore);
+        tiersService.findTierByUserTotalScore.mockResolvedValue(sameTier);
+        usersService.findById.mockResolvedValue({ tierId: sameTier.id } as any);
+
+        const result = await facade.saveGameSession({ ...baseDto, userId });
+
+        expect(result.gameSessionId).toBe(gameSessionId);
+        expect(result.totalScore).toBe(updatedTotalScore);
+
+        expect(tiersService.findTierByUserTotalScore).toHaveBeenCalledWith(updatedTotalScore);
+        expect(usersService.findById).toHaveBeenCalledWith(userId);
+        expect(usersService.updateTierId).not.toHaveBeenCalled();
+      });
+
+      it('비회원인 경우 게임 세션만 저장하고 totalScore 및 티어 관련 로직을 수행하지 않는다.', async () => {
         const gameSessionId = 200n;
         const serverScore = 10;
 
@@ -93,6 +148,8 @@ describe('GameFacade', () => {
         expect(result.totalScore).toBeUndefined();
 
         expect(usersService.incrementTotalScore).not.toHaveBeenCalled();
+        expect(tiersService.findTierByUserTotalScore).not.toHaveBeenCalled();
+        expect(usersService.updateTierId).not.toHaveBeenCalled();
       });
     });
 
@@ -121,6 +178,30 @@ describe('GameFacade', () => {
         );
 
         expect(usersService.incrementTotalScore).not.toHaveBeenCalled();
+      });
+
+      it('findTierByUserTotalScore에서 NotFoundException이 발생하면 이전 게임 세션 저장과 점수 증분도 롤백된다.', async () => {
+        const serverScore = 10;
+        const updatedTotalScore = 150n;
+
+        gameSessionService.validateAndCalculateScore.mockResolvedValue(serverScore);
+        gameSessionService.createGameSession.mockResolvedValue(100n);
+        usersService.incrementTotalScore.mockResolvedValue(updatedTotalScore);
+        tiersService.findTierByUserTotalScore.mockRejectedValue(
+          new NotFoundException('티어 정보를 찾을 수 없습니다.'),
+        );
+
+        await expect(facade.saveGameSession({ ...baseDto, userId })).rejects.toThrow(
+          NotFoundException,
+        );
+
+        // @Transactional에 의해 트랜잭션 전체가 롤백된다
+        // → createGameSession으로 저장된 게임 세션도 롤백
+        // → incrementTotalScore로 증분된 totalScore도 롤백
+        expect(gameSessionService.createGameSession).toHaveBeenCalled();
+        expect(usersService.incrementTotalScore).toHaveBeenCalledWith(userId, BigInt(serverScore));
+        expect(tiersService.findTierByUserTotalScore).toHaveBeenCalledWith(updatedTotalScore);
+        expect(usersService.updateTierId).not.toHaveBeenCalled();
       });
 
       it('incrementTotalScore 실패 시 에러가 전파되어 게임 세션 저장도 롤백되고, user의 totalScore는 변경되지 않는다.', async () => {
