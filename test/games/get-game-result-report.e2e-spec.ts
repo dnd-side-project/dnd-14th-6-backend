@@ -14,6 +14,7 @@ import { ResponseInterceptor } from '@common/interceptors/response.interceptor';
 import { seedCategories } from '../../prisma/seeds/category.seed';
 import { seedGitProblems } from '../../prisma/seeds/seed-problems-git';
 import { seedSubCategories } from '../../prisma/seeds/subcategory.seed';
+import { seedTiers } from '../../prisma/seeds/tier.seed';
 import { AppModule } from '../../src/app.module';
 
 interface SaveSuccessResponse {
@@ -143,6 +144,7 @@ describe('GET /api/games/:gameSessionId/reports (e2e)', () => {
     });
 
     const prisma = new PrismaClient({ datasourceUrl: databaseUrl });
+    await seedTiers(prisma);
     await seedCategories(prisma);
     await seedSubCategories(prisma);
     await seedGitProblems(prisma);
@@ -178,6 +180,7 @@ describe('GET /api/games/:gameSessionId/reports (e2e)', () => {
         refreshToken: '',
         profileImage: null,
         githubUrl: null,
+        tierId: 1,
       },
     });
     await memberPrisma.$disconnect();
@@ -421,6 +424,7 @@ describe('GET /api/games/:gameSessionId/reports (e2e)', () => {
           refreshToken: '',
           profileImage: null,
           githubUrl: null,
+          tierId: 1,
         },
       });
       await prisma.$disconnect();
