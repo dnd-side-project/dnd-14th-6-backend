@@ -35,8 +35,15 @@ export class GameSessionService {
 
   /*
    * @description 게임종료후 게임결과 리포트 조회
+   * (1) 응답데이터
    * - 비회원: gameSessionId만 사용, 결과데이터 일부 열람 제한
    * - 회원: gameSessionId, userId 모두 사용, 전체 열람 가능
+   *
+   * (2) 열람제어
+   * - 비회원은 다른 비회원의 게임결과 리포트를 열람할 수 있다.
+   * - 회원은 비회원의 게임결과 리포트를 열람할 수 있다.
+   * - 비회원은 회원의 게임결과 리포트를 열람할 수 없다. (403 예외 발생)
+   * - 회원은 다른회원의 게임결과 리포트를 열람할 수 없다. (403 예외 발생)
    */
   async getGameResultReport(gameSessionId: bigint, userId?: bigint): Promise<GameResultReport> {
     const gameResultReport = await this.gameRepository.findGameResultReport(gameSessionId);
@@ -49,7 +56,7 @@ export class GameSessionService {
       return gameResultReport.toGuestView(GUEST_MAX_VIEWABLE_PROBLEMS);
     }
 
-    if (userId && userId !== gameResultReport.summary.userId) {
+    if (!userId || userId !== gameResultReport.summary.userId) {
       throw new ForbiddenException('해당 게임 결과 리포트에 접근할 수 없습니다.');
     }
 
