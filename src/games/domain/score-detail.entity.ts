@@ -1,5 +1,3 @@
-import { ScoreDetailOriginData } from '../infrastructure/types/score-detail-origin-data';
-
 export class CategoryScore {
   constructor(
     public readonly category: string,
@@ -26,11 +24,12 @@ export class DifficultyScoreDetail {
 }
 
 export class ScoreDetailMapper {
-  /**
-   * @description 난이도 별 스코어와 카테고리를 그룹화하고 점수가 높은 순으로 정렬
-   */
   static groupAndSortScoreDetail(
-    scoreDetailOriginData: ScoreDetailOriginData[],
+    scoreDetailOriginData: Array<{
+      difficultyMode: string;
+      category: string;
+      totalScore: bigint;
+    }>,
   ): DifficultyScoreDetail[] {
     const difficultyModeGroup = new Map<
       string,
