@@ -1,3 +1,4 @@
+import { IncrementTotalScoreMapper } from './increment-total-score.mapper';
 import { User } from './users.entity';
 
 export interface ScoreDetailOriginData {
@@ -26,7 +27,7 @@ export interface IUsersRepository {
   getAverageScore(): Promise<bigint>;
   getRankingByScore(totalScore: bigint): Promise<number>;
   getScoreDetailByUserId(userId: bigint): Promise<ScoreDetailOriginData[]>;
-  incrementTotalScore(userId: bigint, scoreToAdd: bigint): Promise<bigint>;
+  incrementTotalScore(userId: bigint, scoreToAdd: bigint): Promise<IncrementTotalScoreMapper>;
   updateTierId(userId: bigint, tierId: number): Promise<void>;
 }
 

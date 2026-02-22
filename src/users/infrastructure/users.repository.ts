@@ -5,6 +5,7 @@ import { TransactionalAdapterPrisma } from '@nestjs-cls/transactional-adapter-pr
 
 import { PrismaService } from '@prisma/prisma.service';
 
+import { IncrementTotalScoreMapper } from '../domain/increment-total-score.mapper';
 import { User } from '../domain/users.entity';
 import { IUsersRepository, ScoreDetailOriginData } from '../domain/users.repository.interface';
 
@@ -159,13 +160,16 @@ export class UsersRepositoryImpl implements IUsersRepository {
    * @description 유저의 totalScore 증분 업데이트
    * - @Transactional() 컨텍스트 내에서 호출 시 해당 트랜잭션에 참여
    */
-  async incrementTotalScore(userId: bigint, scoreToAdd: bigint): Promise<bigint> {
+  async incrementTotalScore(
+    userId: bigint,
+    scoreToAdd: bigint,
+  ): Promise<IncrementTotalScoreMapper> {
     const user = await this.txHost.tx.user.update({
       where: { id: userId },
       data: { totalScore: { increment: scoreToAdd } },
-      select: { totalScore: true },
+      select: { totalScore: true, tierId: true },
     });
-    return user.totalScore;
+    return IncrementTotalScoreMapper.from({ totalScore: user.totalScore, tierId: user.tierId });
   }
 
   /**
