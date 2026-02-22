@@ -75,7 +75,8 @@ export function ApiGetGameResultReport() {
     ]),
     createSwaggerForbidden([
       {
-        description: '(회원) 다른 회원의 게임결과 리포트 조회 접근제한',
+        description:
+          '유저가 다른유저의 게임결과 리포트 조회할 경우 & 비회원이 유저의 게임결과 리포트 조회할 경우 접근제한',
         message: '해당 게임 결과 리포트에 접근할 수 없습니다.',
       },
     ]),
