@@ -7,7 +7,7 @@ import { PrismaService } from '@prisma/prisma.service';
 
 import { IncrementTotalScoreMapper } from '../domain/increment-total-score.mapper';
 import { User } from '../domain/users.entity';
-import { IUsersRepository, ScoreDetailOriginData } from '../domain/users.repository.interface';
+import { IUsersRepository } from '../domain/users.repository.interface';
 
 @Injectable()
 export class UsersRepositoryImpl implements IUsersRepository {
@@ -128,32 +128,6 @@ export class UsersRepositoryImpl implements IUsersRepository {
     });
 
     return count + 1;
-  }
-
-  /**
-   * @description 유저의 플레이한 난이도, 카테고리 별 그룹화하여 획득한 총 점수(SUM)와 카테고리 정보를 조회
-   * FIXME: 해당 로직은 게임 모듈 내로 이동 후 facade pattern 을 사용하는 방향으로 리팩터링 필요
-   */
-  async getScoreDetailByUserId(userId: bigint): Promise<ScoreDetailOriginData[]> {
-    const results = await this.prisma.$queryRaw<
-      { difficulty_mode: string; category: string; total_score: bigint }[]
-    >`
-      SELECT
-        gs.difficulty_mode,
-        c.name as category,
-        SUM(gs.score) as total_score
-      FROM game_sessions gs
-      JOIN categories c ON gs.category_id = c.id
-      WHERE gs.user_id = ${userId}
-      GROUP BY gs.difficulty_mode, c.name
-      ORDER BY gs.difficulty_mode, total_score DESC
-    `;
-
-    return results.map((row) => ({
-      difficultyMode: row.difficulty_mode,
-      category: row.category,
-      totalScore: row.total_score,
-    }));
   }
 
   /*
