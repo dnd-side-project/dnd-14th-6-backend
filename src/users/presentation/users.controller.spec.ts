@@ -53,11 +53,11 @@ describe('UsersController', () => {
     mockUsersService = {
       findById: jest.fn(),
       getRanksByPageAndSize: jest.fn(),
-      getUserStats: jest.fn(),
     } as unknown as jest.Mocked<UsersService>;
 
     mockUsersFacade = {
       getUserAnalysis: jest.fn(),
+      getUserStats: jest.fn(),
     } as unknown as jest.Mocked<UsersFacade>;
 
     const module: TestingModule = await Test.createTestingModule({
@@ -270,13 +270,13 @@ describe('UsersController', () => {
     });
 
     beforeEach(() => {
-      mockUsersService.getUserStats.mockResolvedValue(mockUserStats);
+      mockUsersFacade.getUserStats.mockResolvedValue(mockUserStats);
     });
 
-    it('서비스를 호출하여 유저 통계를 조회하는지 확인', async () => {
+    it('facade를 호출하여 유저 통계를 조회하는지 확인', async () => {
       await controller.getUserStats({ userId: 1n });
 
-      expect(mockUsersService.getUserStats).toHaveBeenCalledWith(1n);
+      expect(mockUsersFacade.getUserStats).toHaveBeenCalledWith(1n);
     });
 
     it('유저 통계 응답 DTO가 올바르게 반환되는지 확인', async () => {
