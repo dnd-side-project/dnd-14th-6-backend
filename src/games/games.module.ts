@@ -6,6 +6,7 @@ import { PrismaModule } from '@prisma/prisma.module';
 import { TiersModule } from '@tiers/tiers.module';
 import { UsersModule } from '@users/users.module';
 
+import { GameAnalyticsService } from './application/game-analytics.service';
 import { GameSessionService } from './application/game-session.service';
 import { GameStreamService } from './application/game-stream.service';
 import { GameFacade } from './application/game.facade';
@@ -18,6 +19,7 @@ import { GamesController } from './presentation/games.controller';
   imports: [forwardRef(() => AuthModule), PrismaModule, forwardRef(() => UsersModule), TiersModule],
   providers: [
     GameFacade,
+    GameAnalyticsService,
     GamesService,
     GameStreamService,
     GameSessionService,
@@ -27,6 +29,6 @@ import { GamesController } from './presentation/games.controller';
     },
   ],
   controllers: [GamesController],
-  exports: [GamesService, GameSessionService],
+  exports: [GameAnalyticsService, GamesService, GameSessionService],
 })
 export class GamesModule {}
