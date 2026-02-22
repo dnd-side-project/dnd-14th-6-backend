@@ -27,6 +27,7 @@ export interface IUsersRepository {
   getRankingByScore(totalScore: bigint): Promise<number>;
   getScoreDetailByUserId(userId: bigint): Promise<ScoreDetailOriginData[]>;
   incrementTotalScore(userId: bigint, scoreToAdd: bigint): Promise<bigint>;
+  updateTierId(userId: bigint, tierId: number): Promise<void>;
 }
 
 export const USER_REPOSITORY = Symbol('IUsersRepository');

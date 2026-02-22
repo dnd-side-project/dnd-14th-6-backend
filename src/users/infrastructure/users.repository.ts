@@ -167,4 +167,15 @@ export class UsersRepositoryImpl implements IUsersRepository {
     });
     return user.totalScore;
   }
+
+  /**
+   * @description 유저의 tierId 업데이트
+   * - @Transactional() 컨텍스트 내에서 호출 시 해당 트랜잭션에 참여
+   */
+  async updateTierId(userId: bigint, tierId: number): Promise<void> {
+    await this.txHost.tx.user.update({
+      where: { id: userId },
+      data: { tierId },
+    });
+  }
 }
