@@ -7,6 +7,7 @@ import {
 } from '@games/domain/user-mistake-analysis.entity';
 import { Tier } from '@tiers/domain/tiers.entity';
 
+import { UsersFacade } from '../application/users.facade';
 import { UsersService } from '../application/users.service';
 import { CategoryScore, DifficultyScoreDetail, UserStats } from '../domain/user-stats.entity';
 import { DEFAULT_PROFILE_IMAGE, RankScope } from '../domain/user.business-rule';
@@ -46,14 +47,18 @@ function createMockUser(overrides: Partial<User> = {}): User {
 describe('UsersController', () => {
   let controller: UsersController;
   let mockUsersService: jest.Mocked<UsersService>;
+  let mockUsersFacade: jest.Mocked<UsersFacade>;
 
   beforeEach(async () => {
     mockUsersService = {
       findById: jest.fn(),
       getRanksByPageAndSize: jest.fn(),
-      getUserAnalysis: jest.fn(),
       getUserStats: jest.fn(),
     } as unknown as jest.Mocked<UsersService>;
+
+    mockUsersFacade = {
+      getUserAnalysis: jest.fn(),
+    } as unknown as jest.Mocked<UsersFacade>;
 
     const module: TestingModule = await Test.createTestingModule({
       controllers: [UsersController],
@@ -61,6 +66,10 @@ describe('UsersController', () => {
         {
           provide: UsersService,
           useValue: mockUsersService,
+        },
+        {
+          provide: UsersFacade,
+          useValue: mockUsersFacade,
         },
       ],
     }).compile();
@@ -199,13 +208,13 @@ describe('UsersController', () => {
         frequentWrongCategories: mockCategories,
       });
 
-      mockUsersService.getUserAnalysis.mockResolvedValue(mockAnalysis);
+      mockUsersFacade.getUserAnalysis.mockResolvedValue(mockAnalysis);
     });
 
     it('서비스를 호출하여 사용자 실수 분석 데이터를 조회하는지 확인', async () => {
       await controller.getUserAnalysis({ userId });
 
-      expect(mockUsersService.getUserAnalysis).toHaveBeenCalledWith(userId);
+      expect(mockUsersFacade.getUserAnalysis).toHaveBeenCalledWith(userId);
     });
 
     it('자주 틀린 명령어 목록이 반환되는지 확인', async () => {
