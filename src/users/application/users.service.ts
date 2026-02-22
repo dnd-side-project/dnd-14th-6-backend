@@ -1,8 +1,6 @@
 import { ForbiddenException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 
 import { IncrementTotalScoreMapper } from '../domain/increment-total-score.mapper';
-import { UserStats } from '../domain/user-stats.entity';
-import { UserStatsMapper } from '../domain/user-stats.mapper';
 import { RankScope } from '../domain/user.business-rule';
 import { User } from '../domain/users.entity';
 import { IUsersRepository, USER_REPOSITORY } from '../domain/users.repository.interface';
@@ -103,11 +101,10 @@ export class UsersService {
   /**
    * @description 유저의 랭킹, 티어, 총 점수, 카테고리 별 누적점수를 조회
    */
-  async getUserStats(userId: bigint): Promise<UserStats> {
-    const [user, avgScore, scoreDetailOriginData] = await Promise.all([
+  async getUserStats(userId: bigint): Promise<{ user: User; avgScore: bigint; ranking: number }> {
+    const [user, avgScore] = await Promise.all([
       this.usersRepository.findByIdWithTier(userId),
       this.usersRepository.getAverageScore(),
-      this.usersRepository.getScoreDetailByUserId(userId),
     ]);
 
     if (!user) {
@@ -115,15 +112,11 @@ export class UsersService {
     }
 
     const ranking = await this.usersRepository.getRankingByScore(user.totalScore);
-    const scoreDetail = UserStatsMapper.groupAndSortScoreDetail(scoreDetailOriginData);
 
-    return UserStats.from({
-      nickname: user.nickname,
-      totalScore: user.totalScore,
-      averageScore: avgScore,
+    return {
+      user: User.from(user),
+      avgScore,
       ranking,
-      tier: user.tier,
-      scoreDetail,
-    });
+    };
   }
 }
