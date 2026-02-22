@@ -65,7 +65,7 @@ export class GameFacade {
     const totalScore = await this.userService.incrementTotalScore(userId, BigInt(serverScore));
 
     const currentUser = await this.userService.findById(userId);
-    const newTier = await this.tiersService.findTierByScore(totalScore);
+    const newTier = await this.tiersService.findTierByUserTotalScore(totalScore);
     if (currentUser.tierId !== newTier.id) {
       await this.userService.updateTierId(userId, newTier.id);
     }
