@@ -101,6 +101,13 @@ export class UsersService {
   }
 
   /**
+   * @description 유저의 tierId 업데이트
+   */
+  async updateTierId(userId: bigint, tierId: number): Promise<void> {
+    await this.usersRepository.updateTierId(userId, tierId);
+  }
+
+  /**
    * @description 유저의 랭킹, 티어, 총 점수, 카테고리 별 누적점수를 조회
    */
   async getUserStats(userId: bigint): Promise<UserStats> {
