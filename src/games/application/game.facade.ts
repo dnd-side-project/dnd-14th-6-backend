@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 
 import { Transactional } from '@nestjs-cls/transactional';
 
+import { TiersService } from '@tiers/application/tiers.service';
 import { UsersService } from '@users/application/users.service';
 
 import {
@@ -15,6 +16,7 @@ export class GameFacade {
   constructor(
     private readonly gameSessionService: GameSessionService,
     private readonly userService: UsersService,
+    private readonly tiersService: TiersService,
   ) {}
 
   /*
@@ -46,7 +48,12 @@ export class GameFacade {
         facadeDto.userId,
         BigInt(serverScore),
       );
-      // FIXME: 게임점수 저장후, 유저의 totalScore가 다음티어로 승급이 되는지 확인. (현재티어보다 한단계높은 티어의 minScore이상인지 확인)
+
+      // 티어 승급 체크 & 업데이트
+      const newTier = await this.tiersService.findTierByScore(totalScore);
+      if (newTier) {
+        await this.userService.updateTierId(facadeDto.userId, newTier.id);
+      }
     }
 
     return {
