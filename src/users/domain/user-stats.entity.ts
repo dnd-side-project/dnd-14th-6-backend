@@ -1,29 +1,7 @@
+import { DifficultyScoreDetail } from '@games/domain/score-detail.entity';
 import { Tier } from '@tiers/domain/tiers.entity';
 
-export class CategoryScore {
-  constructor(
-    public readonly category: string,
-    public readonly score: bigint,
-  ) {}
-
-  static from(data: Pick<CategoryScore, 'category' | 'score'>): CategoryScore {
-    return new CategoryScore(data.category, data.score);
-  }
-}
-
-export class DifficultyScoreDetail {
-  constructor(
-    public readonly difficultyMode: string,
-    public readonly totalScore: bigint,
-    public readonly categoryScores: CategoryScore[],
-  ) {}
-
-  static from(
-    data: Pick<DifficultyScoreDetail, 'difficultyMode' | 'totalScore' | 'categoryScores'>,
-  ): DifficultyScoreDetail {
-    return new DifficultyScoreDetail(data.difficultyMode, data.totalScore, data.categoryScores);
-  }
-}
+export { CategoryScore, DifficultyScoreDetail } from '@games/domain/score-detail.entity';
 
 export class UserStats {
   constructor(

@@ -4,6 +4,7 @@ import { AuthModule } from '@auth/auth.module';
 
 import { GamesModule } from '@games/games.module';
 
+import { UsersFacade } from './application/users.facade';
 import { UsersService } from './application/users.service';
 import { USER_REPOSITORY } from './domain/users.repository.interface';
 import { UsersRepositoryImpl } from './infrastructure/users.repository';
@@ -14,6 +15,7 @@ import { UsersController } from './presentation/users.controller';
   controllers: [UsersController],
   providers: [
     UsersService,
+    UsersFacade,
     {
       provide: USER_REPOSITORY,
       useClass: UsersRepositoryImpl,

@@ -1,21 +1,14 @@
 import { ForbiddenException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 
-import { GamesService } from '@games/application/games.service';
-import { UserMistakeAnalysis } from '@games/domain/user-mistake-analysis.entity';
-
 import { IncrementTotalScoreMapper } from '../domain/increment-total-score.mapper';
-import { UserStats } from '../domain/user-stats.entity';
-import { UserStatsMapper } from '../domain/user-stats.mapper';
 import { RankScope } from '../domain/user.business-rule';
 import { User } from '../domain/users.entity';
 import { IUsersRepository, USER_REPOSITORY } from '../domain/users.repository.interface';
+import { GetUserStatsServiceResponseDto } from './service-dto/get-user-stats.service-dto';
 
 @Injectable()
 export class UsersService {
-  constructor(
-    @Inject(USER_REPOSITORY) private readonly usersRepository: IUsersRepository,
-    private readonly gamesService: GamesService,
-  ) {}
+  constructor(@Inject(USER_REPOSITORY) private readonly usersRepository: IUsersRepository) {}
 
   /**
    * @description id로 유저 정보 조회
@@ -89,11 +82,6 @@ export class UsersService {
     return this.usersRepository.updateRefreshToken(userId, refreshToken);
   }
 
-  // FIXME: user facade 도입을 통해 도메인 결합 분리되도록 리팩터링 필요
-  async getUserAnalysis(userId: bigint): Promise<UserMistakeAnalysis> {
-    return this.gamesService.getUserMistakeAnalysis(userId);
-  }
-
   /**
    * @description 유저의 totalScore 증분 업데이트
    */
@@ -114,11 +102,10 @@ export class UsersService {
   /**
    * @description 유저의 랭킹, 티어, 총 점수, 카테고리 별 누적점수를 조회
    */
-  async getUserStats(userId: bigint): Promise<UserStats> {
-    const [user, avgScore, scoreDetailOriginData] = await Promise.all([
+  async getUserStats(userId: bigint): Promise<GetUserStatsServiceResponseDto> {
+    const [user, avgScore] = await Promise.all([
       this.usersRepository.findByIdWithTier(userId),
       this.usersRepository.getAverageScore(),
-      this.usersRepository.getScoreDetailByUserId(userId),
     ]);
 
     if (!user) {
@@ -126,15 +113,11 @@ export class UsersService {
     }
 
     const ranking = await this.usersRepository.getRankingByScore(user.totalScore);
-    const scoreDetail = UserStatsMapper.groupAndSortScoreDetail(scoreDetailOriginData);
 
-    return UserStats.from({
-      nickname: user.nickname,
-      totalScore: user.totalScore,
-      averageScore: avgScore,
+    return {
+      user: User.from(user),
+      avgScore,
       ranking,
-      tier: user.tier,
-      scoreDetail,
-    });
+    };
   }
 }

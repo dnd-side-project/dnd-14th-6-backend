@@ -1,12 +1,35 @@
-import { ScoreDetailOriginData } from './users.repository.interface';
-import { CategoryScore, DifficultyScoreDetail } from './user-stats.entity';
+export class CategoryScore {
+  constructor(
+    public readonly category: string,
+    public readonly score: bigint,
+  ) {}
 
-export class UserStatsMapper {
-  /**
-   * @description 난이도 별 스코어와 카테고리를 그룹화하고 점수가 높은 순으로 정렬
-   */
+  static from(data: Pick<CategoryScore, 'category' | 'score'>): CategoryScore {
+    return new CategoryScore(data.category, data.score);
+  }
+}
+
+export class DifficultyScoreDetail {
+  constructor(
+    public readonly difficultyMode: string,
+    public readonly totalScore: bigint,
+    public readonly categoryScores: CategoryScore[],
+  ) {}
+
+  static from(
+    data: Pick<DifficultyScoreDetail, 'difficultyMode' | 'totalScore' | 'categoryScores'>,
+  ): DifficultyScoreDetail {
+    return new DifficultyScoreDetail(data.difficultyMode, data.totalScore, data.categoryScores);
+  }
+}
+
+export class ScoreDetailMapper {
   static groupAndSortScoreDetail(
-    scoreDetailOriginData: ScoreDetailOriginData[],
+    scoreDetailOriginData: Array<{
+      difficultyMode: string;
+      category: string;
+      totalScore: bigint;
+    }>,
   ): DifficultyScoreDetail[] {
     const difficultyModeGroup = new Map<
       string,

@@ -7,6 +7,7 @@ import { JwtAuthGuard } from '@auth/presentation/guards/jwt-auth.guard';
 import { OptionalJwtAuthGuard } from '@auth/presentation/guards/optional-jwt-auth.guard';
 import { UserOwnershipGuard } from '@auth/presentation/guards/user-ownership.guard';
 
+import { UsersFacade } from '../application/users.facade';
 import { UsersService } from '../application/users.service';
 import { ApiGetMyInfo } from './decorators/get-my-info.swagger.decorator';
 import { ApiGetRanks } from './decorators/get-ranks-swagger.decorator';
@@ -20,7 +21,10 @@ import { GetUserStatsParamDto, GetUserStatsResponseDto } from './dto/get-user-st
 @ApiTags('Users')
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly usersFacade: UsersFacade,
+  ) {}
 
   @Get('/me')
   @ApiGetMyInfo()
@@ -64,7 +68,7 @@ export class UsersController {
   async getUserAnalysis(
     @Param() param: GetUserAnalysisParamDto,
   ): Promise<GetUserAnalysisResponseDto> {
-    const userAnalysis = await this.usersService.getUserAnalysis(param.userId);
+    const userAnalysis = await this.usersFacade.getUserAnalysis(param.userId);
 
     return GetUserAnalysisResponseDto.from(userAnalysis);
   }
@@ -77,7 +81,7 @@ export class UsersController {
   @CheckOwnership('userId')
   @ApiGetUserStats()
   async getUserStats(@Param() param: GetUserStatsParamDto): Promise<GetUserStatsResponseDto> {
-    const userStats = await this.usersService.getUserStats(param.userId);
+    const userStats = await this.usersFacade.getUserStats(param.userId);
 
     return GetUserStatsResponseDto.from(userStats);
   }
