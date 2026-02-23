@@ -7,7 +7,7 @@ export class UserStats {
   constructor(
     public readonly nickname: string,
     public readonly totalScore: bigint,
-    public readonly averageScore: bigint,
+    public readonly percentile: number,
     public readonly ranking: number,
     public readonly tier: Tier | null,
     public readonly scoreDetail: DifficultyScoreDetail[],
@@ -16,13 +16,13 @@ export class UserStats {
   static from(
     data: Pick<
       UserStats,
-      'nickname' | 'totalScore' | 'averageScore' | 'ranking' | 'tier' | 'scoreDetail'
+      'nickname' | 'totalScore' | 'percentile' | 'ranking' | 'tier' | 'scoreDetail'
     >,
   ): UserStats {
     return new UserStats(
       data.nickname,
       data.totalScore,
-      data.averageScore,
+      data.percentile,
       data.ranking,
       data.tier,
       data.scoreDetail,
