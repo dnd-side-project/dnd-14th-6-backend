@@ -4,6 +4,7 @@ import { IncrementTotalScoreMapper } from '../domain/increment-total-score.mappe
 import { RankScope } from '../domain/user.business-rule';
 import { User } from '../domain/users.entity';
 import { IUsersRepository, USER_REPOSITORY } from '../domain/users.repository.interface';
+import { GetUserStatsServiceResponseDto } from './service-dto/get-user-stats.service-dto';
 
 @Injectable()
 export class UsersService {
@@ -101,7 +102,7 @@ export class UsersService {
   /**
    * @description 유저의 랭킹, 티어, 총 점수, 카테고리 별 누적점수를 조회
    */
-  async getUserStats(userId: bigint): Promise<{ user: User; avgScore: bigint; ranking: number }> {
+  async getUserStats(userId: bigint): Promise<GetUserStatsServiceResponseDto> {
     const [user, avgScore] = await Promise.all([
       this.usersRepository.findByIdWithTier(userId),
       this.usersRepository.getAverageScore(),
