@@ -1,9 +1,10 @@
+import { BadRequestException } from '@nestjs/common';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty } from 'class-validator';
+
 import { plainToInstance, Transform } from 'class-transformer';
+import { IsNotEmpty } from 'class-validator';
 
 import { UserStats } from '../../domain/user-stats.entity';
-import { BadRequestException } from '@nestjs/common';
 
 export class GetUserStatsParamDto {
   @ApiProperty({
@@ -75,10 +76,10 @@ export class GetUserStatsResponseDto {
   totalScore: string;
 
   @ApiProperty({
-    description: '전체 유저 평균 점수 (BigInt 안정성을 위해 String)',
-    example: '190293',
+    description: '백분위 (상위 N%)',
+    example: 65.6,
   })
-  averageScore: string;
+  percentile: number;
 
   @ApiProperty({ description: '현재 랭킹', example: 131 })
   ranking: number;
@@ -100,7 +101,7 @@ export class GetUserStatsResponseDto {
     return plainToInstance(GetUserStatsResponseDto, {
       nickname: userStats.nickname,
       totalScore: userStats.totalScore.toString(),
-      averageScore: userStats.averageScore.toString(),
+      percentile: userStats.percentile,
       ranking: userStats.ranking,
       tier: userStats.tier
         ? { id: userStats.tier.id, name: userStats.tier.name, imageUrl: userStats.tier.imageUrl }

@@ -108,15 +108,10 @@ export class UsersRepositoryImpl implements IUsersRepository {
   }
 
   /**
-   * @description 전체 유저의 totalScore average 조회, 유저가 없을 경우 0 반환
+   * @description 전체 유저 수 조회
    */
-  async getAverageScore(): Promise<bigint> {
-    const result = await this.prisma.user.aggregate({
-      _avg: { totalScore: true },
-    });
-
-    const avgScore = result._avg.totalScore ?? 0;
-    return BigInt(Math.round(avgScore));
+  async getTotalUserCount(): Promise<number> {
+    return this.prisma.user.count();
   }
 
   /**

@@ -51,7 +51,7 @@ describe('UsersService', () => {
       updateRefreshToken: jest.fn(),
       findByIdWithTier: jest.fn(),
       isExistUser: jest.fn(),
-      getAverageScore: jest.fn(),
+      getTotalUserCount: jest.fn(),
       getRankingByScore: jest.fn(),
       incrementTotalScore: jest.fn(),
       updateTierId: jest.fn(),
@@ -145,7 +145,7 @@ describe('UsersService', () => {
     });
     beforeEach(() => {
       mockUsersRepository.findByIdWithTier.mockResolvedValue(mockUser);
-      mockUsersRepository.getAverageScore.mockResolvedValue(190294n);
+      mockUsersRepository.getTotalUserCount.mockResolvedValue(200);
       mockUsersRepository.getRankingByScore.mockResolvedValue(131);
     });
 
@@ -153,7 +153,7 @@ describe('UsersService', () => {
       await service.getUserStats(1n);
 
       expect(mockUsersRepository.findByIdWithTier).toHaveBeenCalledWith(1n);
-      expect(mockUsersRepository.getAverageScore).toHaveBeenCalled();
+      expect(mockUsersRepository.getTotalUserCount).toHaveBeenCalled();
     });
 
     it('유저가 없으면 NotFoundException을 던지는지 확인', async () => {
@@ -162,12 +162,12 @@ describe('UsersService', () => {
       await expect(service.getUserStats(999n)).rejects.toThrow(NotFoundException);
     });
 
-    it('조회된 유저와 평균 점수, 랭킹 정보를 반환하는지 확인', async () => {
+    it('조회된 유저와 전체 유저 수, 랭킹 정보를 반환하는지 확인', async () => {
       const result = await service.getUserStats(1n);
 
       expect(result.user.nickname).toBe('Jin Park');
       expect(result.user.totalScore).toBe(54610n);
-      expect(result.avgScore).toBe(190294n);
+      expect(result.totalUserCount).toBe(200);
       expect(result.ranking).toBe(131);
       expect(result.user.tier?.name).toBe('Master');
     });
