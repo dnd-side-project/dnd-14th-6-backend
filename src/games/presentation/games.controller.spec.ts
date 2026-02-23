@@ -500,6 +500,15 @@ describe('GamesController', () => {
 
           await expect(controller.getGameResultReport(param)).rejects.toThrow(NotFoundException);
         });
+
+        it('비회원이 회원의 게임 결과 리포트에 접근하면 ForbiddenException을 던진다.', async () => {
+          const param = createParamDto(7n);
+          gameSessionService.getGameResultReport.mockRejectedValue(
+            new ForbiddenException('해당 게임 결과 리포트에 접근할 수 없습니다.'),
+          );
+
+          await expect(controller.getGameResultReport(param)).rejects.toThrow(ForbiddenException);
+        });
       });
     });
   });

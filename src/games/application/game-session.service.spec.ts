@@ -341,13 +341,13 @@ describe('GameSessionService', () => {
 
     describe('회원용', () => {
       describe('✅ 성공 케이스', () => {
-        it('게임 결과 리포트를 정상적으로 반환한다.', async () => {
+        it('본인의 게임 결과 리포트를 정상적으로 반환한다.', async () => {
           const gameSessionId = 7n;
           const userId = 1n;
           const expectedReport = createMockGameResultReport(userId);
           gameRepository.findGameResultReport.mockResolvedValue(expectedReport);
 
-          const result = await service.getGameResultReport(gameSessionId);
+          const result = await service.getGameResultReport(gameSessionId, userId);
 
           expect(result).toEqual(expectedReport);
           expect(result.isGuest).toBe(false);
@@ -377,6 +377,17 @@ describe('GameSessionService', () => {
           await expect(
             service.getGameResultReport(gameSessionId, accessRequestUserId),
           ).rejects.toThrow(new ForbiddenException('해당 게임 결과 리포트에 접근할 수 없습니다.'));
+        });
+
+        it('비회원이 회원의 게임 결과 리포트에 접근하면 ForbiddenException을 던진다.', async () => {
+          const gameSessionId = 7n;
+          const reportOwnerUserId = 1n;
+          const mockReport = createMockGameResultReport(reportOwnerUserId);
+          gameRepository.findGameResultReport.mockResolvedValue(mockReport);
+
+          await expect(service.getGameResultReport(gameSessionId)).rejects.toThrow(
+            new ForbiddenException('해당 게임 결과 리포트에 접근할 수 없습니다.'),
+          );
         });
       });
     });
