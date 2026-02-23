@@ -32,7 +32,7 @@ export class UsersFacade {
     return UserStats.from({
       nickname: userStatsSource.user.nickname,
       totalScore: userStatsSource.user.totalScore,
-      averageScore: userStatsSource.avgScore,
+      percentile: (userStatsSource.ranking / userStatsSource.totalUserCount) * 100,
       ranking: userStatsSource.ranking,
       tier: userStatsSource.user.tier,
       scoreDetail,
