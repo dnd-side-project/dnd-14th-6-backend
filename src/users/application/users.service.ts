@@ -100,12 +100,12 @@ export class UsersService {
   }
 
   /**
-   * @description 유저의 랭킹, 티어, 총 점수, 카테고리 별 누적점수를 조회
+   * @description 유저의 랭킹, 티어, 총 점수, 전체 유저 수를 조회
    */
   async getUserStats(userId: bigint): Promise<GetUserStatsServiceResponseDto> {
-    const [user, avgScore] = await Promise.all([
+    const [user, totalUserCount] = await Promise.all([
       this.usersRepository.findByIdWithTier(userId),
-      this.usersRepository.getAverageScore(),
+      this.usersRepository.getTotalUserCount(),
     ]);
 
     if (!user) {
@@ -116,7 +116,7 @@ export class UsersService {
 
     return {
       user: User.from(user),
-      avgScore,
+      totalUserCount,
       ranking,
     };
   }
