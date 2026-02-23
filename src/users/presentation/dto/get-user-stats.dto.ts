@@ -77,7 +77,7 @@ export class GetUserStatsResponseDto {
 
   @ApiProperty({
     description: '백분위 (상위 N%)',
-    example: 3,
+    example: 65.6,
   })
   percentile: number;
 
