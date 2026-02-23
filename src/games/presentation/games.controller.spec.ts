@@ -150,7 +150,7 @@ describe('GamesController', () => {
 
     beforeEach(() => {
       mockResponse = {
-        setHeader: jest.fn(),
+        set: jest.fn(),
         flushHeaders: jest.fn(),
         write: jest.fn(),
         end: jest.fn(),
@@ -169,7 +169,12 @@ describe('GamesController', () => {
         await controller.gameStream(query, mockRequest, mockResponse as Response);
 
         expect(gameStreamService.validateGameStreamParams).toHaveBeenCalledWith(query.categoryId);
-        expect(mockResponse.setHeader).toHaveBeenCalledWith('Content-Type', 'text/event-stream');
+        expect(mockResponse.set).toHaveBeenCalledWith({
+          'Content-Type': 'text/event-stream',
+          'Cache-Control': 'no-cache',
+          Connection: 'keep-alive',
+          'X-Accel-Buffering': 'no',
+        });
         expect(mockResponse.flushHeaders).toHaveBeenCalled();
         expect(gameStreamService.createGameStream).toHaveBeenCalledWith(
           query.categoryId,

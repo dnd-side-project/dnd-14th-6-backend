@@ -77,9 +77,12 @@ export class GamesController {
   ): Promise<void> {
     await this.gameStreamService.validateGameStreamParams(query.categoryId);
 
-    response.setHeader('Content-Type', 'text/event-stream');
-    response.setHeader('Cache-Control', 'no-cache');
-    response.setHeader('Connection', 'keep-alive');
+    response.set({
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      Connection: 'keep-alive',
+      'X-Accel-Buffering': 'no',
+    });
     response.flushHeaders();
 
     const disconnectSignal$ = new Subject<void>();

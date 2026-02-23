@@ -26,6 +26,24 @@ export function ApiGameStream() {
     }),
     ApiOkResponse({
       description: 'SSE 이벤트 스트림 (text/event-stream)',
+      headers: {
+        'Content-Type': {
+          description: 'SSE 스트림 컨텐츠 타입',
+          schema: { type: 'string', example: 'text/event-stream' },
+        },
+        'Cache-Control': {
+          description: '캐시 비활성화',
+          schema: { type: 'string', example: 'no-cache' },
+        },
+        Connection: {
+          description: '연결 유지',
+          schema: { type: 'string', example: 'keep-alive' },
+        },
+        'X-Accel-Buffering': {
+          description: '리버스 프록시 버퍼링 비활성화',
+          schema: { type: 'string', example: 'no' },
+        },
+      },
       content: {
         'text/event-stream': {
           examples: {
