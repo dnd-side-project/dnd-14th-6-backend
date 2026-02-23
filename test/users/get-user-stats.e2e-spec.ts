@@ -77,8 +77,11 @@ describe('GET /api/users/:userId/stats (e2e)', () => {
     const response = await request(app.getHttpServer()).get('/api/users/1/stats').expect(200);
     const body = response.body as { data: GetUserStatsResponseDto } & ApiResponseDto;
 
+    // 전체 유저 181명(타겟 1 + 랭커 130 + 하위 50), 131등
+    // percentile = Math.floor((131 / 181) * 1000) / 10 = 72.3
     expect(body.data.totalScore).toBe('54610');
     expect(body.data.ranking).toBe(131);
+    expect(body.data.percentile).toBe(72.3);
 
     const hardMode = body.data.scoreDetail.find((detail) => detail.difficultyMode === 'Hard');
     expect(hardMode).toBeDefined();
