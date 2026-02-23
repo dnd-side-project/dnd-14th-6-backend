@@ -254,7 +254,7 @@ describe('UsersController', () => {
     const mockUserStats = UserStats.from({
       nickname: 'Jin Park',
       totalScore: 54610n,
-      averageScore: 190293n,
+      percentile: 65.5,
       ranking: 131,
       tier: mockTier,
       scoreDetail: [
@@ -284,7 +284,7 @@ describe('UsersController', () => {
 
       expect(result.nickname).toBe('Jin Park');
       expect(result.totalScore).toBe('54610');
-      expect(result.averageScore).toBe('190293');
+      expect(result.percentile).toBe(65.5);
       expect(result.ranking).toBe(131);
     });
 
