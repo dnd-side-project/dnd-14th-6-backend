@@ -11,7 +11,7 @@ async function bootstrap() {
   app.setGlobalPrefix('api');
   app.useGlobalInterceptors(new ResponseInterceptor(app.get(Reflector)));
   app.enableCors({
-    origin: ['http://localhost:3000'],
+    origin: ['http://localhost:3000', 'https://orvit.net'],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
