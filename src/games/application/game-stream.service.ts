@@ -1,11 +1,5 @@
 import { Inject, Injectable, MessageEvent, NotFoundException } from '@nestjs/common';
-import { GAME_REPOSITORY, IGameRepository } from '../domain/games.repository.interface';
-import {
-  GAME_TIMER_DURATION,
-  GameDifficultyMode,
-  PROBLEM_INTERVAL_MAX,
-  PROBLEM_INTERVAL_MIN,
-} from '../domain/game.business-rules';
+
 import {
   concatMap,
   delay,
@@ -20,11 +14,19 @@ import {
   takeUntil,
   timer,
 } from 'rxjs';
+
 import {
   EndEventData,
   ProblemEventData,
   TimerEventData,
 } from '../domain/game-stream-events.interface';
+import {
+  GAME_TIMER_DURATION,
+  GameDifficultyMode,
+  PROBLEM_INTERVAL_MAX,
+  PROBLEM_INTERVAL_MIN,
+} from '../domain/game.business-rules';
+import { GAME_REPOSITORY, IGameRepository } from '../domain/games.repository.interface';
 
 @Injectable()
 export class GameStreamService {

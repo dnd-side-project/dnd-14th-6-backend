@@ -44,12 +44,20 @@ export const MAX_PROBLEMS_PER_GAME = 20;
 export const GUEST_MAX_VIEWABLE_PROBLEMS = 10;
 
 /** 문제 출제 최소 간격 (ms) */
-export const PROBLEM_INTERVAL_MIN = 1000;
+export const PROBLEM_INTERVAL_MIN = 2000;
 
-/** 문제 출제 최대 간격 (ms) - 게임 시간 내 전체 문제 전송을 보장하기 위해 여유분 포함 (2400ms) */
-export const PROBLEM_INTERVAL_MAX = Math.floor(
-  (GAME_TIMER_DURATION * 1000 * 0.8) / MAX_PROBLEMS_PER_GAME,
-);
+/** 마지막 문제 풀이를 위한 최소 보장 시간 (초) */
+export const MIN_TIME_FOR_LAST_PROBLEM = 5;
+
+/**
+ * 문제 출제 최대 간격 (ms)
+ *
+ * - 마지막 문제 도착 후 최소 {@link MIN_TIME_FOR_LAST_PROBLEM}초의 답변 여유를 보장합니다.
+ * - 계산: ({@link GAME_TIMER_DURATION} - {@link MIN_TIME_FOR_LAST_PROBLEM}) * 1000 / {@link MAX_PROBLEMS_PER_GAME}
+ * - 실제 랜덤 범위: [{@link PROBLEM_INTERVAL_MIN}, {@link PROBLEM_INTERVAL_MAX})
+ */
+export const PROBLEM_INTERVAL_MAX =
+  ((GAME_TIMER_DURATION - MIN_TIME_FOR_LAST_PROBLEM) * 1000) / MAX_PROBLEMS_PER_GAME;
 
 /**
  * 게임 세션 히스토리 정렬 기준
