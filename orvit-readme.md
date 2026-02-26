@@ -7,23 +7,23 @@
 
 ## 1. 기술 스택
 
-| 분류                | 기술                                             |
-| ------------------- | ------------------------------------------------ |
-| **Framework**       | NestJS v11, TypeScript v5.7                      |
-| **Database / ORM**  | PostgreSQL, Prisma v6                            |
-| **Authentication**  | Passport.js (Google OAuth, GitHub OAuth), JWT    |
-| **Real-time**       | Server-Sent Events (SSE)                         |
-| **Transaction**     | nestjs-cls/transactional + Prisma Adapter        |
-| **Validation**      | class-validator, class-transformer, Joi          |
-| **API Docs**        | Swagger (nestjs/swagger)                         |
-| **Monitoring**      | New Relic APM, Sentry, Grafana                   |
-| **CI/CD**           | GitHub Actions, Docker Hub                       |
-| **Infra**           | Oracle Cloud (OCI), NGINX, Network Load Balancer |
-| **IaC**             | Terraform                                        |
-| **Test**            | Jest, Supertest, Testcontainers                  |
-| **Runtime**         | Node.js 24                                       |
-| **Package Manager** | pnpm                                             |
-| **Code Quality**    | ESLint, Prettier, Husky, lint-staged             |
+| 분류                | 기술                                          |
+| ------------------- | --------------------------------------------- |
+| **Framework**       | NestJS v11, TypeScript v5.7                   |
+| **Database / ORM**  | PostgreSQL, Prisma v6                         |
+| **Authentication**  | Passport.js (Google OAuth, GitHub OAuth), JWT |
+| **Real-time**       | Server-Sent Events (SSE)                      |
+| **Transaction**     | nestjs-cls/transactional + Prisma Adapter     |
+| **Validation**      | class-validator, class-transformer, Joi       |
+| **API Docs**        | Swagger (nestjs/swagger)                      |
+| **Monitoring**      | New Relic APM                                 |
+| **CI/CD**           | GitHub Actions, Docker Hub                    |
+| **CSP**             | Oracle Cloud Infrastructure (OCI)             |
+| **IaC**             | Terraform                                     |
+| **Test**            | Jest, Supertest, Testcontainers               |
+| **Runtime**         | Node.js 24                                    |
+| **Package Manager** | pnpm                                          |
+| **Code Quality**    | ESLint, Prettier, Husky, lint-staged          |
 
 ---
 
@@ -32,12 +32,11 @@
 ![Architecture](./docs/architecture.png)
 
 - **Frontend**: Vercel에 배포된 Next.js(TypeScript) 클라이언트
-- **Load Balancing**: Oracle Cloud Network Load Balancer를 통한 트래픽 분산
-- **Application Server**: 2대의 VM에 NGINX 리버스 프록시 + Blue-Green 배포 (Docker 컨테이너)
-- **Database**: 별도 VM에서 운영되는 PostgreSQL
+- **Application Server**: NGINX 리버스 프록시 + Blue-Green 컨테이너 무중단 배포
+- **Database**: 별도 VM에서 Private 하게 운영되는 PostgreSQL
 - **CI/CD**: GitHub Actions -> Docker Hub -> OCI VM 자동 배포
-- **Monitoring**: Sentry(에러 추적) + Grafana(시스템 모니터링)
-- **IaC**: Terraform으로 인프라 코드 관리
+- **Monitoring**: Newrelic
+- **IaC**: Terraform을 통한 인프라 프로비저닝
 
 ---
 
