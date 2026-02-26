@@ -46,13 +46,18 @@ export const GUEST_MAX_VIEWABLE_PROBLEMS = 10;
 /** 문제 출제 최소 간격 (ms) */
 export const PROBLEM_INTERVAL_MIN = 2000;
 
+/** 마지막 문제 풀이를 위한 최소 보장 시간 (초) */
+export const MIN_TIME_FOR_LAST_PROBLEM = 5;
+
 /**
  * 문제 출제 최대 간격 (ms)
  *
- * - 실제 랜덤 범위: [PROBLEM_INTERVAL_MIN, PROBLEM_INTERVAL_MAX) → [2000ms, 2749ms]
- * - 20문제 * 최대 2749ms ≈ 54.98초로 마지막 문제 도착 후 최소 5초의 답변 여유 보장
+ * - 마지막 문제 도착 후 최소 {@link MIN_TIME_FOR_LAST_PROBLEM}초의 답변 여유를 보장합니다.
+ * - 계산: ({@link GAME_TIMER_DURATION} - {@link MIN_TIME_FOR_LAST_PROBLEM}) * 1000 / {@link MAX_PROBLEMS_PER_GAME}
+ * - 실제 랜덤 범위: [{@link PROBLEM_INTERVAL_MIN}, {@link PROBLEM_INTERVAL_MAX})
  */
-export const PROBLEM_INTERVAL_MAX = 2750;
+export const PROBLEM_INTERVAL_MAX =
+  ((GAME_TIMER_DURATION - MIN_TIME_FOR_LAST_PROBLEM) * 1000) / MAX_PROBLEMS_PER_GAME;
 
 /**
  * 게임 세션 히스토리 정렬 기준
