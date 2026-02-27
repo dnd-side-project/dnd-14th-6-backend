@@ -3,9 +3,17 @@
 > **Orvit**은 Git/Linux/Docker CLI 명령어를 퀴즈 형식으로 학습할 수 있는 교육용 게임 플랫폼의 백엔드 서비스입니다.
 > OAuth 소셜 로그인, 실시간 퀴즈 스트리밍(SSE), 게임 분석/통계, 티어 랭킹 시스템을 제공합니다.
 
+![00_main_view](./docs/main_view.jpg)
+![01_category_select](./docs/01_category_select.png)
+![02_game](./docs/02_game.png)
+![03_game_result_report](./docs/03_game_result_report.png)
+![04_user_report](./docs/04_user_report.png)
+![05_user_report2](./docs/05_user_report_2.png)
+![06_ranking](./docs/06_ranking.jpg)
+
 ---
 
-## 1. 기술 스택
+## 기술 스택
 
 | 분류                | 기술                                          |
 | ------------------- | --------------------------------------------- |
@@ -27,7 +35,7 @@
 
 ---
 
-## 2. 인프라 구조
+## 인프라 구조
 
 ![Architecture](./docs/architecture.png)
 
@@ -40,7 +48,51 @@
 
 ---
 
-## 3. 주요 기능
+## 프로젝트 아키텍처
+
+```text
+src/
+├── auth/                  # 인증 모듈 (OAuth, JWT)
+│   ├── application/       #   - AuthFacade, AuthService
+│   ├── domain/            #   - 비즈니스 규칙
+│   └── presentation/      #   - Controller, Guard, Strategy, DTO
+├── users/                 # 유저 모듈
+│   ├── application/       #   - UsersFacade, UsersService
+│   ├── domain/            #   - 엔티티, 인터페이스
+│   ├── infrastructure/    #   - Repository 구현체
+│   └── presentation/      #   - Controller, DTO
+├── games/                 # 게임 모듈 (핵심 도메인)
+│   ├── application/       #   - GameFacade, GameSessionService, GameStreamService, GameAnalyticsService
+│   ├── domain/            #   - Problem, Category, GameSession, GameSessionLog
+│   ├── infrastructure/    #   - Repository 구현체
+│   └── presentation/      #   - Controller, DTO, Decorator
+├── tiers/                 # 티어/랭킹 모듈
+│   ├── application/       #   - TiersService
+│   ├── domain/            #   - Tier 엔티티
+│   ├── infrastructure/    #   - Repository 구현체
+│   └── presentation/      #   - Controller, DTO
+├── common/                # 공통 모듈
+│   ├── exceptions/        #   - 커스텀 예외
+│   ├── filters/           #   - 전역 예외 필터
+│   ├── interceptors/      #   - 응답 인터셉터
+│   └── decorators/        #   - 커스텀 데코레이터
+├── config/                # 환경 설정
+├── prisma/                # Prisma ORM 모듈
+└── main.ts                # 애플리케이션 진입점
+```
+
+각 도메인 모듈은 **Clean Layered Architecture(DDD)** 패턴을 따르며, `application` / `domain` / `infrastructure` / `presentation` 레이어로 분리되어 있습니다.
+
+### 적용된 설계 패턴
+
+- **Facade** - 여러 서비스를 조합하는 오케스트레이션 레이어 (GameFacade, UsersFacade, AuthFacade)
+- **Repository** - 데이터 접근 추상화 (인터페이스 + 구현체 분리)
+- **Strategy** - Passport 인증 전략 (JWT, Google, GitHub)
+- **Transactional** - nestjs-cls를 활용한 선언적 트랜잭션 관리
+
+---
+
+## 주요 기능
 
 ### 게임 (Game)
 
@@ -91,90 +143,9 @@
 모든 API 기능에 대해 **단위 테스트(Unit Test)** 와 **E2E 테스트** 를 작성하여 안정성을 확보했습니다.
 E2E 테스트는 Testcontainers로 실제 PostgreSQL 컨테이너를 띄워 API 요청-응답 전체 흐름을 검증합니다.
 
-#### Unit Test
-
-| 도메인 | 기능 단위  | 테스트 파일                                                   |
-| :----: | :--------: | :------------------------------------------------------------ |
-|  Auth  |   Facade   | src/auth/application/auth.facade.spec.ts                      |
-|  Auth  |  Service   | src/auth/application/auth.service.spec.ts                     |
-|  Auth  | Controller | src/auth/presentation/auth.controller.spec.ts                 |
-|  Auth  |   Guard    | src/auth/presentation/guards/jwt-auth.guard.spec.ts           |
-|  Auth  |   Guard    | src/auth/presentation/guards/jwt-refresh-auth.guard.spec.ts   |
-|  Auth  |   Guard    | src/auth/presentation/guards/user-ownership.guard.spec.ts     |
-|  Auth  |  Strategy  | src/auth/presentation/strategies/jwt.strategy.spec.ts         |
-|  Auth  |  Strategy  | src/auth/presentation/strategies/jwt-refresh.strategy.spec.ts |
-|  Game  |   Facade   | src/games/application/game.facade.spec.ts                     |
-|  Game  |  Service   | src/games/application/games.service.spec.ts                   |
-|  Game  |  Service   | src/games/application/game-session.service.spec.ts            |
-|  Game  |  Service   | src/games/application/game-stream.service.spec.ts             |
-|  Game  |  Service   | src/games/application/game-analytics.service.spec.ts          |
-|  Game  | Controller | src/games/presentation/games.controller.spec.ts               |
-|  User  |  Service   | src/users/application/users.service.spec.ts                   |
-|  User  | Controller | src/users/presentation/users.controller.spec.ts               |
-|  Tier  |  Service   | src/tiers/application/tiers.service.spec.ts                   |
-|  Tier  | Controller | src/tiers/presentation/tiers.controller.spec.ts               |
-
-#### E2E Test (Testcontainers + PostgreSQL)
-
-| 도메인 | 대상 API                                      | 테스트 파일                                   |
-| :----: | :-------------------------------------------- | :-------------------------------------------- |
-|  Auth  | `GET /api/auth/token` 토큰 발급               | test/auth/get-tokens.e2e-spec.ts              |
-|  Auth  | `POST /api/auth/refresh` 토큰 갱신            | test/auth/refresh-tokens.e2e-spec.ts          |
-|  Game  | `GET /api/games/options` 게임 옵션 선택       | test/games/get-game-options.e2e-spec.ts       |
-|  Game  | `GET /api/games/stream` 게임 진행 (SSE)       | test/games/game-stream.e2e-spec.ts            |
-|  Game  | `POST /api/games/save` 게임 세션 저장         | test/games/save-game-session.e2e-spec.ts      |
-|  Game  | `GET /api/games/:id/reports` 게임 결과 리포트 | test/games/get-game-result-report.e2e-spec.ts |
-|  User  | `GET /api/users/me` 내 정보 조회              | test/users/get-my-info.e2e-spec.ts            |
-|  User  | `GET /api/users/ranks` 랭킹 조회              | test/users/get-ranks.e2e-spec.ts              |
-|  User  | `GET /api/users/:userId/stats` 유저 스탯 조회 | test/users/get-user-stats.e2e-spec.ts         |
-
 ---
 
-## 4. 프로젝트 아키텍처
-
-```text
-src/
-├── auth/                  # 인증 모듈 (OAuth, JWT)
-│   ├── application/       #   - AuthFacade, AuthService
-│   ├── domain/            #   - 비즈니스 규칙
-│   └── presentation/      #   - Controller, Guard, Strategy, DTO
-├── users/                 # 유저 모듈
-│   ├── application/       #   - UsersFacade, UsersService
-│   ├── domain/            #   - 엔티티, 인터페이스
-│   ├── infrastructure/    #   - Repository 구현체
-│   └── presentation/      #   - Controller, DTO
-├── games/                 # 게임 모듈 (핵심 도메인)
-│   ├── application/       #   - GameFacade, GameSessionService, GameStreamService, GameAnalyticsService
-│   ├── domain/            #   - Problem, Category, GameSession, GameSessionLog
-│   ├── infrastructure/    #   - Repository 구현체
-│   └── presentation/      #   - Controller, DTO, Decorator
-├── tiers/                 # 티어/랭킹 모듈
-│   ├── application/       #   - TiersService
-│   ├── domain/            #   - Tier 엔티티
-│   ├── infrastructure/    #   - Repository 구현체
-│   └── presentation/      #   - Controller, DTO
-├── common/                # 공통 모듈
-│   ├── exceptions/        #   - 커스텀 예외
-│   ├── filters/           #   - 전역 예외 필터
-│   ├── interceptors/      #   - 응답 인터셉터
-│   └── decorators/        #   - 커스텀 데코레이터
-├── config/                # 환경 설정
-├── prisma/                # Prisma ORM 모듈
-└── main.ts                # 애플리케이션 진입점
-```
-
-각 도메인 모듈은 **Clean Architecture(DDD)** 패턴을 따르며, `application` / `domain` / `infrastructure` / `presentation` 레이어로 분리되어 있습니다.
-
-### 적용된 설계 패턴
-
-- **Facade** - 여러 서비스를 조합하는 오케스트레이션 레이어 (GameFacade, UsersFacade, AuthFacade)
-- **Repository** - 데이터 접근 추상화 (인터페이스 + 구현체 분리)
-- **Strategy** - Passport 인증 전략 (JWT, Google, GitHub)
-- **Transactional** - nestjs-cls를 활용한 선언적 트랜잭션 관리
-
----
-
-## 5. 팀원 및 역할
+## 팀원 및 역할
 
 <!-- markdownlint-disable MD033 -->
 
