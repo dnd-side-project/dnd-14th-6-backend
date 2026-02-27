@@ -48,6 +48,29 @@
 
 ---
 
+## ERD Diagram
+
+![erd](./docs/orvit_erd.png)
+
+---
+
+## Backend Convention
+
+> - Backend Coding Convention: [🔗 link](./docs/ground-rule.md)
+
+2인 백엔드 팀이 일관된 코드베이스를 유지하기 위해 코딩 컨벤션을 정의했습니다.
+협업 시 코드 스타일이 제각각이면 리뷰와 디버깅에 불필요한 비용이 발생하기 때문에,
+명확한 규칙을 사전에 합의하는 것이 중요하다고 판단했습니다.
+
+Google TypeScript Style Guide를 기반으로 네이밍·파일명·폴더 구조 규칙을 통일했으며,
+Layered + Clean Architecture를 적용해 계층별 역할과 의존성 방향을 명확히 분리했습니다.
+Git은 git-flow 브랜치 전략을 따르고, 커밋 메시지는 `태그: 메시지` 형식(feat, fix, refactor 등)으로 규격화했습니다.
+
+이를 통해 서로의 코드를 빠르게 파악하고, 리뷰 비용을 줄이며,
+장기적으로 유지보수하기 좋은 구조를 갖추는 것을 목표로 했습니다.
+
+---
+
 ## 프로젝트 아키텍처
 
 ```text
